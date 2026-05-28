@@ -30,6 +30,15 @@ CREATE TABLE players (
 );
 
 -- ----------------------------------------------------------------------
+-- champions  (catalogo de campeones de LoL — cargado desde Data Dragon)
+-- ----------------------------------------------------------------------
+CREATE TABLE champions (
+    id    INTEGER PRIMARY KEY,          -- Riot champion key (numerico, ej. 266)
+    name  VARCHAR(50) NOT NULL UNIQUE,  -- display name: "Lee Sin", "Wukong"
+    alias VARCHAR(50) NOT NULL UNIQUE   -- internal name: "LeeSin", "MonkeyKing"
+);
+
+-- ----------------------------------------------------------------------
 -- accounts  (cuentas de Riot — se pueblan en una fase posterior)
 -- ----------------------------------------------------------------------
 CREATE TABLE accounts (
@@ -85,7 +94,7 @@ CREATE TABLE picks (
     player_id   INTEGER NOT NULL REFERENCES players(id),
     account_id  INTEGER REFERENCES accounts(id),
     game_id     INTEGER NOT NULL REFERENCES games(id),
-    champ_id    INTEGER NOT NULL,
+    champ_id    INTEGER NOT NULL REFERENCES champions(id),
     side        VARCHAR(5) NOT NULL CHECK (side IN ('BLUE','RED')),
     result      BOOLEAN NOT NULL,
     pick_order  INTEGER,
