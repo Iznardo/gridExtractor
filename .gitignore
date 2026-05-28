@@ -1,0 +1,31 @@
+# Credenciales — nunca versionar
+.env
+
+# Entorno virtual
+.venv/
+
+# Datos persistentes de Postgres (montaje del contenedor)
+postgres_data/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Editores
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+
+# Documentacion interna y archivos de trabajo (no van al repo publico)
+*.md
+!README.md
+
+# Utilidades de desarrollo / introspección
+introspect_grid.py
+grid_central_schema.json
+grid_central_schema.txt

@@ -1,0 +1,10 @@
+# Lista de torneos de interes para el discovery.
+# Anadir los nombres exactos tal como aparecen en GRID. La resolucion por
+# nombre se hace con `name contains` y luego se filtra en cliente por
+# igualdad exacta — si hay 0 o varios matches, se avisa por log y se salta.
+#
+# Ejemplos (descomentar y editar):
+#   - "LEC Spring 2026"
+#   - "LVP SuperLiga Spring 2026"
+
+tournaments: ["LCK - Split 2 2026"]

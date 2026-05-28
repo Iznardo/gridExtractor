@@ -1,0 +1,26 @@
+# Postgres 16 para gridExtractor.
+# Credenciales en `.env` (ver .env.example).
+# El schema se aplica automaticamente la primera vez que arranca el contenedor
+# (cuando ./postgres_data esta vacio) gracias al montaje en
+# /docker-entrypoint-initdb.d/.
+# Reaplicar a mano: docker compose exec -T db psql -U "$PGUSER" -d "$PGDATABASE" < db/schema.sql
+
+services:
+  db:
+    image: postgres:16
+    container_name: gridextractor-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${PGUSER}
+      POSTGRES_PASSWORD: ${PGPASSWORD}
+      POSTGRES_DB: ${PGDATABASE}
+    ports:
+      - "${PGPORT}:5432"
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
