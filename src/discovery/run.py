@@ -37,6 +37,9 @@ from grid_minion import GridError, GridGraphQLClient
 from src.db.conn import get_conn
 from src.db.upsert import ensure_player, ensure_team
 
+from src.common.graphql import paginate as _paginate_common
+from src.common.roles import normalize_role
+
 from .queries import PLAYERS_BY_TEAM, SERIES_BY_TOURNAMENTS, TOURNAMENTS_BY_NAME
 
 
@@ -44,30 +47,6 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 CONFIG_PATH = REPO_ROOT / "config" / "tournaments.yaml"
 
 log = logging.getLogger("discovery")
-
-# Mapeo de nombres de rol de GRID (minusculas, verificados empiricamente)
-# al formato de la tabla. Valores observados: top, mid, jungle, bottom, support.
-_ROLE_MAP: dict[str, str] = {
-    "top": "TOP",
-    "mid": "MID",
-    "jungle": "JUNGLE",
-    "bottom": "ADC",
-    "support": "SUPPORT",
-}
-
-
-def normalize_role(raw: str | None) -> str | None:
-    """Convierte el nombre de rol de GRID al formato de la tabla.
-
-    Devuelve None si raw es None o no esta en el mapa conocido (con
-    warning para detectar valores nuevos).
-    """
-    if not raw:
-        return None
-    normalized = _ROLE_MAP.get(raw.strip().lower())
-    if normalized is None:
-        log.warning("Rol desconocido de GRID: %r — se deja NULL.", raw)
-    return normalized
 
 
 # ---------------------------------------------------------------------------
@@ -103,26 +82,8 @@ def _paginate(
     root_key: str,
     variables: dict[str, Any],
 ) -> Generator[dict, None, None]:
-    """Genera nodos de una conexion Relay paginando hasta agotar.
-
-    Parametros:
-        root_key: clave del campo raiz en `data` (ej. "allSeries", "players").
-        variables: se fusionan con {"after": cursor} en cada pagina.
-    """
-    cursor: str | None = None
-    while True:
-        data = client.query_central(query, variables={**variables, "after": cursor})
-        conn = data.get(root_key) or {}
-        for edge in conn.get("edges") or []:
-            node = edge.get("node")
-            if node:
-                yield node
-        page = conn.get("pageInfo") or {}
-        if not page.get("hasNextPage"):
-            break
-        cursor = page.get("endCursor")
-        if not cursor:
-            break
+    """Alias local hacia src.common.graphql.paginate."""
+    yield from _paginate_common(client, query, root_key, variables)
 
 
 def resolve_tournament_id(
