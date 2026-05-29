@@ -1,4 +1,4 @@
-"""GraphQL strings para el extractor de partidos oficiales."""
+"""GraphQL strings para los extractores de oficiales y scrims."""
 
 # Series oficiales de un torneo incluyendo toda su jerarquia de hijos.
 # workflowStatuses es obligatorio en el schema (campo non-null).
@@ -34,6 +34,37 @@ query OfficialSeriesByTournament($tid: ID!, $since: String, $after: String) {
             name
             parent { id name }
           }
+        }
+      }
+    }
+    pageInfo { hasNextPage endCursor }
+  }
+}
+"""
+
+# Series de tipo SCRIM (sin filtro de torneo: descargamos todas las
+# scrims que GRID exponga a nuestra cuenta). workflowStatuses sigue
+# siendo non-null. since opcional para corridas incrementales.
+SCRIM_SERIES = """
+query ScrimSeries($since: String, $after: String) {
+  allSeries(
+    filter: {
+      startTimeScheduled: { gte: $since }
+      workflowStatuses: [PUBLISHED]
+      types: [SCRIM]
+    }
+    first: 50
+    after: $after
+    orderBy: StartTimeScheduled
+    orderDirection: ASC
+  ) {
+    edges {
+      node {
+        id
+        startTimeScheduled
+        format { nameShortened }
+        teams {
+          baseInfo { id name nameShortened }
         }
       }
     }
