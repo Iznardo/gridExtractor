@@ -210,15 +210,21 @@ def series_fully_in_db(
 
 # Orden global de picks en el draft competitivo de LoL (formato estandar).
 # fp.picks[i] y sp.picks[i] son los picks en orden cronologico dentro de
-# cada equipo; el orden global (1-10) sigue el patron fijo de la fase 1 y 2.
+# cada equipo; el orden global (1-10) sigue el patron fijo del draft.
 #
-# Fase 1 picks: FP1, SP1, SP2, FP2, FP3
-# Fase 2 picks: SP3, FP4, FP5, SP4, SP5
+# Fase 1 (6 picks, despues de 6 bans alternos):
+#   FP1(1), SP1(2), SP2(3), FP2(4), FP3(5), SP3(6)
+#
+# Fase 2 (4 picks, despues de 4 bans alternos empezando por SP):
+#   SP4(7), FP4(8), FP5(9), SP5(10)
+#
+# SP double-pickea al cerrar fase 1 (SP3) y al abrir fase 2 (SP4),
+# luego FP double-pickea (FP4, FP5), y SP cierra con el ultimo pick (SP5).
 #
 # pick_order=1 es el primer pick del draft (blind pick del FP);
-# pick_order=10 es el ultimo (ultimo counterpick del SP).
-_FP_PICK_ORDER = {0: 1, 1: 4, 2: 5, 3: 7, 4: 8}
-_SP_PICK_ORDER = {0: 2, 1: 3, 2: 6, 3: 9, 4: 10}
+# pick_order=10 es el ultimo (contrapick puro del SP).
+_FP_PICK_ORDER = {0: 1, 1: 4, 2: 5, 3: 8, 4: 9}
+_SP_PICK_ORDER = {0: 2, 1: 3, 2: 6, 3: 7, 4: 10}
 
 
 def _pick_order_for(champion_name: str | None,
