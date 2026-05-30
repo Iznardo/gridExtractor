@@ -17,7 +17,7 @@ import sys
 from pathlib import Path
 
 from dotenv import load_dotenv
-from grid_minion import GridError, GridGraphQLClient, GridRestClient
+from grid_minion import GridError, GridRestClient
 
 from src.common.champions import build_lookup, ensure_loaded
 from src.db.conn import get_conn

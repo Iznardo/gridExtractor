@@ -81,6 +81,33 @@ def iter_scrim_series(
 
 
 # ---------------------------------------------------------------------------
+# Rescate del DraftObserver.draft_history
+# ---------------------------------------------------------------------------
+
+def _rescue_from_history(draft: DraftObserver) -> dict | None:
+    """Devuelve el ultimo draft completo (5 picks por equipo) del historial.
+
+    Tras una invalidacion (remake), el DraftObserver archiva el draft en
+    `draft_history` y resetea la mesa actual. En scrims esto suele ocurrir
+    por:
+    - Remake de partida: draft completo + partida cancelada antes del nexo.
+      El draft del historial es el real y queremos conservarlo.
+    - Remake de draft: draft incompleto + nuevo intento. Aqui el actual
+      tendria datos y no entrariamos en esta funcion.
+
+    Devuelve `None` si no hay historial o si ningun draft del historial
+    esta completo (5 picks por equipo).
+    """
+    history = getattr(draft, "draft_history", None) or []
+    for h in reversed(history):
+        fp_p = (h.get("fp") or {}).get("picks") or []
+        sp_p = (h.get("sp") or {}).get("picks") or []
+        if len(fp_p) == 5 and len(sp_p) == 5:
+            return h
+    return None
+
+
+# ---------------------------------------------------------------------------
 # Procesado de una partida individual
 # ---------------------------------------------------------------------------
 
@@ -118,22 +145,30 @@ def _process_one_scrim_game(
 
     draft_data = draft.get_draft()
     if not draft_data["draft_found"]:
-        log.warning("Scrim %s game %d: draft vacio, skip.",
-                    series_id, game_number)
-        return False
+        # Rescate: tras un remake (draft completo + partida cancelada o
+        # nuevo draft) el DraftObserver archiva el draft en draft_history
+        # y resetea la mesa. Buscamos el ultimo draft completo del historial.
+        rescued = _rescue_from_history(draft)
+        if rescued is None:
+            log.warning("Scrim %s game %d: draft vacio sin historial "
+                        "recuperable, skip.", series_id, game_number)
+            return False
+        log.info("Scrim %s game %d: draft RESCATADO del historial "
+                 "(remake con draft completo previo).",
+                 series_id, game_number)
+        draft_data = rescued
 
     game_stats = stats.get_game_stats(teams)
     winner = game_stats["meta"].get("winner")
 
     # --- Recoger participants (riot_id 1..10) ---
+    # En el caso "remake de partida no jugada" puede que esten vacios o
+    # incompletos: el flujo lo tolera (game + draft se insertan; las picks
+    # solo entran si hay champion_name).
     participants = [
         p for i in range(1, 11)
         if (p := teams.get_player_by_id(i)) is not None
     ]
-    if not participants:
-        log.warning("Scrim %s game %d: sin participants, skip.",
-                    series_id, game_number)
-        return False
 
     # --- Auto-discovery: equipos (con WARNING si is_new) ---
     series_teams_by_grid = {
@@ -142,14 +177,10 @@ def _process_one_scrim_game(
     }
 
     grid_team_id_to_local: dict[int, int] = {}
-    seen_team_ids: set[int] = set()
-    for p in participants:
-        if p.grid_team_id is None:
-            continue
-        gid = int(p.grid_team_id)
-        if gid in seen_team_ids:
-            continue
-        seen_team_ids.add(gid)
+
+    def _discover_team(gid: int) -> None:
+        if gid in grid_team_id_to_local:
+            return
         base = series_teams_by_grid.get(gid, {})
         name = base.get("name") or f"Team_{gid}"
         local_id, is_new = ensure_team(
@@ -165,6 +196,18 @@ def _process_one_scrim_game(
                 series_id, game_number, gid, name,
             )
         grid_team_id_to_local[gid] = local_id
+
+    for p in participants:
+        if p.grid_team_id is None:
+            continue
+        _discover_team(int(p.grid_team_id))
+
+    # Si participants no aportan los equipos (partida no jugada), usar los
+    # del draft rescatado para no perder esa info.
+    for side in ("fp", "sp"):
+        tid_str = (draft_data.get(side) or {}).get("team_id")
+        if tid_str:
+            _discover_team(int(tid_str))
 
     # team1=BLUE, team2=RED por convencion
     team1_local = team2_local = None

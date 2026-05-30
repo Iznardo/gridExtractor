@@ -16,7 +16,6 @@ import json
 import logging
 from dataclasses import dataclass
 from datetime import date, datetime
-from typing import Any
 
 import psycopg
 from grid_minion import GridError, GridGraphQLClient
