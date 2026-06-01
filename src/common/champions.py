@@ -15,7 +15,6 @@ Uso:
 from __future__ import annotations
 
 import logging
-import os
 import sys
 from pathlib import Path
 
@@ -106,7 +105,6 @@ def main() -> int:
         level=logging.INFO,
         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
     )
-    from pathlib import Path
     from dotenv import load_dotenv
     load_dotenv(dotenv_path=Path(__file__).resolve().parents[2] / ".env")
 
