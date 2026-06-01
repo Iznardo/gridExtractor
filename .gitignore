@@ -29,3 +29,6 @@ __pycache__/
 introspect_grid.py
 grid_central_schema.json
 grid_central_schema.txt
+
+# Claude
+.claude/
