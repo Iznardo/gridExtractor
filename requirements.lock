@@ -1,0 +1,21 @@
+# Pinned versions of the environment used to validate the pipeline.
+# Generated with `pip freeze` against Python 3.12 on Linux.
+#
+# Use this file for reproducible deploys:
+#   pip install -r requirements.lock
+#
+# For development, install the looser `requirements.txt` instead — that
+# file lists only direct dependencies and lets pip pick compatible
+# versions.
+
+certifi==2026.5.20
+charset-normalizer==3.4.7
+grid-minion==0.1.2
+idna==3.16
+psycopg==3.3.4
+psycopg-binary==3.3.4
+python-dotenv==1.2.2
+PyYAML==6.0.3
+requests==2.34.2
+typing_extensions==4.15.0
+urllib3==2.7.0
