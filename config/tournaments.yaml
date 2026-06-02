@@ -7,4 +7,8 @@
 #   - "LEC Spring 2026"
 #   - "LVP SuperLiga Spring 2026"
 
-tournaments: ["LEC - Spring 2026"]
+tournaments: 
+- "LEC - Spring 2026"
+- "LPL - Split 2 2026"
+- "LCS - Split 2 2026"
+- "LCK - Split 2 2026"
