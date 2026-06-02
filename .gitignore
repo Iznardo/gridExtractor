@@ -33,6 +33,7 @@ grid_central_schema.txt
 # Archivos de diagnóstico y análisis local
 docs/
 *.jsonl
+diag_*.py
 
 # Claude
 .claude/
