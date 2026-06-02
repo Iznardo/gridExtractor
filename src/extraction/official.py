@@ -87,6 +87,40 @@ def root_tournament_name(series_node: dict) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Rescate del DraftObserver.draft_history
+# ---------------------------------------------------------------------------
+
+def _rescue_from_history(draft: DraftObserver, teams: TeamsObserver) -> dict | None:
+    """Devuelve el ultimo draft del historial cuyos picks coinciden con lo jugado.
+
+    Cuando grid-minion resetea el DraftObserver por una invalidacion tecnica
+    del feed (no un remake real), el draft completo queda archivado en
+    `draft_history`. Validamos contra TeamsObserver para no usar un draft
+    descartado de un remake genuino donde los equipos cambiaron de campeones.
+
+    Devuelve `None` si no hay historial, si no se puede validar, o si ningun
+    entry coincide con los campeones jugados.
+    """
+    played = {
+        p.champion_name
+        for i in range(1, 11)
+        if (p := teams.get_player_by_id(i)) is not None
+        and p.champion_name
+    }
+    if len(played) != 10:
+        return None
+
+    history = getattr(draft, "draft_history", None) or []
+    for h in reversed(history):
+        fp_p = (h.get("fp") or {}).get("picks") or []
+        sp_p = (h.get("sp") or {}).get("picks") or []
+        if len(fp_p) == 5 and len(sp_p) == 5:
+            if set(fp_p + sp_p) == played:
+                return h
+    return None
+
+
+# ---------------------------------------------------------------------------
 # Procesado de una partida individual
 # ---------------------------------------------------------------------------
 
@@ -124,9 +158,15 @@ def _process_one_game(
 
     draft_data = draft.get_draft()
     if not draft_data["draft_found"]:
-        log.warning("Serie %s game %d: draft vacio, skip.",
-                    series_id, game_number)
-        return False
+        rescued = _rescue_from_history(draft, teams)
+        if rescued is None:
+            log.warning("Serie %s game %d: draft vacio sin historial "
+                        "recuperable, skip.", series_id, game_number)
+            return False
+        log.info("Serie %s game %d: draft RESCATADO del historial "
+                 "(picks coinciden con lo jugado).",
+                 series_id, game_number)
+        draft_data = rescued
 
     game_stats = stats.get_game_stats(teams)
     winner = game_stats["meta"].get("winner")

@@ -84,26 +84,36 @@ def iter_scrim_series(
 # Rescate del DraftObserver.draft_history
 # ---------------------------------------------------------------------------
 
-def _rescue_from_history(draft: DraftObserver) -> dict | None:
-    """Devuelve el ultimo draft completo (5 picks por equipo) del historial.
+def _rescue_from_history(draft: DraftObserver, teams: TeamsObserver) -> dict | None:
+    """Devuelve el ultimo draft del historial cuyos picks coinciden con lo jugado.
 
-    Tras una invalidacion (remake), el DraftObserver archiva el draft en
-    `draft_history` y resetea la mesa actual. En scrims esto suele ocurrir
-    por:
-    - Remake de partida: draft completo + partida cancelada antes del nexo.
-      El draft del historial es el real y queremos conservarlo.
-    - Remake de draft: draft incompleto + nuevo intento. Aqui el actual
-      tendria datos y no entrariamos en esta funcion.
+    Cuando DraftObserver resetea por una invalidacion (remake o problema tecnico
+    del feed), archiva el estado en `draft_history`. Buscamos hacia atras la
+    primera entrada completa (5+5 picks) cuyos 10 campeones coincidan exactamente
+    con los que TeamsObserver reporta como jugados.
 
-    Devuelve `None` si no hay historial o si ningun draft del historial
-    esta completo (5 picks por equipo).
+    Validar contra TeamsObserver evita usar un draft descartado de un remake
+    genuino donde los equipos cambiaron de campeones.
+
+    Devuelve `None` si no hay historial, si no se puede validar (menos de 10
+    campeones conocidos), o si ningun entry del historial coincide.
     """
+    played = {
+        p.champion_name
+        for i in range(1, 11)
+        if (p := teams.get_player_by_id(i)) is not None
+        and p.champion_name
+    }
+    if len(played) != 10:
+        return None  # no se puede validar de forma segura
+
     history = getattr(draft, "draft_history", None) or []
     for h in reversed(history):
         fp_p = (h.get("fp") or {}).get("picks") or []
         sp_p = (h.get("sp") or {}).get("picks") or []
         if len(fp_p) == 5 and len(sp_p) == 5:
-            return h
+            if set(fp_p + sp_p) == played:
+                return h
     return None
 
 
@@ -148,13 +158,13 @@ def _process_one_scrim_game(
         # Rescate: tras un remake (draft completo + partida cancelada o
         # nuevo draft) el DraftObserver archiva el draft en draft_history
         # y resetea la mesa. Buscamos el ultimo draft completo del historial.
-        rescued = _rescue_from_history(draft)
+        rescued = _rescue_from_history(draft, teams)
         if rescued is None:
             log.warning("Scrim %s game %d: draft vacio sin historial "
                         "recuperable, skip.", series_id, game_number)
             return False
         log.info("Scrim %s game %d: draft RESCATADO del historial "
-                 "(remake con draft completo previo).",
+                 "(picks coinciden con lo jugado).",
                  series_id, game_number)
         draft_data = rescued
 
