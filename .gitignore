@@ -30,5 +30,9 @@ introspect_grid.py
 grid_central_schema.json
 grid_central_schema.txt
 
+# Archivos de diagnóstico y análisis local
+docs/
+*.jsonl
+
 # Claude
 .claude/
