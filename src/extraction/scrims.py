@@ -84,35 +84,34 @@ def iter_scrim_series(
 # Rescate del DraftObserver.draft_history
 # ---------------------------------------------------------------------------
 
-def _rescue_from_history(draft: DraftObserver, teams: TeamsObserver) -> dict | None:
+def _rescue_from_history(
+    draft: DraftObserver,
+    teams: TeamsObserver,
+    champ_lookup: dict[str, int],
+) -> dict | None:
     """Devuelve el ultimo draft del historial cuyos picks coinciden con lo jugado.
 
-    Cuando DraftObserver resetea por una invalidacion (remake o problema tecnico
-    del feed), archiva el estado en `draft_history`. Buscamos hacia atras la
-    primera entrada completa (5+5 picks) cuyos 10 campeones coincidan exactamente
-    con los que TeamsObserver reporta como jugados.
-
-    Validar contra TeamsObserver evita usar un draft descartado de un remake
-    genuino donde los equipos cambiaron de campeones.
-
-    Devuelve `None` si no hay historial, si no se puede validar (menos de 10
-    campeones conocidos), o si ningun entry del historial coincide.
+    Normaliza a IDs via champ_lookup antes de comparar: TeamsObserver usa el
+    alias interno de Riot ("JarvanIV", "XinZhao") mientras que GRID usa el
+    nombre de display ("Jarvan IV", "Xin Zhao"). El lookup mapea ambas formas
+    al mismo ID, resolviendo la discrepancia de formato.
     """
-    played = {
-        p.champion_name
+    played_ids = {
+        champ_lookup[p.champion_name]
         for i in range(1, 11)
         if (p := teams.get_player_by_id(i)) is not None
-        and p.champion_name
+        and p.champion_name in champ_lookup
     }
-    if len(played) != 10:
-        return None  # no se puede validar de forma segura
+    if len(played_ids) != 10:
+        return None
 
     history = getattr(draft, "draft_history", None) or []
     for h in reversed(history):
         fp_p = (h.get("fp") or {}).get("picks") or []
         sp_p = (h.get("sp") or {}).get("picks") or []
         if len(fp_p) == 5 and len(sp_p) == 5:
-            if set(fp_p + sp_p) == played:
+            hist_ids = {champ_lookup[c] for c in fp_p + sp_p if c in champ_lookup}
+            if hist_ids == played_ids:
                 return h
     return None
 
@@ -158,7 +157,7 @@ def _process_one_scrim_game(
         # Rescate: tras un remake (draft completo + partida cancelada o
         # nuevo draft) el DraftObserver archiva el draft en draft_history
         # y resetea la mesa. Buscamos el ultimo draft completo del historial.
-        rescued = _rescue_from_history(draft, teams)
+        rescued = _rescue_from_history(draft, teams, champ_lookup)
         if rescued is None:
             log.warning("Scrim %s game %d: draft vacio sin historial "
                         "recuperable, skip.", series_id, game_number)
