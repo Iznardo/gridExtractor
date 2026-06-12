@@ -7,6 +7,9 @@
 # Datos persistentes de Postgres (montaje del contenedor)
 postgres_data/
 
+# Cache de respuestas crudas de la Riot API (fase 1 de soloq)
+data/
+
 # Python
 __pycache__/
 *.py[cod]

@@ -39,14 +39,14 @@ CREATE TABLE champions (
 );
 
 -- ----------------------------------------------------------------------
--- accounts  (cuentas de Riot — se pueblan en una fase posterior)
+-- accounts  (cuentas de Riot de cada jugador — src/riot/accounts_sync.py)
+-- El puuid es la unica identidad: los Riot IDs cambian y NO se persisten.
 -- ----------------------------------------------------------------------
 CREATE TABLE accounts (
     id         SERIAL PRIMARY KEY,
-    riot_id    VARCHAR(100) NOT NULL,
     player_id  INTEGER NOT NULL REFERENCES players(id),
-    region     VARCHAR(8) NOT NULL,
-    puuid      CHAR(78) UNIQUE
+    region     VARCHAR(8) NOT NULL,               -- cluster regional Match-V5 (europe/americas/asia/sea)
+    puuid      CHAR(78) NOT NULL UNIQUE
 );
 
 -- ----------------------------------------------------------------------
@@ -76,7 +76,7 @@ CREATE TABLE games (
     draft_id        INTEGER UNIQUE REFERENCES drafts(id),  -- 1-a-1 con drafts
     grid_series_id  BIGINT,
     game_number     SMALLINT,
-    riot_api_id     BIGINT,
+    riot_api_id     VARCHAR(20),   -- matchId completo de Riot, con plataforma ("EUW1_7884453182")
     stats           JSONB,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
