@@ -32,6 +32,7 @@ import psycopg
 from grid_minion import GridError, GridGraphQLClient, GridRestClient
 from grid_minion import split_grid_series
 from grid_minion.observers import (
+    BuildObserver,
     DraftObserver,
     GameEventProcessor,
     ObjectiveKilledObserver,
@@ -87,42 +88,6 @@ def root_tournament_name(series_node: dict) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Rescate del DraftObserver.draft_history
-# ---------------------------------------------------------------------------
-
-def _rescue_from_history(
-    draft: DraftObserver,
-    teams: TeamsObserver,
-    champ_lookup: dict[str, int],
-) -> dict | None:
-    """Devuelve el ultimo draft del historial cuyos picks coinciden con lo jugado.
-
-    Normaliza a IDs via champ_lookup antes de comparar: TeamsObserver usa el
-    alias interno de Riot ("JarvanIV", "XinZhao") mientras que GRID usa el
-    nombre de display ("Jarvan IV", "Xin Zhao"). El lookup mapea ambas formas
-    al mismo ID, resolviendo la discrepancia de formato.
-    """
-    played_ids = {
-        champ_lookup[p.champion_name]
-        for i in range(1, 11)
-        if (p := teams.get_player_by_id(i)) is not None
-        and p.champion_name in champ_lookup
-    }
-    if len(played_ids) != 10:
-        return None
-
-    history = getattr(draft, "draft_history", None) or []
-    for h in reversed(history):
-        fp_p = (h.get("fp") or {}).get("picks") or []
-        sp_p = (h.get("sp") or {}).get("picks") or []
-        if len(fp_p) == 5 and len(sp_p) == 5:
-            hist_ids = {champ_lookup[c] for c in fp_p + sp_p if c in champ_lookup}
-            if hist_ids == played_ids:
-                return h
-    return None
-
-
-# ---------------------------------------------------------------------------
 # Procesado de una partida individual
 # ---------------------------------------------------------------------------
 
@@ -141,13 +106,14 @@ def _process_one_game(
     Devuelve True si se inserto, False si se salto.
     """
     # --- Observers ---
-    proc  = GameEventProcessor()
-    teams = TeamsObserver()
-    draft = DraftObserver()
-    stats = PostGameObserver()
-    objs  = ObjectiveKilledObserver()
-    wards = WardsObserver(teams_observer=teams)
-    for o in (teams, draft, stats, objs, wards):
+    proc   = GameEventProcessor()
+    teams  = TeamsObserver()
+    draft  = DraftObserver()
+    stats  = PostGameObserver()
+    objs   = ObjectiveKilledObserver()
+    wards  = WardsObserver(teams_observer=teams)
+    builds = BuildObserver()
+    for o in (teams, draft, stats, objs, wards, builds):
         proc.attach(o)
 
     proc.process_bundle(
@@ -158,17 +124,15 @@ def _process_one_game(
                                                       game_number=game_number),
     )
 
+    # v0.2.0: DraftObserver ya ignora los grid-invalidated-series posteriores a
+    # series-started-game (Patron D resuelto en la libreria), asi que ya no hay
+    # rescate manual desde draft_history. Si aun asi no hay draft (Patron A/B/C),
+    # se salta la partida.
     draft_data = draft.get_draft()
     if not draft_data["draft_found"]:
-        rescued = _rescue_from_history(draft, teams, champ_lookup)
-        if rescued is None:
-            log.warning("Serie %s game %d: draft vacio sin historial "
-                        "recuperable, skip.", series_id, game_number)
-            return False
-        log.info("Serie %s game %d: draft RESCATADO del historial "
-                 "(picks coinciden con lo jugado).",
-                 series_id, game_number)
-        draft_data = rescued
+        log.warning("Serie %s game %d: draft vacio (sin eventos de draft), "
+                    "skip.", series_id, game_number)
+        return False
 
     game_stats = stats.get_game_stats(teams)
     winner = game_stats["meta"].get("winner")
@@ -293,6 +257,7 @@ def _process_one_game(
         game_stats=game_stats,
         champ_lookup=champ_lookup,
         draft_data=draft_data,
+        builds_data=builds.get_builds(),
     )
 
     return True

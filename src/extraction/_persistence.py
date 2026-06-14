@@ -183,7 +183,9 @@ def pick_order_for(champion_name: str | None,
     """Devuelve el pick_order global (1-10) del campeon en el draft.
 
     Compara por champion ID (no por string) para evitar mismatches de
-    formato entre GRID ("LeeSin") y Riot ("Lee Sin").
+    formato entre GRID ("LeeSin") y Riot ("Lee Sin"). Desde grid-minion
+    v0.2.0 los picks del draft son dicts `{"name", "id"}` ya normalizados
+    contra Data Dragon, asi que el id sale directo del dict.
     """
     if not champion_name or grid_team_id is None:
         return None
@@ -203,8 +205,8 @@ def pick_order_for(champion_name: str | None,
         picks_list = sp_picks
         order_map  = SP_PICK_ORDER
 
-    for i, pick_name in enumerate(picks_list):
-        if pick_name and champ_lookup.get(pick_name) == champ_id:
+    for i, pick in enumerate(picks_list):
+        if pick and pick.get("id") == champ_id:
             return order_map.get(i)
     return None
 
@@ -246,8 +248,15 @@ def insert_draft(
     fp = draft_data["fp"]
     sp = draft_data["sp"]
 
-    def champ(name):
-        return resolve_champ(name, champ_lookup)
+    def champ(entry):
+        # v0.2.0: cada pick/ban es {"name", "id"} ya normalizado (o None en
+        # un ban saltado). Usamos el id directo; si la libreria no lo resolvio
+        # (id None) caemos al champ_lookup por nombre como ultimo recurso.
+        if not entry:
+            return None
+        if entry.get("id") is not None:
+            return entry["id"]
+        return resolve_champ(entry.get("name"), champ_lookup)
 
     fp_team_id_str = fp.get("team_id")
     fp_local = None
@@ -371,9 +380,16 @@ def insert_picks(
     game_stats: dict,
     champ_lookup: dict[str, int],
     draft_data: dict,
+    builds_data: dict[int, dict] | None = None,
 ) -> None:
-    """Inserta 10 filas en picks (una por participante)."""
+    """Inserta 10 filas en picks (una por participante).
+
+    `builds_data` es la salida de `BuildObserver.get_builds()` (v0.2.0):
+    `{participantId: {"build_path": [...], "skill_order": "..."}}`. Puede ser
+    None / vacio si la partida no traia riot_livestats.
+    """
     players_stats = game_stats.get("players") or {}
+    builds_data   = builds_data or {}
 
     with conn.cursor() as cur:
         for p in participants:
@@ -399,10 +415,23 @@ def insert_picks(
                                         p.grid_team_id, champ_lookup)
 
             p_stats = players_stats.get(p.riot_id) or {}
+            b_stats = builds_data.get(p.riot_id) or {}
+            # Contrato alineado con SoloQ (CLAUDE.md §10). runes/final_items
+            # salen del PostGameObserver (Riot summary); skill_order/build_path
+            # del BuildObserver (Riot livestats). Quedan fuera de alcance en
+            # GRID: team_position, champ_level, vision_score, summoner_spells.
             stats_json = {
-                k: p_stats.get(k)
-                for k in ("kills", "deaths", "assists", "gold",
-                          "cs", "damage_dealt", "kda_str")
+                "kills":        p_stats.get("kills"),
+                "deaths":       p_stats.get("deaths"),
+                "assists":      p_stats.get("assists"),
+                "gold":         p_stats.get("gold"),
+                "cs":           p_stats.get("cs"),
+                "damage_dealt": p_stats.get("damage_dealt"),
+                "kda_str":      p_stats.get("kda_str"),
+                "runes":        p_stats.get("runes"),
+                "final_items":  p_stats.get("final_items"),
+                "skill_order":  b_stats.get("skill_order") or None,
+                "build_path":   b_stats.get("build_path") or None,
             }
 
             cur.execute(
