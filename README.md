@@ -38,13 +38,13 @@ LoL match data — drafts, picks, results, objectives, wards, post-game stats
 | Player/team discovery from GRID tournaments | Implemented |
 | Official match extraction (with roster reconciliation) | Implemented |
 | Scrim extraction (with auto-discovery + warnings) | Implemented |
-| SoloQ extraction (via Riot API, not via GRID) | Planned |
-| Riot `accounts` table population | Planned (will be done with SoloQ) |
+| SoloQ extraction (via Riot API, not via GRID) | Implemented |
+| Riot `accounts` table population | Implemented (`accounts_sync`) |
+| Per-player builds for officials/scrims (runes, items, skills) | Implemented (grid-minion v0.2.0) |
 
 The pipeline has been validated against real data from the LCK, LEC and LES.
-SoloQ is the next milestone and is intentionally out of scope of the GRID
-library: it will be built on top of the existing schema using the Riot API
-directly.
+All four data sources (discovery, officials, scrims, SoloQ) are in place. The
+next milestone is a read-only API + front-end on top of the same database.
 
 There is one known data shape that the scrim extractor cannot currently
 recover (matches played but with no draft events emitted by GRID). See
@@ -59,7 +59,7 @@ same `games` table, differentiated by the `game_type` column:
 |---|---|---|
 | Official tournament matches | `OFFICIAL` | `grid-minion`, filtered by tournaments listed in `config/tournaments.yaml`. Reconciles the players' current team/role/starter status. |
 | Scrims | `SCRIM` | `grid-minion`, no tournament filter — every `PUBLISHED` scrim visible to your GRID account. Does **not** reconcile roster (scrim data is too noisy). |
-| SoloQ | `SOLOQ` | Riot API directly. Not yet implemented. |
+| SoloQ | `SOLOQ` | Riot API directly (queue 420). PUUID is the account identity; one row per tracked account present in the game. |
 
 The end-to-end flow for a GRID-sourced run is:
 
@@ -111,8 +111,9 @@ the Postgres container boots (via `docker-entrypoint-initdb.d`).
 - **`teams`** — one row per team. `grid_id` is the join key with GRID.
 - **`players`** — one row per *person* (not per Riot account). `team_id`,
   `role` and `starter` are reconciled from official matches.
-- **`accounts`** — one row per Riot account belonging to a player. Empty
-  for now; will be populated when the SoloQ stage lands.
+- **`accounts`** — one row per Riot account belonging to a player. Populated
+  from `config/soloq_accounts.yaml` via `src/riot/accounts_sync.py`. The
+  `puuid` is the account's only identity (Riot IDs change and are not stored).
 - **`champions`** — Riot Data Dragon catalog (id, name, alias). Bootstrapped
   automatically on the first extractor run.
 - **`games`** — one row per game. The `stats` JSONB column holds the post-game
@@ -142,15 +143,26 @@ The `games.stats` column contains:
 }
 ```
 
-The `picks.stats` column contains per-player aggregates:
+The `picks.stats` column contains per-player aggregates plus the build. For
+GRID-sourced games (officials/scrims), `runes`/`final_items` come from the Riot
+summary and `skill_order`/`build_path` from the Riot livestats (grid-minion
+v0.2.0); any of them may be `null` when the source feed is missing/partial:
 
 ```json
 { "kills": 4, "deaths": 2, "assists": 8, "gold": 13420,
-  "cs": 256, "damage_dealt": 18900, "kda_str": "4/2/8" }
+  "cs": 256, "damage_dealt": 18900, "kda_str": "4/2/8",
+  "runes": { "primary_style": 8200, "primary": [8229, 8275],
+             "sub_style": 8400, "sub": [8473, 8242],
+             "stat_perks": [5008, 5008, 5011] },
+  "final_items": [3047, 3157, 6653, 4645, 3363],
+  "skill_order": "QWEQQRQEQEREEWWRWW",
+  "build_path": [{ "ts_s": 3, "action": "BUY", "item_id": 1056 }, ...] }
 ```
 
-Both shapes mirror what `grid-minion` produces; refer to its documentation
-when consuming them.
+SoloQ rows share these build keys (same contract) and add a few that only the
+Riot API exposes: `champ_level`, `vision_score`, `team_position`,
+`summoner_spells`. The GRID and SoloQ shapes mirror what `grid-minion` and the
+Riot API produce respectively; refer to their docs when consuming them.
 
 ## Requirements
 
@@ -276,9 +288,11 @@ What's different from officials:
   team names, fill players, etc. are common).
 - **No roster reconciliation.** A player playing fill in a scrim should
   not retroactively be marked as that team's starter in the database.
-- When a remake invalidates a series after a complete draft, the draft is
-  rescued from `DraftObserver.draft_history`, so you don't lose the
-  draft data even if the actual game was cancelled.
+- Mid-game feed invalidations (technical reconnections, not real remakes)
+  no longer drop the draft: grid-minion v0.2.0 ignores any
+  `grid-invalidated-series` that arrives after the game has started, and
+  rescues side-swaps internally. The old `_rescue_from_history` workaround
+  was removed.
 
 ### 4. Manually refreshing the champions table
 
@@ -291,6 +305,35 @@ python -m src.common.champions
 
 It re-fetches the latest version from Riot Data Dragon and inserts any
 new champion IDs. Existing rows are not touched.
+
+### 5. SoloQ extraction (Riot API)
+
+SoloQ does not use GRID. First, list the accounts to track in
+`config/soloq_accounts.yaml` (each entry binds a Riot ID to an existing
+`players` row by exact name) and sync them into the `accounts` table:
+
+```bash
+python -m src.riot.accounts_sync
+```
+
+Only the `puuid` is stored as the account identity (Riot IDs change and are
+not persisted). To resolve a Riot ID to its PUUID/region ad hoc:
+
+```bash
+python -m src.riot.resolve_run "Name#TAG"
+```
+
+Then extract ranked solo games (queue 420) and persist them:
+
+```bash
+python -m src.extraction.soloq_run --since 2026-06-01 [--limit 50]
+```
+
+It filters match IDs against the DB before downloading (idempotency by
+`riot_api_id`), skips remakes, and writes one `picks` row per tracked account
+present. `drafts` stays empty for SoloQ (Riot exposes no pick sequence; bans
+are simultaneous and kept in `games.stats`). Requires a `RIOT_API_KEY` in
+`.env`.
 
 ## Querying the data
 
@@ -412,10 +455,15 @@ Notes:
   are currently skipped with a `WARNING` log. Open question: whether GRID
   exposes the draft in a different event type for these series, or
   whether the data is simply not there. To investigate.
-- **No SoloQ yet.** The `accounts` table exists in the schema but is
-  empty until the SoloQ stage is implemented.
-- **No automated tests.** The pipeline has been validated empirically
-  against real tournament data, but there is no test suite.
+- **LPL has no Riot summary.** GRID returns 404 on the Riot summary
+  endpoint for LPL series at this API tier, so `TeamsObserver` cannot
+  resolve participants and those series are skipped. Not a code bug — a
+  data-access limit; deferred until a future grid-minion exposes an
+  alternative source. Keep LPL commented out in `tournaments.yaml`.
+- **Build backfill.** Per-player builds were added with grid-minion
+  v0.2.0; games ingested before that don't have them, and idempotency
+  skips already-stored games. Backfilling them needs an explicit
+  re-extraction path (not built yet).
 - **`tournaments.yaml` is project-specific.** The repository ships with a
   sample value — customise it before running the official extractor.
 
