@@ -3,4 +3,6 @@ psycopg[binary]>=3.1
 python-dotenv>=1.0
 PyYAML>=6.0
 requests>=2.31
+fastapi>=0.110       # API read-only sobre loldata (src/api/)
+uvicorn[standard]>=0.29
 pytest>=8.0          # dev: tests offline contra fixtures de docs/riot

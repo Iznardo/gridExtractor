@@ -1,0 +1,19 @@
+# Imagen de la API read-only (FastAPI). La BD vive en su propio servicio (`db`
+# en docker-compose.yml); esta imagen solo sirve la API.
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# Deps primero para aprovechar la cache de capas de Docker.
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copiar el codigo deja la imagen autonoma (prod). En dev, docker-compose monta
+# ./src como volumen encima, asi que los cambios se reflejan sin reconstruir.
+COPY src ./src
+
+EXPOSE 8000
+
+# CMD por defecto = produccion (sin --reload). El servicio `api` de
+# docker-compose lo sobreescribe con --reload para desarrollo.
+CMD ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000"]

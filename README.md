@@ -41,10 +41,12 @@ LoL match data — drafts, picks, results, objectives, wards, post-game stats
 | SoloQ extraction (via Riot API, not via GRID) | Implemented |
 | Riot `accounts` table population | Implemented (`accounts_sync`) |
 | Per-player builds for officials/scrims (runes, items, skills) | Implemented (grid-minion v0.2.0) |
+| Read-only query API (FastAPI) | Implemented (`src/api/`) |
 
 The pipeline has been validated against real data from the LCK, LEC and LES.
-All four data sources (discovery, officials, scrims, SoloQ) are in place. The
-next milestone is a read-only API + front-end on top of the same database.
+All four data sources (discovery, officials, scrims, SoloQ) are in place, and a
+read-only API over the same database is up (see §6). The next milestone is the
+front-end on top of that API.
 
 There is one known data shape that the scrim extractor cannot currently
 recover (matches played but with no draft events emitted by GRID). See
@@ -194,11 +196,12 @@ cp .env.example .env
 #   PGPASSWORD    (any password — used by both the container and Python)
 # The other PG* variables have safe defaults.
 
-# 4. Start the PostgreSQL container
+# 4. Start the containers (PostgreSQL + the read-only API)
 docker compose up -d
-# The first boot reads db/schema.sql automatically (via the
-# /docker-entrypoint-initdb.d mount). After that, the volume in
-# ./postgres_data/ persists the data.
+# The first run also builds the API image. The DB's first boot reads
+# db/schema.sql automatically (via the /docker-entrypoint-initdb.d mount);
+# after that, the volume in ./postgres_data/ persists the data. The API is
+# then reachable at http://localhost:${API_PORT:-8000} (see §6).
 
 # 5. Configure the tournaments to track (officials only)
 $EDITOR config/tournaments.yaml
@@ -388,6 +391,44 @@ ORDER BY array_position(
 );
 ```
 
+## The query API (FastAPI)
+
+A read-only HTTP API over the same `loldata` database lives in `src/api/`. It is
+SQL-only (no ORM), reuses the DB layer, and is meant for a front-end (and ad-hoc
+use).
+
+The recommended way to run it is via Docker Compose: the `api` service starts
+alongside the `db` service (it waits for the DB healthcheck), so a single
+command brings both up — no need to launch `uvicorn` by hand:
+
+```bash
+docker compose up -d        # starts db + api
+docker compose up -d --build api   # rebuild after changing dependencies
+```
+
+`src/` is mounted into the container with `--reload`, so editing API code
+reloads it live without rebuilding. The API is published on `API_PORT` (default
+`8000`). To run it outside Docker instead (e.g. quick local debugging):
+
+```bash
+uvicorn src.api.main:app --reload
+```
+
+Interactive docs at `http://localhost:8000/docs`. All query filters are
+**id-based** (resolve champion/team names to ids via the catalog endpoints
+first); responses include both the id and the resolved name.
+
+| Endpoint | Purpose |
+|---|---|
+| `GET /champions`, `/teams`, `/players?team_id=&role=` | Catalog (populate filters, resolve name→id). |
+| `GET /drafts` | Drafts (officials/scrims). Filters: `team_id, rival_id, patch, pick_phase(first\|second), champ_id, game_type`. Exposes both axes: `team1`=BLUE/`team2`=RED **and** `first_pick_team` (decoupled since 2026). |
+| `GET /scouting/champion-pool?team_id=` | Per-player champion pool split by medium (`by_medium`: official/scrim/soloq). Attribution via `players.team_id`. |
+| `GET /games` | Game search: `team_id, patch, game_type, champ_id, champ_id2+opposing` (matchup on opposite sides), `date_from/date_to`. Returns side compositions (`blue_champions`/`red_champions`). |
+| `GET /picks` | Raw per-player picks (drill-down); `stats` JSONB as stored. |
+
+CORS is open to `localhost` and there is no auth (local use). Read-only: give it
+a Postgres user with `SELECT` only if you expose it.
+
 ## Automating extractions (cron)
 
 The recommended cadence depends on how fast you need fresh data:
@@ -475,7 +516,8 @@ Notes:
 ├── requirements.txt           direct Python dependencies (loose pins)
 ├── requirements.lock          fully-pinned environment for reproducible deploys
 ├── LICENSE                    MIT
-├── docker-compose.yml         PostgreSQL 16 container
+├── docker-compose.yml         PostgreSQL 16 + read-only API services
+├── Dockerfile.api             image for the FastAPI service
 ├── .env.example               credentials template (copy to .env)
 ├── config/
 │   └── tournaments.yaml       tournament names for the official extractor
@@ -488,12 +530,19 @@ Notes:
     ├── db/                    connection + ensure_team/ensure_player +
     │                          roster reconciliation
     ├── discovery/             bulk team/player discovery from tournaments
-    └── extraction/            official + scrim extractors
-        ├── official.py        per-series logic for officials
-        ├── scrims.py          per-series logic for scrims
-        ├── _persistence.py    shared INSERT helpers
-        ├── run.py             entry point: python -m src.extraction.run
-        └── scrims_run.py      entry point: python -m src.extraction.scrims_run
+    ├── extraction/            official + scrim + soloq extractors
+    │   ├── official.py        per-series logic for officials
+    │   ├── scrims.py          per-series logic for scrims
+    │   ├── soloq.py           soloq persistence (games + picks)
+    │   ├── _persistence.py    shared INSERT helpers
+    │   ├── run.py             entry point: python -m src.extraction.run
+    │   ├── scrims_run.py      entry point: python -m src.extraction.scrims_run
+    │   └── soloq_run.py       entry point: python -m src.extraction.soloq_run
+    ├── riot/                  Riot API layer (client, endpoints, extract)
+    └── api/                   read-only FastAPI app (§6)
+        ├── main.py            app factory + lifespan (caches champ map)
+        ├── deps.py            shared deps (DB conn, champ map)
+        └── routers/           catalog, drafts, scouting, games, picks
 ```
 
 ## Troubleshooting

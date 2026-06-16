@@ -24,3 +24,30 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
+  # API read-only (FastAPI) sobre la misma BD. Arranca con la BD; un solo
+  # `docker compose up` levanta ambos. No hay que lanzar uvicorn a mano.
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: gridextractor-api
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # Dentro de la red de compose la BD es el host `db` en su puerto interno
+      # 5432 — NO el ${PGPORT} publicado al host (que puede ser otro).
+      PGHOST: db
+      PGPORT: "5432"
+      PGUSER: ${PGUSER}
+      PGPASSWORD: ${PGPASSWORD}
+      PGDATABASE: ${PGDATABASE}
+    ports:
+      - "${API_PORT:-8000}:8000"
+    volumes:
+      # Codigo en vivo: editar src/ recarga la API sin reconstruir la imagen.
+      - ./src:/app/src:ro
+    command:
+      ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
