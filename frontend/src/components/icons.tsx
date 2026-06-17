@@ -45,9 +45,10 @@ export function ChampIcon({ id, name, size = 28 }: { id: number; name?: string |
 }
 
 export function ItemIcon({ id, size = 24 }: { id: number; size?: number }) {
-  const { version } = useDdragon();
+  const { version, items } = useDdragon();
   if (!id) return <span className="item-empty" style={{ width: size, height: size }} />;
-  return <Img className="icon-sq" size={size} src={itemIconUrl(version, id)} alt={`item ${id}`} />;
+  const name = items.get(id) ?? `ítem ${id}`;
+  return <Img className="icon-sq" size={size} src={itemIconUrl(version, id)} alt={name} />;
 }
 
 export function SpellIcon({ id, size = 22 }: { id: number; size?: number }) {

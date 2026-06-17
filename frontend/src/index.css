@@ -13,6 +13,12 @@
   --red-bg: #7f1d1d;
   --red-fg: #fecaca;
 
+  /* Vocabulario de colores de habilidades — vocabulario cerrado (DESIGN.md §5) */
+  --skill-q: #38bdf8;
+  --skill-w: #f97316;
+  --skill-e: #a855f7;
+  --skill-r: #ef4444;
+
   /* Escala z-index semántica (dropdown → sticky → modal → toast → tooltip) */
   --z-dropdown: 100;
   --z-sticky: 200;
@@ -113,3 +119,75 @@ table { border-collapse: collapse; }
   transition: border-color 150ms ease-out, color 150ms ease-out;
 }
 .btn-ghost:hover { border-color: var(--text); color: var(--text); }
+
+.btn-ghost-sm {
+  padding: 2px 8px;
+  font-size: 0.78rem;
+  min-height: unset;
+}
+
+/* Error de campo (campeón no reconocido, validaciones). Canal separado del
+   status de carga para que no compitan en urgencia visual. */
+.field-error {
+  padding: 0.3rem 1.2rem;
+  color: var(--red);
+  font-size: 0.82rem;
+  margin: 0;
+}
+.field-error::before { content: "⚠ "; }
+
+/* Chip row: sticky debajo de la filter bar. Mantiene visible el contexto de
+   búsqueda mientras el analista scrollea. */
+.filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+  padding: 0.35rem 1.2rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+  position: sticky;
+  top: 0;
+  z-index: 90;
+}
+.filter-chip {
+  font-size: 0.7rem;
+  color: var(--muted);
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1px 7px;
+  white-space: nowrap;
+}
+.filter-chip-clear {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 0.7rem;
+  cursor: pointer;
+  padding: 0 2px;
+  margin-left: 0.15rem;
+  transition: color 150ms ease-out;
+}
+.filter-chip-clear:hover { color: var(--text); }
+
+/* Visually hidden but accessible to screen readers. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Hint de un campo: explicación breve bajo el control. */
+.field-hint {
+  font-size: 0.68rem;
+  color: var(--muted);
+  margin-top: 2px;
+  line-height: 1.35;
+}

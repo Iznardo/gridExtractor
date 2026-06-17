@@ -3,9 +3,11 @@ import { useQuery } from "@tanstack/react-query";
 
 import {
   FALLBACK_VERSION,
+  itemUrl,
   runesUrl,
   summonerUrl,
   versionsUrl,
+  type ItemData,
   type RuneDef,
   type RuneStyle,
   type RunesReforged,
@@ -17,6 +19,7 @@ export type DdragonData = {
   perks: Map<number, RuneDef>; // todas las runas (no shards) por id
   styles: Map<number, RuneStyle>; // árboles (Domination, etc.) por id
   spells: Map<number, { name: string; image: string }>; // summoner spells por id
+  items: Map<number, string>; // id → nombre de ítem
 };
 
 const EMPTY: DdragonData = {
@@ -24,6 +27,7 @@ const EMPTY: DdragonData = {
   perks: new Map(),
   styles: new Map(),
   spells: new Map(),
+  items: new Map(),
 };
 
 async function loadDdragon(): Promise<DdragonData> {
@@ -38,6 +42,7 @@ async function loadDdragon(): Promise<DdragonData> {
   const perks = new Map<number, RuneDef>();
   const styles = new Map<number, RuneStyle>();
   const spells = new Map<number, { name: string; image: string }>();
+  const items = new Map<number, string>();
 
   try {
     const reforged: RunesReforged = await (await fetch(runesUrl(version))).json();
@@ -60,7 +65,16 @@ async function loadDdragon(): Promise<DdragonData> {
     /* spells no disponibles */
   }
 
-  return { version, perks, styles, spells };
+  try {
+    const itemData: ItemData = await (await fetch(itemUrl(version))).json();
+    for (const [id, item] of Object.entries(itemData.data)) {
+      items.set(Number(id), item.name);
+    }
+  } catch {
+    /* ítems no disponibles */
+  }
+
+  return { version, perks, styles, spells, items };
 }
 
 const DdragonContext = createContext<DdragonData>(EMPTY);

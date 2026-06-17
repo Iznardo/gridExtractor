@@ -11,50 +11,6 @@
 .empty-sub { color: var(--muted); margin: 0; max-width: 38ch; line-height: 1.55; }
 .empty-icon { opacity: 0.45; display: block; margin-bottom: 0.15rem; }
 
-/* Error de campo (campeón no reconocido, fase sin equipo). Canal separado
-   del status de carga para que no compitan en urgencia visual. */
-.field-error {
-  padding: 0.3rem 1.2rem;
-  color: var(--red);
-  font-size: 0.82rem;
-  margin: 0;
-}
-.field-error::before { content: "⚠ "; }
-
-/* Chip row: sticky justo debajo de la filter bar. Mantiene visible el contexto
-   de búsqueda mientras el analista scrollea el grid de drafts. */
-.filter-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-  align-items: center;
-  padding: 0.35rem 1.2rem;
-  border-bottom: 1px solid var(--border);
-  background: var(--bg);
-  position: sticky;
-  top: 0;
-  z-index: 90; /* por debajo de --z-dropdown (100) para que el combobox quede encima */
-}
-.filter-chip {
-  font-size: 0.7rem;
-  color: var(--muted);
-  background: var(--panel2);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 1px 7px;
-  white-space: nowrap;
-}
-.filter-chip-clear {
-  background: transparent;
-  border: none;
-  color: var(--muted);
-  font-size: 0.7rem;
-  cursor: pointer;
-  padding: 0 2px;
-  margin-left: 0.15rem;
-  transition: color 150ms ease-out;
-}
-.filter-chip-clear:hover { color: var(--text); }
 
 .draft-grid {
   display: grid;

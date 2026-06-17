@@ -51,6 +51,8 @@ export type Game = {
   team2: TeamRef; // RED
   blue_champions: ChampRef[];
   red_champions: ChampRef[];
+  grid_series_id: number | null;
+  game_number: number | null;
 };
 
 // ---- /picks ----
@@ -89,7 +91,7 @@ export type Pick = {
   side: Side;
   result: boolean;
   pick_order: number | null;
-  player: { id: number; name: string };
+  player: { id: number; name: string; role: string | null };
   champion: { id: number; name: string };
   stats: PickStats;
 };

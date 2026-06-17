@@ -8,6 +8,7 @@ export const FALLBACK_VERSION = "14.23.1";
 export const versionsUrl = () => `${DDRAGON}/api/versions.json`;
 export const runesUrl = (v: string) => `${DDRAGON}/cdn/${v}/data/en_US/runesReforged.json`;
 export const summonerUrl = (v: string) => `${DDRAGON}/cdn/${v}/data/en_US/summoner.json`;
+export const itemUrl = (v: string) => `${DDRAGON}/cdn/${v}/data/en_US/item.json`;
 
 export const champIconUrl = (v: string, alias: string) =>
   `${DDRAGON}/cdn/${v}/img/champion/${alias}.png`;
@@ -31,6 +32,10 @@ export type RunesReforged = RuneStyle[];
 
 export type SummonerData = {
   data: Record<string, { key: string; name: string; image: { full: string } }>;
+};
+
+export type ItemData = {
+  data: Record<string, { name: string }>;
 };
 
 // Stat shards (no están en runesReforged.json): mapa estático best-effort.

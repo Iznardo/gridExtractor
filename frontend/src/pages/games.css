@@ -27,6 +27,9 @@
 .game-row { cursor: pointer; }
 .game-row:hover { background: var(--panel2); }
 
+/* Separador visual entre series distintas — espacio extra, sin romper la Hairline Rule (1px). */
+.game-row.series-sep td { padding-top: 14px; }
+
 .expander {
   background: transparent;
   border: none;
@@ -36,6 +39,14 @@
 }
 
 .comp { display: flex; gap: 3px; }
+
+/* Badge G1 / G2 / G3 */
+.game-num {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+}
 
 .detail-row > td {
   background: var(--bg);

@@ -28,6 +28,7 @@ router = APIRouter(tags=["games"])
 _SQL = """
 SELECT
   g.id AS game_id, g.date, g.version, g.game_type, g.tournament, g.result,
+  g.grid_series_id, g.game_number,
   g.team1_id, t1.name AS team1_name, t1.tag AS team1_tag,
   g.team2_id, t2.name AS team2_name, t2.tag AS team2_tag,
   g.stats
@@ -103,6 +104,8 @@ def _shape(row: dict, comps: dict, champ_map: dict[int, str]) -> dict:
         "game_type": row["game_type"],
         "tournament": row["tournament"],
         "result": row["result"],
+        "grid_series_id": row["grid_series_id"],
+        "game_number": row["game_number"],
         "team1": _team_obj(row["team1_id"], row["team1_name"], row["team1_tag"]),
         "team2": _team_obj(row["team2_id"], row["team2_name"], row["team2_tag"]),
         "blue_champions": [

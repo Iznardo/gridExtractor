@@ -1,4 +1,5 @@
-import type { Pick, Side } from "../api/types";
+import { useState } from "react";
+import type { Pick, Side, TeamRef } from "../api/types";
 import { useGamePicks } from "../api/hooks";
 import { ChampIcon, ItemIcon, RuneIcon, RuneStyleIcon, SpellIcon } from "../components/icons";
 import { Tabs } from "../components/Tabs";
@@ -8,17 +9,16 @@ import "./gamedetail.css";
 const ROLE_RANK: Record<string, number> = {
   TOP: 0,
   JUNGLE: 1,
-  MIDDLE: 2,
-  BOTTOM: 3,
-  UTILITY: 4,
+  MID: 2,
+  ADC: 3,
+  SUPPORT: 4,
 };
 
 function sortPlayers(picks: Pick[]): Pick[] {
   return [...picks].sort((a, b) => {
-    const ra = a.stats.team_position ? ROLE_RANK[a.stats.team_position] ?? 9 : 9;
-    const rb = b.stats.team_position ? ROLE_RANK[b.stats.team_position] ?? 9 : 9;
-    if (ra !== rb) return ra - rb;
-    return (a.pick_order ?? 0) - (b.pick_order ?? 0);
+    const ra = ROLE_RANK[a.player.role ?? ""] ?? 9;
+    const rb = ROLE_RANK[b.player.role ?? ""] ?? 9;
+    return ra !== rb ? ra - rb : (a.pick_order ?? 0) - (b.pick_order ?? 0);
   });
 }
 
@@ -28,35 +28,43 @@ function teamKills(picks: Pick[]): number {
 
 // ----------------------------- General -----------------------------
 
-function Scoreboard({ blue, red }: { blue: Pick[]; red: Pick[] }) {
+function Scoreboard({
+  blue, red, blueTeam, redTeam,
+}: {
+  blue: Pick[];
+  red: Pick[];
+  blueTeam?: TeamRef;
+  redTeam?: TeamRef;
+}) {
   const all = [...blue, ...red];
   const hasDamage = all.some((p) => p.stats.damage_dealt != null);
   const hasSpells = all.some((p) => p.stats.summoner_spells?.length);
   const hasLevel = all.some((p) => p.stats.champ_level != null);
   const hasVision = all.some((p) => p.stats.vision_score != null);
 
-  function sideBlock(side: Side, picks: Pick[]) {
+  function sideBlock(side: Side, picks: Pick[], team?: TeamRef) {
     const tk = teamKills(picks);
     const won = picks[0]?.result;
     return (
       <div className="sb-block">
         <div className="sb-side">
           <span className={"pill " + side}>{side}</span>
-          <span className={"muted"}>{won ? "Victoria" : "Derrota"}</span>
+          {team && <span className="sb-team">{team.tag ?? team.name}</span>}
+          <span className="muted">{won ? "Victoria" : "Derrota"}</span>
         </div>
         <table className="grid">
           <thead>
             <tr>
-              <th>Campeón</th>
-              {hasSpells && <th />}
-              <th>KDA</th>
-              <th>KP</th>
-              <th className="num">CS</th>
-              <th className="num">Oro</th>
-              {hasDamage && <th className="num">Daño</th>}
-              {hasLevel && <th className="num">Nv</th>}
-              {hasVision && <th className="num">Vis</th>}
-              <th>Items</th>
+              <th scope="col">Campeón</th>
+              {hasSpells && <th scope="col" />}
+              <th scope="col">KDA</th>
+              <th scope="col">KP</th>
+              <th scope="col" className="num">CS</th>
+              <th scope="col" className="num">Oro</th>
+              {hasDamage && <th scope="col" className="num">Daño</th>}
+              {hasLevel && <th scope="col" className="num">Nv</th>}
+              {hasVision && <th scope="col" className="num">Vis</th>}
+              <th scope="col">Items</th>
             </tr>
           </thead>
           <tbody>
@@ -110,57 +118,13 @@ function Scoreboard({ blue, red }: { blue: Pick[]; red: Pick[] }) {
 
   return (
     <div className="scoreboard">
-      {sideBlock("BLUE", blue)}
-      {sideBlock("RED", red)}
+      {sideBlock("BLUE", blue, blueTeam)}
+      {sideBlock("RED", red, redTeam)}
     </div>
   );
 }
 
-// ------------------------------ Runas ------------------------------
-
-function RunesView({ players }: { players: Pick[] }) {
-  return (
-    <div className="runes-grid">
-      {players.map((p) => {
-        const r = p.stats.runes;
-        if (!r) {
-          return (
-            <div key={p.pick_id} className="rune-card">
-              <ChampIcon id={p.champion.id} name={p.champion.name} size={32} />
-              <span className="muted">sin runas</span>
-            </div>
-          );
-        }
-        return (
-          <div key={p.pick_id} className="rune-card">
-            <div className="rc-head">
-              <ChampIcon id={p.champion.id} name={p.champion.name} size={32} />
-              <span className="pname">{p.player.name}</span>
-            </div>
-            <div className="rc-row primary">
-              {r.primary.map((id, i) => (
-                <RuneIcon key={i} id={id} size={i === 0 ? 30 : 22} />
-              ))}
-            </div>
-            <div className="rc-row">
-              <RuneStyleIcon id={r.sub_style} size={18} />
-              {r.sub.map((id, i) => (
-                <RuneIcon key={i} id={id} size={22} />
-              ))}
-            </div>
-            <div className="rc-row shards">
-              {r.stat_perks.map((id, i) => (
-                <RuneIcon key={i} id={id} size={16} />
-              ))}
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-// ------------------------------ Build ------------------------------
+// ------------------------------ Build / Runas ------------------------------
 
 const SKILLS = ["Q", "W", "E", "R"] as const;
 
@@ -186,46 +150,93 @@ function SkillGrid({ order }: { order: string }) {
   );
 }
 
-function BuildView({ players }: { players: Pick[] }) {
+function BuildCard({ p }: { p: Pick }) {
+  const buys = (p.stats.build_path ?? []).filter((b) => b.action === "BUY");
+  const r = p.stats.runes;
   return (
-    <div className="build-list">
-      {players.map((p) => {
-        const buys = (p.stats.build_path ?? []).filter((b) => b.action === "BUY");
-        return (
-          <div key={p.pick_id} className="build-card">
-            <div className="bc-head">
-              <ChampIcon id={p.champion.id} name={p.champion.name} size={28} />
-              <span className="pname">{p.player.name}</span>
-            </div>
-
-            {buys.length > 0 ? (
-              <div className="build-order">
-                {buys.map((b, i) => (
-                  <span key={i} className="bo-item">
-                    <ItemIcon id={b.item_id} size={26} />
-                    <span className="bo-ts">{mmss(b.ts_s)}</span>
-                  </span>
-                ))}
-              </div>
-            ) : (
-              <span className="muted">sin build order</span>
-            )}
-
-            {p.stats.skill_order ? (
-              <SkillGrid order={p.stats.skill_order} />
-            ) : (
-              <span className="muted">sin skill order</span>
-            )}
+    <div className="build-card">
+      {r ? (
+        <div className="build-runes">
+          <div className="rc-row primary">
+            {r.primary.map((id, i) => (
+              <RuneIcon key={i} id={id} size={i === 0 ? 28 : 20} />
+            ))}
           </div>
-        );
-      })}
+          <div className="rc-row">
+            <RuneStyleIcon id={r.sub_style} size={16} />
+            {r.sub.map((id, i) => (
+              <RuneIcon key={i} id={id} size={20} />
+            ))}
+          </div>
+          <div className="rc-row shards">
+            {r.stat_perks.map((id, i) => (
+              <RuneIcon key={i} id={id} size={15} />
+            ))}
+          </div>
+        </div>
+      ) : (
+        <span className="muted">sin runas</span>
+      )}
+
+      {buys.length > 0 ? (
+        <div className="build-order">
+          {buys.map((b, i) => (
+            <span key={i} className="bo-item">
+              <ItemIcon id={b.item_id} size={26} />
+              <span className="bo-ts">{mmss(b.ts_s)}</span>
+            </span>
+          ))}
+        </div>
+      ) : (
+        <span className="muted">sin build order</span>
+      )}
+
+      {p.stats.skill_order ? (
+        <SkillGrid order={p.stats.skill_order} />
+      ) : (
+        <span className="muted">sin skill order</span>
+      )}
+    </div>
+  );
+}
+
+function BuildView({ players }: { players: Pick[] }) {
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const effectiveId = selectedId ?? players[0]?.pick_id ?? null;
+  const selected = players.find((p) => p.pick_id === effectiveId);
+
+  return (
+    <div className="build-view">
+      <div className="build-player-bar">
+        {players.map((p) => (
+          <button
+            key={p.pick_id}
+            type="button"
+            className={"build-player-btn" + (p.pick_id === effectiveId ? " active" : "") + " " + p.side}
+            aria-pressed={p.pick_id === effectiveId}
+            onClick={() => setSelectedId(p.pick_id)}
+          >
+            <ChampIcon id={p.champion.id} name={p.champion.name} size={22} />
+            <span>{p.player.name}</span>
+          </button>
+        ))}
+      </div>
+      {selected && <BuildCard p={selected} />}
     </div>
   );
 }
 
 // ------------------------------ root ------------------------------
 
-export function GameDetail({ gameId }: { gameId: number }) {
+export function GameDetail({
+  gameId,
+  team1,
+  team2,
+}: {
+  gameId: number;
+  team1?: TeamRef;
+  team2?: TeamRef;
+}) {
   const { data: picks, isLoading, error } = useGamePicks(gameId);
 
   if (isLoading) return <div className="gd-msg muted">Cargando partida…</div>;
@@ -240,8 +251,11 @@ export function GameDetail({ gameId }: { gameId: number }) {
     <div className="game-detail">
       <Tabs
         tabs={[
-          { id: "general", label: "General", content: <Scoreboard blue={blue} red={red} /> },
-          { id: "runes", label: "Runas", content: <RunesView players={ordered} /> },
+          {
+            id: "general",
+            label: "General",
+            content: <Scoreboard blue={blue} red={red} blueTeam={team1} redTeam={team2} />,
+          },
           { id: "build", label: "Build", content: <BuildView players={ordered} /> },
         ]}
       />
