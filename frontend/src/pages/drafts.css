@@ -1,0 +1,88 @@
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 4rem 1.2rem;
+  text-align: center;
+}
+.empty-title { font-size: 1rem; font-weight: 600; margin: 0; }
+.empty-sub { color: var(--muted); margin: 0; max-width: 38ch; line-height: 1.55; }
+.empty-icon { opacity: 0.45; display: block; margin-bottom: 0.15rem; }
+
+/* Error de campo (campeón no reconocido, fase sin equipo). Canal separado
+   del status de carga para que no compitan en urgencia visual. */
+.field-error {
+  padding: 0.3rem 1.2rem;
+  color: var(--red);
+  font-size: 0.82rem;
+  margin: 0;
+}
+.field-error::before { content: "⚠ "; }
+
+/* Chip row: sticky justo debajo de la filter bar. Mantiene visible el contexto
+   de búsqueda mientras el analista scrollea el grid de drafts. */
+.filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+  padding: 0.35rem 1.2rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+  position: sticky;
+  top: 0;
+  z-index: 90; /* por debajo de --z-dropdown (100) para que el combobox quede encima */
+}
+.filter-chip {
+  font-size: 0.7rem;
+  color: var(--muted);
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1px 7px;
+  white-space: nowrap;
+}
+.filter-chip-clear {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 0.7rem;
+  cursor: pointer;
+  padding: 0 2px;
+  margin-left: 0.15rem;
+  transition: color 150ms ease-out;
+}
+.filter-chip-clear:hover { color: var(--text); }
+
+.draft-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 1rem;
+  padding: 0 1.2rem 2rem;
+}
+
+/* Llegada suave de los resultados reales (skeleton→grid). */
+@keyframes grid-arrive {
+  from { opacity: 0.6; }
+  to   { opacity: 1; }
+}
+.draft-grid.results { animation: grid-arrive 200ms ease-out; }
+@media (prefers-reduced-motion: reduce) {
+  .draft-grid.results { animation: none; }
+}
+
+/* En pantallas estrechas, menos columnas para que no se aplasten. */
+@media (max-width: 1150px) {
+  .draft-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (max-width: 950px) {
+  .draft-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 720px) {
+  .draft-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 520px) {
+  .draft-grid { grid-template-columns: 1fr; }
+}

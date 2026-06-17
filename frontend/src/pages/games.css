@@ -1,0 +1,43 @@
+.games-table-wrap { padding: 0 1.2rem 2rem; overflow-x: auto; }
+
+.games-table {
+  width: 100%;
+  font-size: 0.84rem;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.games-table th,
+.games-table td {
+  padding: 7px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.games-table th {
+  background: var(--panel2);
+  color: var(--muted);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+.game-row { cursor: pointer; }
+.game-row:hover { background: var(--panel2); }
+
+.expander {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+}
+
+.comp { display: flex; gap: 3px; }
+
+.detail-row > td {
+  background: var(--bg);
+  padding: 0.4rem 1rem;
+}

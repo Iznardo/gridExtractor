@@ -1,0 +1,111 @@
+// Tipos espejo de las respuestas de la API (src/api/ de gridExtractor).
+// Verificados contra los routers reales; los campos nullables reflejan la
+// realidad de los datos (soloq no tiene equipos, GRID no tiene team_position...).
+
+export type Side = "BLUE" | "RED";
+export type GameResult = "BLUE" | "RED" | "NONE";
+export type GameType = "OFFICIAL" | "SCRIM" | "SOLOQ";
+
+export type ChampRef = { id: number; name: string | null };
+export type TeamRef = { id: number; name: string; tag: string | null } | null;
+
+// ---- catálogo ----
+export type Champion = { id: number; name: string; alias: string };
+export type Team = { id: number; name: string; tag: string | null };
+export type Player = {
+  id: number;
+  name: string;
+  role: string | null;
+  team_id: number | null;
+  starter: boolean;
+};
+
+// ---- /drafts ----
+export type DraftSideGroup = {
+  bans: (ChampRef | null)[];
+  picks: (ChampRef | null)[];
+};
+export type Draft = {
+  game_id: number;
+  date: string;
+  version: string | null;
+  game_type: GameType;
+  tournament: string | null;
+  result: GameResult;
+  team1: TeamRef; // BLUE
+  team2: TeamRef; // RED
+  first_pick_team: { id: number; name: string; tag: string | null; side: Side | null } | null;
+  first_pick: DraftSideGroup;
+  second_pick: DraftSideGroup;
+};
+
+// ---- /games ----
+export type Game = {
+  game_id: number;
+  date: string;
+  version: string | null;
+  game_type: GameType;
+  tournament: string | null;
+  result: GameResult;
+  team1: TeamRef; // BLUE
+  team2: TeamRef; // RED
+  blue_champions: ChampRef[];
+  red_champions: ChampRef[];
+};
+
+// ---- /picks ----
+export type Runes = {
+  primary_style: number;
+  primary: number[];
+  sub_style: number;
+  sub: number[];
+  stat_perks: number[];
+};
+export type BuildStep = { ts_s: number; action: "BUY" | "SELL"; item_id: number };
+export type PickStats = {
+  kills?: number;
+  deaths?: number;
+  assists?: number;
+  gold?: number;
+  cs?: number;
+  damage_dealt?: number; // GRID
+  kda_str?: string; // GRID
+  champ_level?: number; // SoloQ
+  vision_score?: number; // SoloQ
+  team_position?: string; // SoloQ
+  summoner_spells?: number[]; // SoloQ
+  runes?: Runes | null;
+  final_items?: number[] | null;
+  skill_order?: string | null;
+  build_path?: BuildStep[] | null;
+};
+export type Pick = {
+  pick_id: number;
+  game_id: number;
+  date: string;
+  version: string | null;
+  game_type: GameType;
+  tournament: string | null;
+  side: Side;
+  result: boolean;
+  pick_order: number | null;
+  player: { id: number; name: string };
+  champion: { id: number; name: string };
+  stats: PickStats;
+};
+
+// ---- /scouting/champion-pool ----
+export type ScoutChampion = {
+  champion: { id: number; name: string };
+  games: number;
+  wins: number;
+};
+export type ScoutPlayer = {
+  player: { id: number; name: string; role: string | null };
+  champions: ScoutChampion[];
+};
+export type Medium = "official" | "scrim" | "soloq";
+export type ScoutingPool = {
+  team_id: number;
+  by_medium: Record<Medium, ScoutPlayer[]>;
+};

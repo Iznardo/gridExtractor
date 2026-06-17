@@ -1,0 +1,41 @@
+.app-header {
+  display: flex;
+  align-items: center;
+  gap: 1.4rem;
+  padding: 0.6rem 1.2rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel);
+}
+
+.app-header h1 {
+  font-size: 1.05rem;
+  margin: 0;
+  font-weight: 600;
+}
+
+.app-nav {
+  display: flex;
+  gap: 0.3rem;
+}
+.app-nav a {
+  color: var(--muted);
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+}
+.app-nav a:hover {
+  background: var(--panel2);
+  color: var(--text);
+}
+.app-nav a.active {
+  background: var(--panel2);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+.api-base {
+  margin-left: auto;
+  font-size: 0.78rem;
+  font-family: ui-monospace, Consolas, monospace;
+}

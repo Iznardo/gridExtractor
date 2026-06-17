@@ -1,0 +1,115 @@
+:root {
+  --bg: #14161c;
+  --panel: #1d2029;
+  --panel2: #252935;
+  --border: #333845;
+  --text: #e6e8ee;
+  --muted: #8a93a6;
+  --blue: #3b82f6;
+  --red: #ef4444;
+  --win: #22c55e;
+  --blue-bg: #1e3a8a;
+  --blue-fg: #bfdbfe;
+  --red-bg: #7f1d1d;
+  --red-fg: #fecaca;
+
+  /* Escala z-index semántica (dropdown → sticky → modal → toast → tooltip) */
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-modal: 400;
+  --z-toast: 600;
+  --z-tooltip: 800;
+
+  color-scheme: dark;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 14px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+}
+
+a { color: inherit; text-decoration: none; }
+
+button { font: inherit; cursor: pointer; }
+
+/* Foco visible y preciso en todo control interactivo (promesa "preciso y
+   técnico" de DESIGN.md). :where() mantiene especificidad 0 para que un
+   componente pueda ajustar el offset si lo necesita. */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
+input, select {
+  font: inherit;
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 6px 8px;
+  min-height: 32px;
+}
+/* El placeholder por defecto del navegador queda corto de contraste; --muted
+   sobre --panel2 ≈ 4.7:1 (AA). */
+input::placeholder { color: var(--muted); opacity: 1; }
+/* Estado de error en inputs: borde rojo (no solo texto rojo fuera del campo). */
+input[aria-invalid="true"] {
+  border-color: var(--red);
+}
+input[aria-invalid="true"]:focus-visible {
+  outline-color: var(--red);
+}
+
+table { border-collapse: collapse; }
+
+/* ---- utilidades compartidas ---- */
+.pill {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  padding: 1px 7px;
+  border-radius: 10px;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+.pill.BLUE { background: var(--blue-bg); color: var(--blue-fg); }
+.pill.RED  { background: var(--red-bg);  color: var(--red-fg); }
+.pill.win  { background: var(--win); color: #052e12; }
+.pill.fp   { background: #3f3f12; color: #fde68a; }
+.pill.sp   { background: #2c2c38; color: var(--muted); }
+
+.muted { color: var(--muted); }
+
+.status { padding: 0.4rem 0; color: var(--muted); min-height: 1.2rem; }
+.status.error { color: var(--red); }
+/* Refuerzo no-cromático: el error no depende solo del rojo (daltonismo). */
+.status.error::before { content: "⚠"; margin-right: 0.4em; }
+
+.page > .status { padding: 0.5rem 1.2rem; }
+
+.btn-primary {
+  background: var(--blue);
+  border: none;
+  color: #fff;
+  font-weight: 600;
+  padding: 8px 18px;
+  border-radius: 6px;
+  min-height: 34px;
+}
+.btn-primary { transition: filter 150ms ease-out; }
+.btn-primary:hover { filter: brightness(1.1); }
+
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: 8px 18px;
+  border-radius: 6px;
+  min-height: 34px;
+  transition: border-color 150ms ease-out, color 150ms ease-out;
+}
+.btn-ghost:hover { border-color: var(--text); color: var(--text); }

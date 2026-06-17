@@ -42,11 +42,12 @@ LoL match data — drafts, picks, results, objectives, wards, post-game stats
 | Riot `accounts` table population | Implemented (`accounts_sync`) |
 | Per-player builds for officials/scrims (runes, items, skills) | Implemented (grid-minion v0.2.0) |
 | Read-only query API (FastAPI) | Implemented (`src/api/`) |
+| Web front-end (React + Vite) | Implemented (`frontend/`) |
 
 The pipeline has been validated against real data from the LCK, LEC and LES.
-All four data sources (discovery, officials, scrims, SoloQ) are in place, and a
-read-only API over the same database is up (see §6). The next milestone is the
-front-end on top of that API.
+All four data sources (discovery, officials, scrims, SoloQ) are in place, a
+read-only API over the same database is up (see §6), and a web front-end consumes
+it (see §7).
 
 There is one known data shape that the scrim extractor cannot currently
 recover (matches played but with no draft events emitted by GRID). See
@@ -429,6 +430,39 @@ first); responses include both the id and the resolved name.
 CORS is open to `localhost` and there is no auth (local use). Read-only: give it
 a Postgres user with `SELECT` only if you expose it.
 
+## The web front-end (React + Vite + TypeScript)
+
+A single-page app in `frontend/` consumes the API. It needs Node 20+ and is run
+with Vite's dev server (HMR); it is **not** dockerized yet (that's a deliberate
+follow-up — the dev server is better for active development).
+
+```bash
+cd frontend
+npm install
+npm run dev        # http://localhost:5173
+```
+
+It expects the API at `http://localhost:8000` by default; override with
+`VITE_API_BASE` (copy `.env.example` to `.env.local`). Champion/team names are
+resolved to ids client-side (the API is id-based) using the catalog endpoints.
+
+Three windows:
+
+| Window | What it shows |
+|---|---|
+| **Drafts** | Draft boards (officials/scrims), first-pick team left / second-pick right, side (BLUE/RED) and win marked separately (decoupled since 2026). Filters: team, rival, type, pick phase, champion, patch. |
+| **Games** | Searchable table (champion, matchup with "opposite sides", patch, dates) with side compositions. Each row **expands** into a post-game view: scoreboard, runes, and build/skill order (tabs). Columns adapt to the source (SoloQ exposes spells/level/vision; GRID exposes damage). |
+| **Scouting** | Per-player champion pool for a team, split into three medium sections (official/scrim/soloq) plus an all-mediums per-player aggregate table (derived client-side). |
+
+Build a static bundle with `npm run build` (output in `frontend/dist/`); the
+`tsc -b` step also type-checks. Stack: React 18, `@tanstack/react-query`
+(fetching/cache), `@tanstack/react-table` (Games rows), `react-router-dom`.
+Champion/item/spell/rune icons come from Riot's Data Dragon CDN.
+
+Data shown is bounded by what the pipeline stores: laning-phase diffs at 15,
+per-player wards and timeline series are **not** persisted, so the detail view
+omits them.
+
 ## Automating extractions (cron)
 
 The recommended cadence depends on how fast you need fresh data:
@@ -543,6 +577,12 @@ Notes:
         ├── main.py            app factory + lifespan (caches champ map)
         ├── deps.py            shared deps (DB conn, champ map)
         └── routers/           catalog, drafts, scouting, games, picks
+
+frontend/                      web SPA (React + Vite + TS), consumes the API (§7)
+├── src/api/                   typed client + react-query hooks + response types
+├── src/ddragon/              Data Dragon assets (icons, runes, spells)
+├── src/components/           icons, filters, tabs, champion picker
+└── src/pages/                Drafts, Games (+ GameDetail), Scouting
 ```
 
 ## Troubleshooting

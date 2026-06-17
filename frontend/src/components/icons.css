@@ -1,0 +1,21 @@
+.icon-sq {
+  border-radius: 4px;
+  display: block;
+  background: #000;
+  object-fit: cover;
+}
+.icon-round {
+  border-radius: 50%;
+  display: block;
+  background: #0008;
+}
+.item-empty {
+  display: inline-block;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: #00000030;
+}
+.icon-fallback {
+  font-size: 0.78rem;
+  color: var(--muted);
+}

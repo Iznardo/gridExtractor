@@ -40,3 +40,5 @@ diag_*.py
 
 # Claude
 .claude/
+# Reglas de agentes IA (Cursor) — no versionar
+.cursor/

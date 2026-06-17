@@ -1,0 +1,75 @@
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.9rem;
+  align-items: flex-end;
+  padding: 1rem 1.2rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.field-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+}
+.field.check {
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+}
+.field.check .field-label { text-transform: none; }
+
+/* ---- combobox de campeón ---- */
+.champ-combo { position: relative; }
+
+.champ-list {
+  position: absolute;
+  z-index: var(--z-dropdown);
+  top: calc(100% + 4px);
+  left: 0;
+  min-width: max(100%, 200px);
+  max-height: 260px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  animation: champ-pop 120ms ease-out;
+}
+
+.champ-opt {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 100ms ease-out;
+}
+.champ-opt .cn { font-size: 0.85rem; }
+/* Activa: tinte translúcido del acento (no relleno sólido) — legible y on-brand. */
+.champ-opt.active { background: rgba(59, 130, 246, 0.18); }
+
+.champ-none {
+  padding: 6px 8px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-style: italic;
+}
+
+@keyframes champ-pop {
+  from { opacity: 0; transform: translateY(-2px); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .champ-list { animation: none; }
+}
