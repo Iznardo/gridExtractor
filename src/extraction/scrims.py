@@ -32,7 +32,7 @@ from typing import Generator
 
 import psycopg
 from grid_minion import GridError, GridGraphQLClient, GridRestClient
-from grid_minion import split_grid_series
+from grid_minion import split_grid_series, extract_grid_game_state, group_riot_livestats_fragments
 from grid_minion.observers import (
     BuildObserver,
     DraftObserver,
@@ -94,6 +94,9 @@ def _process_one_scrim_game(
     raw_game: list,
     role_cache: RoleCache,
     champ_lookup: dict[str, int],
+    *,
+    grid_game_state=None,
+    riot_livestats=None,
 ) -> bool:
     """Procesa una scrim: observers -> auto-discovery con warning -> INSERT.
 
@@ -111,11 +114,11 @@ def _process_one_scrim_game(
         proc.attach(o)
 
     proc.process_bundle(
+        grid_game_state=grid_game_state,
         grid_livestats=raw_game,
         riot_summary=client_rest.get_riot_summary(series_id,
                                                   game_number=game_number),
-        riot_livestats=client_rest.get_riot_livestats(series_id,
-                                                      game_number=game_number),
+        riot_livestats=riot_livestats,
     )
 
     # v0.2.0: DraftObserver ya ignora los grid-invalidated-series posteriores a
@@ -304,6 +307,35 @@ def process_scrim_series(
     games = split_grid_series(full)
     log.info("Scrim %s: %d partida(s).", series_id, len(games))
 
+    # GRID end-state: draftActions fallback
+    grid_state = None
+    try:
+        grid_state = client_rest.get_grid_endstate(series_id)
+    except GridError as e:
+        log.warning("Scrim %s: error en get_grid_endstate: %s", series_id, e)
+
+    # Riot LiveStats fragmentado
+    fragments_grouped = None
+    try:
+        frags = client_rest.get_riot_livestats_fragments(series_id)
+        if frags:
+            fragments_grouped = group_riot_livestats_fragments(
+                frags, expected_games=len(games)
+            )
+    except GridError:
+        pass
+
+    def _riot_ls_for(game_number: int):
+        ls = client_rest.get_riot_livestats(series_id, game_number)
+        if ls is not None:
+            return ls
+        if (fragments_grouped
+                and fragments_grouped.get("confidence") != "low"):
+            fg = fragments_grouped.get("games") or []
+            if game_number - 1 < len(fg):
+                return fg[game_number - 1]
+        return None
+
     for i, raw_game in enumerate(games):
         game_number = i + 1
 
@@ -318,6 +350,11 @@ def process_scrim_series(
                     client_rest, conn, series_node,
                     series_id, game_number, raw_game,
                     role_cache, champ_lookup,
+                    grid_game_state=(
+                        extract_grid_game_state(grid_state, game_number)
+                        if grid_state else None
+                    ),
+                    riot_livestats=_riot_ls_for(game_number),
                 )
             if inserted:
                 result.games_new += 1
