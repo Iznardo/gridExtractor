@@ -1,0 +1,234 @@
+.matchups-page { display: flex; flex-direction: column; min-height: 0; }
+
+/* ---- lista de resultados ---- */
+.mu-list {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---- fila de matchup ---- */
+.mu-row {
+  border-bottom: 1px solid var(--border);
+}
+
+.mu-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 0.6rem 1.2rem;
+  cursor: pointer;
+  transition: background 100ms ease-out;
+}
+.mu-summary:hover { background: var(--panel); }
+.mu-row.expanded > .mu-summary { background: var(--panel); }
+
+/* fila principal: focal | VS | opponent */
+.mu-match {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* cada mitad */
+.mu-side {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.mu-side.opponent { justify-content: flex-end; }
+.mu-side.opponent .mu-champ-block { align-items: flex-end; text-align: right; }
+
+/* icono + nombres apilados */
+.mu-champ-block {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  flex-shrink: 0;
+}
+.mu-champ-name  { font-weight: 600; font-size: 0.88rem; line-height: 1.2; white-space: nowrap; }
+.mu-player-name { font-size: 0.72rem; color: var(--muted); line-height: 1.2; white-space: nowrap; }
+
+/* kda + items agrupados */
+.mu-stats {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.mu-side.opponent .mu-stats { flex-direction: row-reverse; }
+
+.mu-kda {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+.mu-kda.won  { color: var(--win); }
+.mu-kda.lost { color: var(--muted); }
+
+.mu-items { display: flex; gap: 2px; flex-wrap: nowrap; }
+.mu-items-empty { width: 22px; opacity: 0; } /* placeholder para alinear sin items */
+
+/* centro — VS + badges */
+.mu-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  white-space: nowrap;
+}
+.mu-vs {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 0.06em;
+}
+.mu-badges { display: flex; gap: 4px; align-items: center; }
+.mu-badge {
+  font-size: 0.64rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+/* blind: #d1d5db sobre #1f2937 ≈ 5.6:1 (AA) */
+.mu-badge.blind   { background: #1f2937; color: #d1d5db; border: 1px solid #374151; }
+/* counter: #c4b5fd sobre #2e1065 ≈ 8.1:1 */
+.mu-badge.counter { background: #2e1065; color: #c4b5fd; border: 1px solid #4c1d95; }
+
+/* fila de metadatos */
+.mu-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+.mu-meta-sep { opacity: 0.35; }
+.mu-role {
+  font-weight: 600;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.mu-type {
+  font-size: 0.64rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: var(--panel2);
+  border: 1px solid var(--border);
+}
+.mu-meta-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.mu-expand { font-size: 0.68rem; }
+
+/* W/L glyph — refuerzo de color para daltónicos */
+.mu-result-glyph {
+  font-size: 0.64rem;
+  font-weight: 700;
+  opacity: 0.7;
+}
+
+/* Barra de conteo de resultados */
+.mu-count-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.3rem 1.2rem;
+  font-size: 0.72rem;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+}
+
+/* Separador visual entre grupos de filtros */
+.filter-divider {
+  width: 1px;
+  background: var(--border);
+  align-self: stretch;
+  margin: 2px 4px;
+  flex-shrink: 0;
+}
+
+/* sin rival */
+.mu-no-opponent {
+  font-size: 0.78rem;
+  color: var(--muted);
+  font-style: italic;
+}
+
+/* ---- expandido: builds lado a lado ---- */
+.mu-detail {
+  padding: 0.8rem 1.2rem 1.1rem;
+  border-top: 1px solid var(--border);
+  background: var(--panel);
+}
+.mu-builds {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+.mu-build-col { display: flex; flex-direction: column; gap: 0.4rem; }
+.mu-build-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  padding-bottom: 0.3rem;
+  border-bottom: 1px solid var(--border);
+}
+.mu-no-data {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  font-size: 0.82rem;
+  color: var(--muted);
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+/* ---- esqueleto ---- */
+.mu-skeleton-row {
+  padding: 0.7rem 1.2rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+@keyframes mu-shimmer {
+  from { background-position: -400px 0; }
+  to   { background-position: 400px 0; }
+}
+.mu-skel {
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--panel2) 25%, var(--panel) 50%, var(--panel2) 75%);
+  background-size: 800px 100%;
+  animation: mu-shimmer 1.4s infinite linear;
+}
+@media (prefers-reduced-motion: reduce) { .mu-skel { animation: none; } }
+
+/* ---- responsive ---- */
+@media (max-width: 820px) {
+  .mu-match { grid-template-columns: 1fr; gap: 0.4rem; }
+  .mu-center { flex-direction: row; justify-content: center; }
+  .mu-side.opponent { justify-content: flex-start; }
+  .mu-side.opponent .mu-champ-block { align-items: flex-start; text-align: left; }
+  .mu-side.opponent .mu-stats { flex-direction: row; }
+}
+
+/* Builds sigue en 2 columnas hasta pantallas pequeñas — la comparación es el punto */
+@media (max-width: 560px) {
+  .mu-builds { grid-template-columns: 1fr; }
+}

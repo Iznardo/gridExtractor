@@ -28,6 +28,26 @@ def list_teams(conn: psycopg.Connection = Depends(db_conn)):
         return cur.fetchall()
 
 
+@router.get("/tournaments")
+def list_tournaments(conn: psycopg.Connection = Depends(db_conn)):
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT DISTINCT tournament FROM games "
+            "WHERE tournament IS NOT NULL ORDER BY tournament"
+        )
+        return [r["tournament"] for r in cur.fetchall()]
+
+
+@router.get("/patches")
+def list_patches(conn: psycopg.Connection = Depends(db_conn)):
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT DISTINCT version FROM games "
+            "WHERE version IS NOT NULL AND version != 'Unknown' ORDER BY version DESC"
+        )
+        return [r["version"] for r in cur.fetchall()]
+
+
 @router.get("/players")
 def list_players(
     team_id: int | None = None,

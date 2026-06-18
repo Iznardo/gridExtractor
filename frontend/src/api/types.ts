@@ -96,6 +96,33 @@ export type Pick = {
   stats: PickStats;
 };
 
+// ---- /matchups ----
+export type PickRelation = "blind" | "counter" | null;
+
+export type MatchupSide = {
+  side: Side;
+  result: boolean | null;
+  pick_order: number | null;
+  pick_relation: PickRelation;
+  player: { id: number; name: string } | null; // null = rival untrackeado (soloq)
+  champion: ChampRef;
+  stats: PickStats | null; // null = rival untrackeado (soloq)
+};
+
+export type Matchup = {
+  game_id: number;
+  date: string;
+  version: string | null;
+  game_type: GameType;
+  tournament: string | null;
+  role: string | null;
+  game_result: GameResult;
+  team1: TeamRef;
+  team2: TeamRef;
+  pick: MatchupSide;
+  opponent: MatchupSide | null;
+};
+
 // ---- /scouting/champion-pool ----
 export type ScoutChampion = {
   champion: { id: number; name: string };

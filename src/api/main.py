@@ -19,7 +19,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from psycopg.rows import dict_row
 
-from src.api.routers import catalog, drafts, games, picks, scouting
+from src.api.routers import catalog, drafts, games, matchups, picks, replays, scouting
 from src.db.conn import get_conn
 
 log = logging.getLogger("api")
@@ -49,9 +49,11 @@ def create_app() -> FastAPI:
         allow_origin_regex=r"http://(localhost|127\.0\.0\.1)(:\d+)?",
         allow_methods=["GET"],
         allow_headers=["*"],
+        # El front (fetch) necesita leer el nombre de fichero de la replay.
+        expose_headers=["Content-Disposition"],
     )
 
-    for module in (catalog, drafts, scouting, games, picks):
+    for module in (catalog, drafts, scouting, games, picks, matchups, replays):
         app.include_router(module.router)
 
     return app

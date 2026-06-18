@@ -1,4 +1,12 @@
 .game-detail { padding: 0.6rem 0.4rem 1rem; }
+
+/* Botón de replay inline: icono solo, sin wrapper */
+.replay-btn { display: inline-flex; align-items: center; }
+.replay-btn-error { color: var(--red) !important; }
+
+.spin { animation: replay-spin 0.8s linear infinite; }
+@keyframes replay-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
 .gd-msg { padding: 1rem; }
 .gd-msg.error { color: var(--red); }
 

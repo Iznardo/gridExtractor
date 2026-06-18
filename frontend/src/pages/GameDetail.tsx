@@ -1,9 +1,10 @@
 import { useState } from "react";
 import type { Pick, Side, TeamRef } from "../api/types";
 import { useGamePicks } from "../api/hooks";
-import { ChampIcon, ItemIcon, RuneIcon, RuneStyleIcon, SpellIcon } from "../components/icons";
+import { BuildCard } from "../components/BuildCard";
+import { ChampIcon, ItemIcon, RuneIcon, SpellIcon } from "../components/icons";
 import { Tabs } from "../components/Tabs";
-import { kdaRatio, kpPct, mmss } from "../lib/format";
+import { kdaRatio, kpPct } from "../lib/format";
 import "./gamedetail.css";
 
 const ROLE_RANK: Record<string, number> = {
@@ -126,80 +127,6 @@ function Scoreboard({
 
 // ------------------------------ Build / Runas ------------------------------
 
-const SKILLS = ["Q", "W", "E", "R"] as const;
-
-function SkillGrid({ order }: { order: string }) {
-  const letters = order.toUpperCase().split("").filter((c) => "QWER".includes(c));
-  const levels = letters.length;
-  return (
-    <div className="skillgrid">
-      {SKILLS.map((skill) => (
-        <div key={skill} className="sg-row">
-          <span className="sg-key">{skill}</span>
-          {Array.from({ length: levels }, (_, i) => {
-            const hit = letters[i] === skill;
-            return (
-              <span key={i} className={"sg-cell" + (hit ? " hit " + skill : "")}>
-                {hit ? i + 1 : ""}
-              </span>
-            );
-          })}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function BuildCard({ p }: { p: Pick }) {
-  const buys = (p.stats.build_path ?? []).filter((b) => b.action === "BUY");
-  const r = p.stats.runes;
-  return (
-    <div className="build-card">
-      {r ? (
-        <div className="build-runes">
-          <div className="rc-row primary">
-            {r.primary.map((id, i) => (
-              <RuneIcon key={i} id={id} size={i === 0 ? 28 : 20} />
-            ))}
-          </div>
-          <div className="rc-row">
-            <RuneStyleIcon id={r.sub_style} size={16} />
-            {r.sub.map((id, i) => (
-              <RuneIcon key={i} id={id} size={20} />
-            ))}
-          </div>
-          <div className="rc-row shards">
-            {r.stat_perks.map((id, i) => (
-              <RuneIcon key={i} id={id} size={15} />
-            ))}
-          </div>
-        </div>
-      ) : (
-        <span className="muted">sin runas</span>
-      )}
-
-      {buys.length > 0 ? (
-        <div className="build-order">
-          {buys.map((b, i) => (
-            <span key={i} className="bo-item">
-              <ItemIcon id={b.item_id} size={26} />
-              <span className="bo-ts">{mmss(b.ts_s)}</span>
-            </span>
-          ))}
-        </div>
-      ) : (
-        <span className="muted">sin build order</span>
-      )}
-
-      {p.stats.skill_order ? (
-        <SkillGrid order={p.stats.skill_order} />
-      ) : (
-        <span className="muted">sin skill order</span>
-      )}
-    </div>
-  );
-}
-
 function BuildView({ players }: { players: Pick[] }) {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const effectiveId = selectedId ?? players[0]?.pick_id ?? null;
@@ -221,7 +148,7 @@ function BuildView({ players }: { players: Pick[] }) {
           </button>
         ))}
       </div>
-      {selected && <BuildCard p={selected} />}
+      {selected && <BuildCard stats={selected.stats} />}
     </div>
   );
 }

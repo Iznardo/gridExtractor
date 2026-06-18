@@ -5,6 +5,7 @@ import type {
   Champion,
   Draft,
   Game,
+  Matchup,
   Pick,
   ScoutingPool,
   Team,
@@ -73,6 +74,41 @@ export function useGamePicks(gameId: number | null) {
     queryKey: ["picks", gameId],
     queryFn: () => getJSON<Pick[]>("/picks" + buildQuery({ game_id: gameId, limit: 10 })),
     enabled: gameId != null,
+  });
+}
+
+export function useTournaments() {
+  return useQuery({
+    queryKey: ["tournaments"],
+    queryFn: () => getJSON<string[]>("/tournaments"),
+    ...CATALOG_OPTS,
+  });
+}
+
+export function usePatches() {
+  return useQuery({
+    queryKey: ["patches"],
+    queryFn: () => getJSON<string[]>("/patches"),
+    ...CATALOG_OPTS,
+  });
+}
+
+export type MatchupFilters = {
+  champ_id?: number;
+  champ_id2?: number;
+  role?: string;
+  tournament?: string;
+  patch?: string;
+  pick_relation?: "blind" | "counter";
+  game_type?: string;
+  limit?: number;
+};
+
+export function useMatchups(filters: MatchupFilters, enabled = true) {
+  return useQuery({
+    queryKey: ["matchups", filters],
+    queryFn: () => getJSON<Matchup[]>("/matchups" + buildQuery(filters as QueryParams)),
+    enabled,
   });
 }
 

@@ -44,6 +44,9 @@ services:
       PGUSER: ${PGUSER}
       PGPASSWORD: ${PGPASSWORD}
       PGDATABASE: ${PGDATABASE}
+      # Solo para el proxy de descarga de replays (.rofl): la API la usa
+      # server-side; nunca se expone al navegador.
+      GRID_API_KEY: ${GRID_API_KEY}
     ports:
       - "${API_PORT:-8000}:8000"
     volumes:

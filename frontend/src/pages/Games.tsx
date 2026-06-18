@@ -19,6 +19,7 @@ import { TeamPicker } from "../components/TeamPicker";
 import { useChampMaps } from "../lib/champs";
 import { teamLabel } from "../lib/format";
 import { GameDetail } from "./GameDetail";
+import { ReplayButton } from "../components/ReplayButton";
 import "./games.css";
 
 function numParam(v: string | null): number | undefined {
@@ -99,6 +100,11 @@ const columns = [
         team2={row.original.team2}
       />
     ),
+  }),
+  col.display({
+    id: "replay",
+    header: () => null,
+    cell: ({ row }) => <ReplayButton gameId={row.original.game_id} />,
   }),
 ];
 
