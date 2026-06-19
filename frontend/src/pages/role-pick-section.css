@@ -1,0 +1,291 @@
+/* RolePickSection — Blind Picks y Counterpicks */
+
+.rps-section {
+  padding: 0 1.2rem 2rem;
+}
+
+.rps-title {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  margin: 0 0 0.75rem;
+  padding-top: 1.6rem;
+  border-top: 1px solid var(--border);
+}
+
+/* Grid de 5 columnas (una por rol) */
+.rps-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+/* Columna de rol */
+.rps-col {
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+}
+.rps-col:last-child { border-right: none; }
+
+.rps-col-head {
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  background: var(--panel2);
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.rps-col-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex: 1;
+}
+
+.rps-col-empty {
+  font-size: 0.75rem;
+  color: var(--muted);
+  padding: 10px;
+  margin: 0;
+}
+
+/* Skeleton por columna */
+.rps-col-skel {
+  padding: 4px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.rps-skel-entry {
+  height: 26px;
+  border-radius: 4px;
+  background: var(--panel2);
+  animation: rps-pulse 1.4s ease-in-out infinite;
+}
+@keyframes rps-pulse {
+  0%, 100% { opacity: 0.5; }
+  50%       { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rps-skel-entry { animation: none; }
+}
+
+/* Entrada de campeón */
+.rps-entry {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+  transition: background 80ms ease-out;
+  user-select: none;
+}
+.rps-entry:last-child { border-bottom: none; }
+.rps-entry:hover { background: var(--panel2); }
+
+.rps-entry--selected {
+  background: var(--panel2);
+}
+.rps-entry--selected .rps-entry-name { color: var(--text); }
+
+.rps-entry-name {
+  font-size: 0.78rem;
+  font-weight: 500;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+}
+
+.rps-entry-meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.rps-entry-games {
+  font-size: 0.72rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.rps-entry-wr {
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  min-width: 38px;
+  text-align: right;
+}
+
+/* WR coloreado */
+.rps-wr-pos     { color: var(--win); }
+.rps-wr-neg     { color: var(--red); }
+.rps-wr-neutral { color: var(--muted); }
+
+/* Botón "mostrar más" dentro de columna */
+.rps-show-more {
+  display: block;
+  width: 100%;
+  padding: 5px 8px;
+  font-size: 0.72rem;
+  color: var(--muted);
+  background: none;
+  border: none;
+  border-top: 1px solid var(--border);
+  cursor: pointer;
+  text-align: center;
+  transition: color 100ms ease-out, background 80ms ease-out;
+}
+.rps-show-more:hover { color: var(--text); background: var(--panel2); }
+
+/* Error de carga de la sección */
+.rps-load-error {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: var(--muted);
+  padding: 0.5rem 0;
+}
+
+/* Panel de detalle */
+.rps-detail-panel {
+  margin-top: 1px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  overflow: hidden;
+}
+
+.rps-detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--panel2);
+  border-bottom: 1px solid var(--border);
+  gap: 12px;
+}
+
+.rps-detail-champ {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.rps-detail-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.rps-detail-meta {
+  font-size: 0.75rem;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rps-detail-close {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 3px;
+  transition: color 100ms, background 80ms;
+}
+.rps-detail-close:hover { color: var(--text); background: var(--panel); }
+
+.rps-detail-body {
+  padding: 10px 12px;
+}
+
+/* Skeleton del panel de detalle */
+.rps-detail-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.rps-skel-row {
+  height: 24px;
+  border-radius: 4px;
+  background: var(--panel2);
+  animation: rps-pulse 1.4s ease-in-out infinite;
+}
+
+.rps-detail-error {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.rps-detail-empty {
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin: 0;
+}
+
+/* Lista de matchups en el panel de detalle */
+.rps-matchup-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 0;
+}
+
+.rps-matchup-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  min-width: 180px;
+  flex: 0 0 auto;
+  transition: background 80ms ease-out;
+}
+.rps-matchup-row:hover { background: var(--panel2); }
+
+.rps-matchup-name {
+  font-size: 0.78rem;
+  font-weight: 500;
+  flex: 1;
+  min-width: 80px;
+  color: var(--text);
+}
+
+.rps-matchup-games {
+  font-size: 0.72rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  min-width: 28px;
+}
+
+.rps-matchup-wr {
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  min-width: 40px;
+  text-align: right;
+}

@@ -19,7 +19,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from psycopg.rows import dict_row
 
-from src.api.routers import catalog, drafts, games, matchups, picks, replays, scouting
+from src.api.routers import catalog, draft_stats, drafts, games, matchups, picks, replays, scouting
 from src.db.conn import get_conn
 
 log = logging.getLogger("api")
@@ -53,7 +53,7 @@ def create_app() -> FastAPI:
         expose_headers=["Content-Disposition"],
     )
 
-    for module in (catalog, drafts, scouting, games, picks, matchups, replays):
+    for module in (catalog, drafts, draft_stats, scouting, games, picks, matchups, replays):
         app.include_router(module.router)
 
     return app

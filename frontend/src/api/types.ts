@@ -123,6 +123,81 @@ export type Matchup = {
   opponent: MatchupSide | null;
 };
 
+// ---- /draft-stats/champion-presence ----
+export type ChampionPresenceRow = {
+  champ_id: number;
+  champ_name: string | null;
+  picks: number;
+  picked_by: number;
+  picked_vs: number;
+  wins: number;
+  phase1: number;
+  phase2: number;
+  bans: number;
+  total_games: number;
+  presence_pct: number;
+  picked_pct: number;
+  win_rate: number | null;
+  // picks y wins por game number (G1=primero del día vs mismo rival, etc.)
+  picks_g1: number; wins_g1: number;
+  picks_g2: number; wins_g2: number;
+  picks_g3: number; wins_g3: number;
+  picks_g4: number; wins_g4: number;
+  picks_g5: number; wins_g5: number;
+  // total de partidas en cada game number (igual en todas las filas)
+  total_g1: number;
+  total_g2: number;
+  total_g3: number;
+  total_g4: number;
+  total_g5: number;
+};
+
+// ---- /draft-stats/role-picks  y  /draft-stats/role-pick-matchups ----
+export type RolePickEntry = {
+  champ_id: number;
+  champ_name: string | null;
+  games: number;
+  wins: number;
+  win_rate: number | null;
+};
+
+/** Keyed by role (TOP/JUNGLE/MID/ADC/SUPPORT). */
+export type RolePickData = Partial<Record<string, RolePickEntry[]>>;
+
+export type MatchupEntry = {
+  champ_id: number;
+  champ_name: string | null;
+  games: number;
+  wins: number;
+  win_rate: number | null;
+};
+
+// ---- /draft-stats/pick-order ----
+export type PickSlotEntry = {
+  champ_id: number;
+  champ_name: string | null;
+  slot: string;
+  games: number;
+  wins: number;
+  win_rate: number | null;
+  total_games: number;
+};
+
+export type RoleDistEntry = {
+  role: string;
+  slot: string;
+  pick_side: "blue" | "red";
+  cnt: number;
+  wins: number;
+  pct: number;
+  win_rate: number | null;
+};
+
+export type PickOrderData = {
+  slots: PickSlotEntry[];
+  role_dist: RoleDistEntry[];
+};
+
 // ---- /scouting/champion-pool ----
 export type ScoutChampion = {
   champion: { id: number; name: string };

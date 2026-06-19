@@ -1,0 +1,136 @@
+.cp-wrap {
+  overflow-x: auto;
+  padding: 0 1.2rem 2rem;
+}
+
+.cp-table {
+  width: 100%;
+  min-width: 560px;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.cp-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--panel);
+  padding: 6px 10px;
+  text-align: right;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  border-bottom: 1px solid var(--border);
+  transition: color 120ms ease-out;
+}
+
+.cp-table thead th:first-child {
+  text-align: left;
+  padding-left: 4px;
+}
+
+.cp-table thead th:hover { color: var(--text); }
+
+.cp-table thead th.cp-sorted { color: var(--text); }
+
+.cp-sort-arrow {
+  display: inline-block;
+  margin-left: 3px;
+  opacity: 0.6;
+  font-size: 0.6rem;
+}
+
+.cp-table tbody tr {
+  border-bottom: 1px solid var(--border);
+  transition: background 80ms ease-out;
+}
+
+.cp-table tbody tr:hover { background: var(--panel2); }
+
+.cp-table td {
+  padding: 4px 10px;
+  text-align: right;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.cp-table td:first-child {
+  text-align: left;
+  padding-left: 4px;
+}
+
+/* Celda de campeón */
+.cp-champ-cell {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 140px;
+}
+
+.cp-champ-name {
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+
+/* Heatmap: presencia — tinte rojo escalonado por intensidad relativa */
+.cp-heat-1 { background: rgba(239, 68, 68, 0.07); }
+.cp-heat-2 { background: rgba(239, 68, 68, 0.14); }
+.cp-heat-3 { background: rgba(239, 68, 68, 0.22); }
+.cp-heat-4 { background: rgba(239, 68, 68, 0.32); }
+.cp-heat-5 { background: rgba(239, 68, 68, 0.44); }
+
+/* WR colorizado */
+.cp-wr-pos { color: var(--win); }
+.cp-wr-neg { color: var(--red); }
+.cp-wr-neutral { color: var(--muted); }
+
+/* Columnas de game number — estilo diferenciado, no sortable */
+.cp-gn-head {
+  cursor: default;
+  color: var(--muted) !important;
+  opacity: 0.8;
+  border-left: 1px solid var(--border);
+}
+.cp-gn-head:hover { color: var(--muted) !important; }
+
+.cp-gn-cell {
+  border-left: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+/* Show-more button para la tabla */
+.cp-show-more {
+  display: block;
+  width: 100%;
+  padding: 8px 10px;
+  font-size: 0.78rem;
+  color: var(--muted);
+  background: none;
+  border: none;
+  border-top: 1px solid var(--border);
+  cursor: pointer;
+  text-align: center;
+  transition: color 100ms ease-out, background 80ms ease-out;
+}
+.cp-show-more:hover { color: var(--text); background: var(--panel2); }
+
+/* Skeleton */
+.cp-skel-row td { padding: 6px 10px; }
+.cp-skel-bar {
+  height: 14px;
+  border-radius: 4px;
+  background: var(--panel2);
+  animation: cp-pulse 1.4s ease-in-out infinite;
+}
+@keyframes cp-pulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cp-skel-bar { animation: none; }
+}

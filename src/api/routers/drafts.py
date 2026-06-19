@@ -39,7 +39,8 @@ WHERE g.draft_id IS NOT NULL
   AND (%(team_id)s::int   IS NULL OR g.team1_id = %(team_id)s OR g.team2_id = %(team_id)s)
   AND (%(rival_id)s::int  IS NULL OR g.team1_id = %(rival_id)s OR g.team2_id = %(rival_id)s)
   AND (%(patch)s::text     IS NULL OR g.version   = %(patch)s)
-  AND (%(game_type)s::text IS NULL OR g.game_type = %(game_type)s)
+  AND (%(game_type)s::text  IS NULL OR g.game_type  = %(game_type)s)
+  AND (%(tournament)s::text IS NULL OR g.tournament = %(tournament)s)
   AND (%(pick_phase)s::text IS NULL OR
        (%(pick_phase)s = 'first'  AND d.first_pick_team_id =  %(team_id)s) OR
        (%(pick_phase)s = 'second' AND d.first_pick_team_id <> %(team_id)s))
@@ -114,6 +115,7 @@ def list_drafts(
     pick_phase: str | None = Query(None, pattern="^(first|second)$"),
     champ_id: int | None = None,
     game_type: str | None = Query(None, description="OFFICIAL | SCRIM"),
+    tournament: str | None = None,
     page: Pagination = Depends(pagination),
     conn: psycopg.Connection = Depends(db_conn),
     champ_map: dict[int, str] = Depends(get_champ_map),
@@ -128,6 +130,7 @@ def list_drafts(
         "pick_phase": pick_phase,
         "champ_id": champ_id,
         "game_type": game_type,
+        "tournament": tournament,
         "limit": page.limit,
         "offset": page.offset,
     }

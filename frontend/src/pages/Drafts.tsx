@@ -2,12 +2,16 @@ import { useMemo, useRef, useState } from "react";
 import { AlertTriangle, SearchX } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 
-import { useDrafts, useTeams, type DraftFilters } from "../api/hooks";
+import { useDrafts, useTeams, useTournaments, type DraftFilters, type StatsFilters } from "../api/hooks";
 import { ChampionPicker } from "../components/ChampionPicker";
 import { Field, FilterBar } from "../components/Field";
+import { Tabs } from "../components/Tabs";
 import { TeamPicker } from "../components/TeamPicker";
+import { TournamentPicker } from "../components/TournamentPicker";
 import { useChampMaps } from "../lib/champs";
+import { ChampionPresence } from "./ChampionPresence";
 import { DraftBoard, DraftBoardSkeleton } from "./DraftBoard";
+import { PickOrderStats } from "./PickOrderStats";
 import "./drafts.css";
 
 function numParam(v: string | null): number | undefined {
@@ -21,6 +25,7 @@ const LIMIT_DEFAULT = "50";
 
 export function Drafts() {
   const { data: teams } = useTeams();
+  const { data: tournaments } = useTournaments();
   const { byName, list: champList } = useChampMaps();
   const [params, setParams] = useSearchParams();
   const champRef = useRef<HTMLInputElement>(null);
@@ -33,8 +38,12 @@ export function Drafts() {
   const [phase, setPhase] = useState(() => params.get("phase") ?? "");
   const [champ, setChamp] = useState(() => params.get("champ") ?? "");
   const [patch, setPatch] = useState(() => params.get("patch") ?? "");
+  const [tournament, setTournament] = useState(() => params.get("tournament") ?? "");
   const [limit, setLimit] = useState(() => params.get("limit") ?? LIMIT_DEFAULT);
   const [formError, setFormError] = useState("");
+
+  // El tab activo vive en la URL para que sea compartible.
+  const view = params.get("view") ?? "drafts";
 
   // La búsqueda activa vive en la URL (única fuente de verdad → compartible).
   const applied = useMemo<DraftFilters>(() => {
@@ -46,14 +55,32 @@ export function Drafts() {
       pick_phase: (params.get("phase") || undefined) as DraftFilters["pick_phase"],
       champ_id: champName ? byName.get(champName) : undefined,
       patch: params.get("patch")?.trim() || undefined,
+      tournament: params.get("tournament") || undefined,
       limit: numParam(params.get("limit")) ?? 50,
     };
   }, [params, byName]);
 
-  const { data: drafts, isFetching, error, refetch } = useDrafts(applied);
+  // Filtros para las tabs de stats: igual que applied pero sin champ_id ni limit.
+  const statsApplied = useMemo<StatsFilters>(() => ({
+    team_id: applied.team_id,
+    rival_id: applied.rival_id,
+    game_type: applied.game_type,
+    pick_phase: applied.pick_phase,
+    patch: applied.patch,
+    tournament: applied.tournament,
+  }), [applied.team_id, applied.rival_id, applied.game_type, applied.pick_phase, applied.patch, applied.tournament]);
+
+  const { data: drafts, isFetching, error, refetch } = useDrafts(applied, view === "drafts");
 
   // Indica si el error actual es específicamente del campo campeón.
   const champError = formError.startsWith("Campeón");
+
+  function handleViewChange(v: string) {
+    const next: Record<string, string> = { ...Object.fromEntries(params) };
+    if (v === "drafts") delete next.view;
+    else next.view = v;
+    setParams(next);
+  }
 
   function submit() {
     setFormError("");
@@ -67,12 +94,14 @@ export function Drafts() {
       return;
     }
     const next: Record<string, string> = {};
+    if (view !== "drafts") next.view = view;
     if (teamId) next.team = teamId;
     if (rivalId) next.rival = rivalId;
     if (gameType) next.type = gameType;
     if (phase) next.phase = phase;
     if (champ.trim()) next.champ = champ.trim();
     if (patch.trim()) next.patch = patch.trim();
+    if (tournament) next.tournament = tournament;
     if (limit && limit !== LIMIT_DEFAULT) next.limit = limit;
     setParams(next);
   }
@@ -84,12 +113,15 @@ export function Drafts() {
     setPhase("");
     setChamp("");
     setPatch("");
+    setTournament("");
     setLimit(LIMIT_DEFAULT);
     setFormError("");
-    setParams({});
+    const next: Record<string, string> = {};
+    if (view !== "drafts") next.view = view;
+    setParams(next);
   }
 
-  const hasFilters = [...params.keys()].length > 0;
+  const hasFilters = [...params.keys()].some((k) => k !== "view");
 
   function activeFilterLabels(): string[] {
     const teamName = (id: string) => teams?.find((t) => String(t.id) === id)?.name ?? `#${id}`;
@@ -100,6 +132,7 @@ export function Drafts() {
     if (params.get("phase")) out.push(`${params.get("phase")} pick`);
     if (params.get("champ")) out.push(`«${params.get("champ")}»`);
     if (params.get("patch")) out.push(`parche ${params.get("patch")}`);
+    if (params.get("tournament")) out.push(params.get("tournament")!);
     if (params.get("limit")) out.push(`${params.get("limit")} partidas`);
     return out;
   }
@@ -168,6 +201,9 @@ export function Drafts() {
             <option value="SCRIM">Scrims</option>
           </select>
         </Field>
+        <Field label="Torneo">
+          <TournamentPicker value={tournament} onChange={setTournament} tournaments={tournaments ?? []} />
+        </Field>
         <Field label="Fase de pick">
           <select value={phase} onChange={(e) => setPhase(e.target.value)}>
             <option value="">(cualquiera)</option>
@@ -219,11 +255,34 @@ export function Drafts() {
         <p className="field-error" role="alert">{formError}</p>
       )}
 
-      <p className={"status" + (error ? " error" : "")} role="status" aria-live="polite">
-        {error ? "Error al cargar." : isFetching ? "Buscando…" : `${drafts?.length ?? 0} drafts.`}
-      </p>
-
-      {results}
+      <Tabs
+        value={view}
+        onChange={handleViewChange}
+        tabs={[
+          {
+            id: "drafts",
+            label: "Drafts",
+            content: (
+              <>
+                <p className={"status" + (error ? " error" : "")} role="status" aria-live="polite">
+                  {error ? "Error al cargar." : isFetching ? "Buscando…" : `${drafts?.length ?? 0} drafts.`}
+                </p>
+                {results}
+              </>
+            ),
+          },
+          {
+            id: "presencia",
+            label: "Presencia",
+            content: <ChampionPresence filters={statsApplied} teamId={applied.team_id} />,
+          },
+          {
+            id: "pick-order",
+            label: "Pick Order",
+            content: <PickOrderStats filters={statsApplied} />,
+          },
+        ]}
+      />
     </div>
   );
 }

@@ -10,6 +10,7 @@ import {
 } from "../api/hooks";
 import { BuildCard } from "../components/BuildCard";
 import { ChampionPicker } from "../components/ChampionPicker";
+import { TournamentPicker } from "../components/TournamentPicker";
 import { ReplayButton } from "../components/ReplayButton";
 import { Field, FilterBar } from "../components/Field";
 import { ChampIcon, ItemIcon, RuneIcon } from "../components/icons";
@@ -364,10 +365,7 @@ export function Matchups() {
           </select>
         </Field>
         <Field label="Torneo">
-          <select value={tournament} onChange={(e) => setTournament(e.target.value)} style={{ minWidth: 130 }}>
-            <option value="">Todos</option>
-            {(tournaments ?? []).map((t) => <option key={t} value={t}>{t}</option>)}
-          </select>
+          <TournamentPicker value={tournament} onChange={setTournament} tournaments={tournaments ?? []} />
         </Field>
         <Field label="Parche">
           <select value={patch} onChange={(e) => setPatch(e.target.value)} style={{ minWidth: 100 }}>
