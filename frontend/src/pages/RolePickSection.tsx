@@ -22,6 +22,27 @@ function wrClass(wr: number | null): string {
   return "rps-wr-neutral";
 }
 
+// Glifo direccional: el WR no se apoya solo en verde/rojo (daltonismo).
+function wrArrow(wr: number | null): string {
+  if (wr == null) return "";
+  if (wr >= 55) return "▲";
+  if (wr <= 45) return "▼";
+  return "";
+}
+
+// WR con su refuerzo no-cromático. Devuelve el % precedido del glifo cuando
+// procede; «—» cuando no hay dato.
+function WrValue({ wr }: { wr: number | null }) {
+  if (wr == null) return <>—</>;
+  const arrow = wrArrow(wr);
+  return (
+    <>
+      {arrow && <span className="rps-wr-arrow" aria-hidden="true">{arrow}</span>}
+      {wr.toFixed(1)}%
+    </>
+  );
+}
+
 function DetailPanel({
   champ,
   role,
@@ -77,7 +98,7 @@ function DetailPanel({
                 <span className="rps-matchup-name">{m.champ_name ?? `#${m.champ_id}`}</span>
                 <span className="rps-matchup-games">{m.games}g</span>
                 <span className={"rps-matchup-wr " + wrClass(m.win_rate)}>
-                  {m.win_rate != null ? m.win_rate.toFixed(1) + "%" : "—"}
+                  <WrValue wr={m.win_rate} />
                 </span>
               </li>
             ))}
@@ -125,7 +146,7 @@ function RoleColumn({
               <span className="rps-entry-meta">
                 <span className="rps-entry-games">{e.games}g</span>
                 <span className={"rps-entry-wr " + wrClass(e.win_rate)}>
-                  {e.win_rate != null ? e.win_rate.toFixed(1) + "%" : "—"}
+                  <WrValue wr={e.win_rate} />
                 </span>
               </span>
             </li>

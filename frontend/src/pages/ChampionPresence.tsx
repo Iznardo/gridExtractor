@@ -40,13 +40,30 @@ function wrClass(wr: number | null): string {
   return "cp-wr-neutral";
 }
 
+// Glifo no-cromático para el WR: la dirección (▲/▼) codifica bueno/malo sin
+// depender solo del verde/rojo (daltonismo — PRODUCT.md, DESIGN.md).
+function wrArrow(wr: number | null): string {
+  if (wr == null) return "";
+  if (wr >= 55) return "▲";
+  if (wr <= 45) return "▼";
+  return "";
+}
+
+// Un 0 real (pickeado 0 veces, 0 wins…) se muestra como 0 atenuado, nunca como
+// «—»: el guion se reserva para la ausencia genuina de dato (PRODUCT.md:
+// «nunca presentar un hueco como un cero» — y a la inversa).
+function numCell(v: number) {
+  return v === 0 ? <span className="cp-zero">0</span> : v;
+}
+
 function gnPct(picks: number, total: number): string {
-  if (total === 0 || picks === 0) return "—";
-  return `${((picks / total) * 100).toFixed(0)}%`;
+  if (total === 0) return "—"; // sin partidas en esta posición = ausencia real
+  return `${((picks / total) * 100).toFixed(0)}%`; // picks=0 → «0%», dato real
 }
 
 function gnTooltip(picks: number, wins: number, total: number, n: number): string {
-  if (picks === 0) return `G${n}: no pickeado`;
+  if (total === 0) return `G${n}: sin partidas en esta posición de serie`;
+  if (picks === 0) return `G${n}: no pickeado (de ${total} partidas)`;
   const losses = picks - wins;
   return `G${n}: ${picks}g · ${wins}W / ${losses}L (de ${total} partidas)`;
 }
@@ -133,22 +150,28 @@ export function ChampionPresence({
       <th
         className={active ? "cp-sorted" : undefined}
         onClick={() => toggleSort(col)}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleSort(col); } }}
+        tabIndex={0}
+        aria-sort={active ? (sort.dir === "desc" ? "descending" : "ascending") : "none"}
         title={title}
-        aria-sort={active ? (sort.dir === "desc" ? "descending" : "ascending") : undefined}
       >
         {label}
-        {active && (
-          <span className="cp-sort-arrow" aria-hidden="true">
-            {sort.dir === "desc" ? "▼" : "▲"}
-          </span>
-        )}
+        <span className="cp-sort-arrow" aria-hidden="true">
+          {active ? (sort.dir === "desc" ? "▼" : "▲") : "⇅"}
+        </span>
       </th>
     );
   }
 
   // Cabecera estática no sortable (game number).
   function GnHead({ n }: { n: number }) {
-    return <th className="cp-gn-head" title={`Picked en game ${n} de la serie`}>G{n}%</th>;
+    return (
+      <th className="cp-gn-head">
+        G{n}%
+        <span className="cp-gn-hint" aria-hidden="true"> (G{n})</span>
+        <span className="sr-only">Porcentaje de veces que se pickeó en el game {n} de la serie</span>
+      </th>
+    );
   }
 
   // Columnas fijas + dinámica (By/Vs o Picked) + game number cols.
@@ -191,6 +214,15 @@ export function ChampionPresence({
           ? `${data.length} campeones · ${totalGames} partidas`
           : ""}
       </p>
+      <div className="cp-legend" aria-label="Leyenda">
+        <span className="cp-legend-heat">Presence: <span className="cp-heat-1">·</span><span className="cp-heat-2">·</span><span className="cp-heat-3">·</span><span className="cp-heat-4">·</span><span className="cp-heat-5">·</span> relativo al máximo</span>
+        <span className="cp-legend-sep" aria-hidden="true">·</span>
+        <span className="cp-legend-wr"><span className="cp-wr-pos">▲ ≥55%</span> <span className="cp-wr-neg">▼ ≤45%</span> WR</span>
+        <span className="cp-legend-sep" aria-hidden="true">·</span>
+        <span className="cp-legend-phase">1ª Fase: B1-B3, R1-R2 · 2ª Fase: B4-B5, R3-R5</span>
+        <span className="cp-legend-sep" aria-hidden="true">·</span>
+        <span className="cp-legend-zero">0 atenuado = dato real · — = sin dato</span>
+      </div>
       <div className="cp-wrap">
         <table className="cp-table">
           <thead>
@@ -230,19 +262,30 @@ export function ChampionPresence({
                   </td>
                   {hasTeam ? (
                     <>
-                      <td>{row.picked_by || "—"}</td>
-                      <td>{row.picked_vs || "—"}</td>
+                      <td>{numCell(row.picked_by)}</td>
+                      <td>{numCell(row.picked_vs)}</td>
                     </>
                   ) : (
-                    <td>{row.picks || "—"}</td>
+                    <td>{numCell(row.picks)}</td>
                   )}
-                  <td>{row.wins || "—"}</td>
+                  <td>{numCell(row.wins)}</td>
                   <td className={wrClass(row.win_rate)}>
-                    {row.win_rate != null ? `${row.win_rate.toFixed(1)}%` : "—"}
+                    {row.win_rate != null ? (
+                      <>
+                        {wrArrow(row.win_rate) && (
+                          <span className="cp-wr-arrow" aria-hidden="true">
+                            {wrArrow(row.win_rate)}
+                          </span>
+                        )}
+                        {row.win_rate.toFixed(1)}%
+                      </>
+                    ) : (
+                      "—"
+                    )}
                   </td>
-                  <td>{row.bans || "—"}</td>
-                  <td>{row.phase1 || "—"}</td>
-                  <td>{row.phase2 || "—"}</td>
+                  <td>{numCell(row.bans)}</td>
+                  <td>{numCell(row.phase1)}</td>
+                  <td>{numCell(row.phase2)}</td>
                   {gnCols.map((n) => {
                     const picks = row[`picks_g${n}` as keyof ChampionPresenceRow] as number;
                     const wins  = row[`wins_g${n}`  as keyof ChampionPresenceRow] as number;

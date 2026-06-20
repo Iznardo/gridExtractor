@@ -25,6 +25,10 @@
   overflow: hidden;
 }
 
+@media (max-width: 640px) {
+  .rps-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
 /* Columna de rol */
 .rps-col {
   border-right: 1px solid var(--border);
@@ -129,10 +133,13 @@
   text-align: right;
 }
 
-/* WR coloreado */
+/* WR coloreado — reforzado con glifo direccional (▲/▼) para no depender solo
+   del verde/rojo (daltonismo). */
 .rps-wr-pos     { color: var(--win); }
-.rps-wr-neg     { color: var(--red); }
+.rps-wr-neg     { color: var(--red-text); }
 .rps-wr-neutral { color: var(--muted); }
+
+.rps-wr-arrow { font-size: 0.6rem; margin-right: 2px; }
 
 /* Botón "mostrar más" dentro de columna */
 .rps-show-more {

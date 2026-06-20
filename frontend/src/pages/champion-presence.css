@@ -1,3 +1,27 @@
+/* Leyenda discreta encima de la tabla */
+.cp-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 0.6rem;
+  padding: 0.35rem 1.2rem 0.5rem;
+  font-size: 0.68rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.cp-legend-sep { opacity: 0.4; }
+
+/* Muestra los dots de heatmap a escala reducida */
+.cp-legend-heat span[class^="cp-heat"] {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  vertical-align: -1px;
+  margin: 0 1px;
+}
+
 .cp-wrap {
   overflow-x: auto;
   padding: 0 1.2rem 2rem;
@@ -34,15 +58,24 @@
 }
 
 .cp-table thead th:hover { color: var(--text); }
+.cp-table thead th:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: -2px;
+}
 
 .cp-table thead th.cp-sorted { color: var(--text); }
 
+/* ⇅ siempre visible (affordance de sortabilidad); ▼/▲ en la col activa.
+   En columnas no activas el ⇅ aparece atenuado para no competir con los datos. */
 .cp-sort-arrow {
   display: inline-block;
   margin-left: 3px;
-  opacity: 0.6;
   font-size: 0.6rem;
+  opacity: 0.35; /* default: atenuado */
+  transition: opacity 80ms ease-out;
 }
+.cp-table thead th:hover .cp-sort-arrow { opacity: 0.7; }
+.cp-table thead th.cp-sorted .cp-sort-arrow { opacity: 0.9; }
 
 .cp-table tbody tr {
   border-bottom: 1px solid var(--border);
@@ -83,10 +116,20 @@
 .cp-heat-4 { background: rgba(239, 68, 68, 0.32); }
 .cp-heat-5 { background: rgba(239, 68, 68, 0.44); }
 
-/* WR colorizado */
+/* WR colorizado — el color se refuerza con un glifo direccional (▲/▼) para no
+   depender solo de verde/rojo (daltonismo). */
 .cp-wr-pos { color: var(--win); }
-.cp-wr-neg { color: var(--red); }
+.cp-wr-neg { color: var(--red-text); }
 .cp-wr-neutral { color: var(--muted); }
+
+.cp-wr-arrow {
+  font-size: 0.6rem;
+  margin-right: 2px;
+  vertical-align: 1px;
+}
+
+/* Cero real (no ausencia): atenuado para distinguirlo de «—». */
+.cp-zero { color: var(--muted); }
 
 /* Columnas de game number — estilo diferenciado, no sortable */
 .cp-gn-head {

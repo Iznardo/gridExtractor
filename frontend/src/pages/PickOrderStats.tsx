@@ -8,16 +8,16 @@ import "./pick-order.css";
 // ─── constantes ─────────────────────────────────────────────────────────────
 
 const BLUE_SLOTS = [
-  { key: "b1",   label: "B1" },
-  { key: "b2_3", label: "B2-3" },
-  { key: "b4_5", label: "B4-5" },
+  { key: "b1",   label: "B1",   hint: "1er pick de Blue (primera acción de draft)" },
+  { key: "b2_3", label: "B2-3", hint: "2º y 3er picks de Blue (fase 1)" },
+  { key: "b4_5", label: "B4-5", hint: "4º y 5º picks de Blue (fase 2)" },
 ] as const;
 
 const RED_SLOTS = [
-  { key: "r1_2", label: "R1-2" },
-  { key: "r3",   label: "R3" },
-  { key: "r4",   label: "R4" },
-  { key: "r5",   label: "R5" },
+  { key: "r1_2", label: "R1-2", hint: "1er y 2º picks de Red (fase 1)" },
+  { key: "r3",   label: "R3",   hint: "3er pick de Red (giro del snake)" },
+  { key: "r4",   label: "R4",   hint: "4º pick de Red (fase 2)" },
+  { key: "r5",   label: "R5",   hint: "5º pick de Red (cierre del draft)" },
 ] as const;
 
 const ROLES = ["TOP", "JUNGLE", "MID", "ADC", "SUPPORT"] as const;
@@ -40,24 +40,34 @@ function wrColor(wr: number | null): string {
   return "";
 }
 
+// Glifo direccional: el WR no se apoya solo en verde/rojo (daltonismo).
+function wrArrow(wr: number | null): string {
+  if (wr == null) return "";
+  if (wr >= 55) return "▲";
+  if (wr <= 45) return "▼";
+  return "";
+}
+
 // ─── sub-componentes ─────────────────────────────────────────────────────────
 
 function SlotColumn({
   slotKey,
   label,
+  hint,
   side,
   entries,
   loading,
 }: {
   slotKey: string;
   label: string;
+  hint: string;
   side: "blue" | "red";
   entries: PickSlotEntry[];
   loading: boolean;
 }) {
   return (
     <div className="po-col">
-      <div className={`po-col-head ${side}`}>{label}</div>
+      <div className={`po-col-head ${side}`} title={hint} aria-label={hint}>{label}</div>
       <div className="po-col-body">
         {loading ? (
           Array.from({ length: 5 }).map((_, i) => (
@@ -74,7 +84,15 @@ function SlotColumn({
               <span className="po-champ-name">{e.champ_name ?? `#${e.champ_id}`}</span>
               <span className={`po-stats ${wrColor(e.win_rate)}`}>
                 {e.games}g
-                {e.win_rate != null && ` · ${e.win_rate.toFixed(0)}%`}
+                {e.win_rate != null && (
+                  <>
+                    {" · "}
+                    {wrArrow(e.win_rate) && (
+                      <span className="po-wr-arrow" aria-hidden="true">{wrArrow(e.win_rate)}</span>
+                    )}
+                    {e.win_rate.toFixed(0)}%
+                  </>
+                )}
               </span>
             </div>
           ))
@@ -98,7 +116,7 @@ function RoleTable({
       <div className={`rd-title ${side}`}>
         {side === "blue" ? "Blue Side" : "Red Side"} — distribución por rol
       </div>
-      <table className="rd-table">
+      <table className={`rd-table ${side}`}>
         <thead>
           <tr>
             <th>Rol</th>
@@ -179,6 +197,10 @@ export function PickOrderStats({ filters }: { filters: StatsFilters }) {
         {isFetching ? "Cargando…" : data ? `${totalGames} partidas` : ""}
       </p>
 
+      <div className="po-legend" aria-label="Leyenda">
+        <span className="po-legend-wr"><span className="po-wr-pos">▲ ≥55%</span> <span className="po-wr-neg">▼ ≤45%</span> WR · Ng = partidas en ese slot</span>
+      </div>
+
       <div className="po-page">
         {/* ── Blue Side ── */}
         <section aria-label="Blue Side picks">
@@ -189,6 +211,7 @@ export function PickOrderStats({ filters }: { filters: StatsFilters }) {
                 key={s.key}
                 slotKey={s.key}
                 label={s.label}
+                hint={s.hint}
                 side="blue"
                 entries={slotMap.get(s.key) ?? []}
                 loading={isFetching}
@@ -206,6 +229,7 @@ export function PickOrderStats({ filters }: { filters: StatsFilters }) {
                 key={s.key}
                 slotKey={s.key}
                 label={s.label}
+                hint={s.hint}
                 side="red"
                 entries={slotMap.get(s.key) ?? []}
                 loading={isFetching}

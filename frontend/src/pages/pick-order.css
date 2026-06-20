@@ -1,5 +1,12 @@
+/* Leyenda de WR */
+.po-legend {
+  padding: 0.35rem 1.2rem 0.1rem;
+  font-size: 0.68rem;
+  color: var(--muted);
+}
+
 .po-page {
-  padding: 0.8rem 1.2rem 2rem;
+  padding: 0.4rem 1.2rem 2rem;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
@@ -92,7 +99,10 @@
 }
 
 .po-wr-pos { color: var(--win); }
-.po-wr-neg { color: var(--red); }
+.po-wr-neg { color: var(--red-text); }
+
+/* Glifo direccional del WR (refuerzo no-cromático del verde/rojo). */
+.po-wr-arrow { font-size: 0.6rem; margin-right: 1px; }
 
 /* Skeleton dentro de columna */
 .po-skel {
@@ -172,14 +182,27 @@
   font-size: 0.72rem;
 }
 
-/* Heatmap de rol */
-.rd-heat-1 { background: rgba(59, 130, 246, 0.08); }
-.rd-heat-2 { background: rgba(59, 130, 246, 0.16); }
-.rd-heat-3 { background: rgba(59, 130, 246, 0.26); }
-.rd-heat-4 { background: rgba(59, 130, 246, 0.38); }
-.rd-heat-5 { background: rgba(59, 130, 246, 0.52); color: var(--blue-fg); }
+/* Heatmap de rol — el hue sigue el lado de la tabla para no colisionar con la
+   semántica de color: Blue Side usa azul, Red Side usa rojo. Antes ambas tablas
+   usaban azul, tiñendo de azul (= acción/lado azul) la tabla de Red Side
+   (Semantic-Only Colour Rule, DESIGN.md §2). */
+.rd-table.blue .rd-heat-1 { background: rgba(59, 130, 246, 0.08); }
+.rd-table.blue .rd-heat-2 { background: rgba(59, 130, 246, 0.16); }
+.rd-table.blue .rd-heat-3 { background: rgba(59, 130, 246, 0.26); }
+.rd-table.blue .rd-heat-4 { background: rgba(59, 130, 246, 0.38); }
+.rd-table.blue .rd-heat-5 { background: rgba(59, 130, 246, 0.52); color: var(--blue-fg); }
 
+.rd-table.red .rd-heat-1 { background: rgba(239, 68, 68, 0.08); }
+.rd-table.red .rd-heat-2 { background: rgba(239, 68, 68, 0.16); }
+.rd-table.red .rd-heat-3 { background: rgba(239, 68, 68, 0.26); }
+.rd-table.red .rd-heat-4 { background: rgba(239, 68, 68, 0.40); }
+.rd-table.red .rd-heat-5 { background: rgba(239, 68, 68, 0.54); color: var(--red-fg); }
+
+/* Sub-línea de WR dentro de la celda: hereda el color de texto de la celda
+   (que en heat-5 ya es el fg legible) y de-enfatiza por opacidad, no por un gris
+   --muted que perdía contraste sobre los tintes fuertes. */
 .rd-wr {
   font-size: 0.65rem;
-  color: var(--muted);
+  color: inherit;
+  opacity: 0.78;
 }
