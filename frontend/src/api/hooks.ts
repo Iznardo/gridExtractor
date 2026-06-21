@@ -12,6 +12,7 @@ import type {
   PickOrderData,
   RolePickData,
   ScoutingPool,
+  ScrimGame,
   Team,
   TeamMatchupData,
 } from "./types";
@@ -194,13 +195,33 @@ export function useTeamMatchups(filters: StatsFilters, enabled = true) {
   });
 }
 
-export function useScouting(teamId: number | null, dateFrom?: string) {
+export function useScouting(
+  teamId: number | null,
+  opts: { dateFrom?: string; patch?: string } = {},
+) {
+  const { dateFrom, patch } = opts;
   return useQuery({
-    queryKey: ["scouting", teamId, dateFrom],
+    queryKey: ["scouting", teamId, dateFrom, patch],
     queryFn: () =>
       getJSON<ScoutingPool>(
-        "/scouting/champion-pool" + buildQuery({ team_id: teamId, date_from: dateFrom }),
+        "/scouting/champion-pool" +
+          buildQuery({ team_id: teamId, date_from: dateFrom, patch }),
       ),
     enabled: teamId != null,
+  });
+}
+
+export type ScrimGamesFilters = {
+  team_id: number | null;
+  date_from?: string;
+  patch?: string;
+};
+
+export function useScrimGames(filters: ScrimGamesFilters, enabled = true) {
+  return useQuery({
+    queryKey: ["scrim-games", filters],
+    queryFn: () =>
+      getJSON<ScrimGame[]>("/scrims/games" + buildQuery(filters as QueryParams)),
+    enabled: enabled && filters.team_id != null,
   });
 }

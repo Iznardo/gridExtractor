@@ -232,3 +232,19 @@ export type ScoutingPool = {
   team_id: number;
   by_medium: Record<Medium, ScoutPlayer[]>;
 };
+
+// ---- /scrims/games ----
+export type ScrimRole = "TOP" | "JUNGLE" | "MID" | "ADC" | "SUPPORT";
+/** Una fila por scrim del equipo trackeado. El front agrega (duos/trios/etc.). */
+export type ScrimGame = {
+  game_id: number;
+  date: string;
+  version: string | null;
+  our_side: Side;
+  won: boolean;
+  first_pick: boolean;
+  block_game_number: number; // posición dentro del bloque vs ese rival
+  rival: { id: number; name: string; tag: string | null } | null;
+  lineup: Record<ScrimRole, number | null>; // champ_id por rol (lado propio)
+  rival_champs: number[]; // picks rivales, lista plana (sin rol)
+};

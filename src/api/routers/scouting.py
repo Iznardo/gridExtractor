@@ -35,6 +35,7 @@ JOIN games g     ON g.id  = pk.game_id
 JOIN champions c ON c.id  = pk.champ_id
 WHERE pl.team_id = %(team_id)s
   AND (%(date_from)s::date IS NULL OR g.date >= %(date_from)s)
+  AND (%(patch)s::text     IS NULL OR g.version = %(patch)s)
 GROUP BY pl.id, pl.name, pl.role, c.id, c.name, g.game_type
 """
 
@@ -47,10 +48,11 @@ _MEDIUMS = {"OFFICIAL": "official", "SCRIM": "scrim", "SOLOQ": "soloq"}
 def champion_pool(
     team_id: int = Query(..., description="Equipo a scoutear (obligatorio)"),
     date_from: date | None = Query(None, description="Solo partidas desde esta fecha"),
+    patch: str | None = Query(None, description="games.version, ej. 14.23"),
     conn: psycopg.Connection = Depends(db_conn),
 ):
     with conn.cursor() as cur:
-        cur.execute(_SQL, {"team_id": team_id, "date_from": date_from})
+        cur.execute(_SQL, {"team_id": team_id, "date_from": date_from, "patch": patch})
         rows = cur.fetchall()
 
     # by_medium[medio][player_id] = {player, champions: {champ_id: {...}}}

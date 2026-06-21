@@ -1,0 +1,124 @@
+/* Ventana Scrims — dashboard de tracking. Reusa tokens globales y el pool de
+   ChampionPool (scouting.css). Aquí solo lo específico de las vistas nuevas. */
+
+.scr-results {
+  padding: 0 1.2rem 2rem;
+}
+
+.scr-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+}
+
+.scr-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.scr-h3 {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* Grid de tarjetas (duos/trios) */
+.scr-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1rem;
+}
+
+.scr-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.scr-card-title {
+  padding: 0.45rem 0.7rem;
+  background: var(--panel2);
+  border-bottom: 1px solid var(--border);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+/* ---- tablas ---- */
+.scr-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+.scr-table th {
+  text-align: left;
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  font-weight: 600;
+  padding: 0.4rem 0.6rem;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.scr-table td {
+  padding: 0.35rem 0.6rem;
+  border-bottom: 1px solid #00000022;
+  vertical-align: middle;
+}
+.scr-table tbody tr:last-child td { border-bottom: none; }
+.scr-table tbody tr:hover { background: var(--panel2); }
+
+.scr-num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.scr-sub { font-size: 0.7rem; }
+
+.scr-team-cell { font-weight: 600; }
+
+.scr-champ-row {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex-wrap: nowrap;
+}
+.scr-champ-name {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.scr-champ-empty { color: var(--muted); }
+
+/* ---- WR (glifo no-cromático, coherente con TeamMatchups) ---- */
+.scr-wr-pos { color: var(--win); font-weight: 600; }
+.scr-wr-neg { color: var(--red-text, #f87171); font-weight: 600; }
+.scr-wr-neutral { color: var(--text); }
+.scr-wr-arrow { font-size: 0.7em; margin-right: 2px; }
+
+/* ---- último bloque ---- */
+.scr-block-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 0.7rem;
+  background: var(--panel2);
+  border-bottom: 1px solid var(--border);
+}
+.scr-block-title { font-weight: 700; font-size: 0.84rem; }
+.scr-block-summary { font-size: 0.84rem; font-variant-numeric: tabular-nums; }
+.scr-block-table td { vertical-align: middle; }
+
+.scr-empty { padding: 0.7rem; margin: 0; }
+
+/* ---- pestaña Bloques (filas expandibles) ---- */
+.scr-block-row { cursor: pointer; }
+.scr-block-row:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px; }
+.scr-caret { width: 1.4rem; text-align: center; color: var(--muted); }
+/* La tabla de games del detalle va embebida en una celda: sin doble borde. */
+.scr-block-detail-row > td { padding: 0; background: var(--panel2); }
+.scr-block-detail-row .scr-block-table { background: transparent; }
+.scr-block-detail-row .scr-block-table th { background: transparent; }

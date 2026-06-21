@@ -25,7 +25,7 @@ from psycopg.rows import dict_row
 from psycopg_pool import ConnectionPool
 
 from src.api.deps import ChampMap
-from src.api.routers import catalog, draft_stats, drafts, games, matchups, picks, replays, scouting
+from src.api.routers import catalog, draft_stats, drafts, games, matchups, picks, replays, scouting, scrims
 from src.db.conn import db_kwargs
 
 log = logging.getLogger("api")
@@ -100,7 +100,7 @@ def create_app() -> FastAPI:
                 status_code=503, content={"status": "degraded", "db": "down"}
             )
 
-    for module in (catalog, drafts, draft_stats, scouting, games, picks, matchups, replays):
+    for module in (catalog, drafts, draft_stats, scouting, scrims, games, picks, matchups, replays):
         app.include_router(module.router)
 
     return app
