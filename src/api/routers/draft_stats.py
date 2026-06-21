@@ -23,6 +23,7 @@ WHERE g.draft_id IS NOT NULL
   AND (%(rival_id)s::int   IS NULL OR g.team1_id = %(rival_id)s OR g.team2_id = %(rival_id)s)
   AND (%(patch)s::text     IS NULL OR g.version   = %(patch)s)
   AND (%(game_type)s::text  IS NULL OR g.game_type = %(game_type)s)
+  AND (%(game_types)s::text[] IS NULL OR g.game_type = ANY(%(game_types)s))
   AND (%(tournament)s::text IS NULL OR g.tournament = %(tournament)s)
   AND (%(pick_phase)s::text IS NULL OR
        (%(pick_phase)s = 'first'  AND d.first_pick_team_id =  %(team_id)s) OR
@@ -254,6 +255,7 @@ def _base_params(
     pick_phase: str | None,
     game_type: str | None,
     tournament: str | None,
+    game_types: list[str] | None = None,
 ) -> dict:
     return {
         "team_id": team_id,
@@ -261,8 +263,17 @@ def _base_params(
         "patch": patch,
         "pick_phase": pick_phase,
         "game_type": game_type,
+        "game_types": game_types,
         "tournament": tournament,
     }
+
+
+def _parse_game_types(game_types: str | None) -> list[str] | None:
+    """CSV 'OFFICIAL,SCRIM' → ['OFFICIAL','SCRIM']. Vacío/None → None (no filtra)."""
+    if not game_types:
+        return None
+    parsed = [s for s in (p.strip() for p in game_types.split(",")) if s]
+    return parsed or None
 
 
 @router.get("/champion-presence")
@@ -272,6 +283,7 @@ def champion_presence(
     patch: str | None = Query(None),
     pick_phase: str | None = Query(None, pattern="^(first|second)$"),
     game_type: str | None = Query(None),
+    game_types: str | None = Query(None, description="CSV: OFFICIAL,SCRIM"),
     tournament: str | None = None,
     conn: psycopg.Connection = Depends(db_conn),
     champ_map: dict[int, str] = Depends(get_champ_map),
@@ -279,7 +291,10 @@ def champion_presence(
     if pick_phase and team_id is None:
         raise HTTPException(400, "pick_phase requiere team_id")
 
-    params = _base_params(team_id, rival_id, patch, pick_phase, game_type, tournament)
+    params = _base_params(
+        team_id, rival_id, patch, pick_phase, game_type, tournament,
+        _parse_game_types(game_types),
+    )
     with conn.cursor() as cur:
         cur.execute(_PRESENCE_SQL, params)
         rows = cur.fetchall()
@@ -330,6 +345,7 @@ WITH base_ids AS (
     AND (%(rival_id)s::int   IS NULL OR g.team1_id = %(rival_id)s OR g.team2_id = %(rival_id)s)
     AND (%(patch)s::text     IS NULL OR g.version   = %(patch)s)
     AND (%(game_type)s::text  IS NULL OR g.game_type = %(game_type)s)
+    AND (%(game_types)s::text[] IS NULL OR g.game_type = ANY(%(game_types)s))
     AND (%(tournament)s::text IS NULL OR g.tournament = %(tournament)s)
     AND (%(pick_phase)s::text IS NULL OR
          (%(pick_phase)s = 'first'  AND d.first_pick_team_id =  %(team_id)s) OR
@@ -408,6 +424,7 @@ def role_picks(
     patch: str | None = Query(None),
     pick_phase: str | None = Query(None, pattern="^(first|second)$"),
     game_type: str | None = Query(None),
+    game_types: str | None = Query(None, description="CSV: OFFICIAL,SCRIM"),
     tournament: str | None = None,
     conn: psycopg.Connection = Depends(db_conn),
     champ_map: dict[int, str] = Depends(get_champ_map),
@@ -416,7 +433,10 @@ def role_picks(
         raise HTTPException(400, "pick_phase requiere team_id")
 
     sql = _build_role_picks_sql(pick_type)
-    params = _base_params(team_id, rival_id, patch, pick_phase, game_type, tournament)
+    params = _base_params(
+        team_id, rival_id, patch, pick_phase, game_type, tournament,
+        _parse_game_types(game_types),
+    )
     with conn.cursor() as cur:
         cur.execute(sql, params)
         rows = cur.fetchall()
@@ -445,6 +465,7 @@ def role_pick_matchups(
     patch: str | None = Query(None),
     pick_phase: str | None = Query(None, pattern="^(first|second)$"),
     game_type: str | None = Query(None),
+    game_types: str | None = Query(None, description="CSV: OFFICIAL,SCRIM"),
     tournament: str | None = None,
     conn: psycopg.Connection = Depends(db_conn),
     champ_map: dict[int, str] = Depends(get_champ_map),
@@ -454,7 +475,10 @@ def role_pick_matchups(
 
     sql = _build_role_matchup_sql(pick_type)
     params = {
-        **_base_params(team_id, rival_id, patch, pick_phase, game_type, tournament),
+        **_base_params(
+            team_id, rival_id, patch, pick_phase, game_type, tournament,
+            _parse_game_types(game_types),
+        ),
         "champ_id": champ_id,
         "role": role,
     }
@@ -481,6 +505,7 @@ def pick_order(
     patch: str | None = Query(None),
     pick_phase: str | None = Query(None, pattern="^(first|second)$"),
     game_type: str | None = Query(None),
+    game_types: str | None = Query(None, description="CSV: OFFICIAL,SCRIM"),
     tournament: str | None = None,
     conn: psycopg.Connection = Depends(db_conn),
     champ_map: dict[int, str] = Depends(get_champ_map),
@@ -488,7 +513,10 @@ def pick_order(
     if pick_phase and team_id is None:
         raise HTTPException(400, "pick_phase requiere team_id")
 
-    params = _base_params(team_id, rival_id, patch, pick_phase, game_type, tournament)
+    params = _base_params(
+        team_id, rival_id, patch, pick_phase, game_type, tournament,
+        _parse_game_types(game_types),
+    )
     with conn.cursor() as cur:
         cur.execute(_SLOTS_SQL, params)
         slot_rows = cur.fetchall()
@@ -520,3 +548,108 @@ def pick_order(
         for r in role_rows
     ]
     return {"slots": slots, "role_dist": role_dist}
+
+
+# ─── team matchups (más jugados) ────────────────────────────────────────────
+
+# CTE común: ids de partidas del equipo + filtros (multi-fuente). A diferencia
+# del resto del módulo, este endpoint es siempre team-céntrico (team_id obligatorio).
+_TEAM_MATCHUP_BASE = """
+WITH base_ids AS (
+  SELECT g.id, g.team1_id, g.team2_id
+  FROM games g JOIN drafts d ON d.id = g.draft_id
+  WHERE g.draft_id IS NOT NULL
+    AND (g.team1_id = %(team_id)s OR g.team2_id = %(team_id)s)
+    AND (%(game_types)s::text[] IS NULL OR g.game_type = ANY(%(game_types)s))
+    AND (%(patch)s::text      IS NULL OR g.version    = %(patch)s)
+    AND (%(tournament)s::text IS NULL OR g.tournament = %(tournament)s)
+)
+"""
+
+# Una fila por pick del equipo scouteado, emparejada con el rival del mismo
+# carril. LATERAL ... LIMIT 1 deduplica scrims con roles duplicados (igual que
+# matchups.py). "our" = lado del equipo scouteado en cada partida.
+_TEAM_LANE_PAIRS_CTE = _TEAM_MATCHUP_BASE + """,
+lane_pairs AS (
+  SELECT pl.role AS role, our.champ_id AS our_champ,
+         opp.opp_champ, our.result AS won
+  FROM picks our
+  JOIN base_ids g ON g.id = our.game_id
+  JOIN players pl ON pl.id = our.player_id
+  JOIN LATERAL (
+    SELECT o.champ_id AS opp_champ
+    FROM picks o JOIN players plo ON plo.id = o.player_id AND plo.role = pl.role
+    WHERE o.game_id = our.game_id AND o.side <> our.side
+    LIMIT 1
+  ) opp ON true
+  WHERE pl.role IS NOT NULL
+    AND ((g.team1_id = %(team_id)s AND our.side = 'BLUE')
+      OR (g.team2_id = %(team_id)s AND our.side = 'RED'))
+)
+"""
+
+_TEAM_MATCHUP_SQL = _TEAM_LANE_PAIRS_CTE + """
+SELECT role, our_champ, opp_champ,
+  COUNT(*) AS games,
+  COUNT(*) FILTER (WHERE won) AS wins
+FROM lane_pairs
+GROUP BY role, our_champ, opp_champ
+ORDER BY role, games DESC
+"""
+
+# Baseline por (rol, campeón): WR del equipo con ese campeón EN ESE ROL contra
+# TODOS los rivales (incluido el del matchup). Role-specific: un campeón flexeado
+# tiene baseline distinto por rol (antes se mezclaban). El front resta la fila
+# concreta para obtener el "resto de rivales" → el delta excluye el propio matchup.
+_TEAM_BASELINE_SQL = _TEAM_LANE_PAIRS_CTE + """
+SELECT role, our_champ AS champ_id,
+  COUNT(*) AS games,
+  COUNT(*) FILTER (WHERE won) AS wins
+FROM lane_pairs
+GROUP BY role, our_champ
+"""
+
+
+@router.get("/team-matchups")
+def team_matchups(
+    team_id: int = Query(..., description="Equipo a scoutear (obligatorio)"),
+    game_types: str | None = Query(None, description="CSV: OFFICIAL,SCRIM"),
+    patch: str | None = Query(None),
+    tournament: str | None = None,
+    conn: psycopg.Connection = Depends(db_conn),
+    champ_map: dict[int, str] = Depends(get_champ_map),
+):
+    params = {
+        "team_id": team_id,
+        "game_types": _parse_game_types(game_types),
+        "patch": patch,
+        "tournament": tournament,
+    }
+    with conn.cursor() as cur:
+        cur.execute(_TEAM_MATCHUP_SQL, params)
+        mu_rows = cur.fetchall()
+        cur.execute(_TEAM_BASELINE_SQL, params)
+        bl_rows = cur.fetchall()
+
+    matchups: dict[str, list] = {}
+    for r in mu_rows:
+        matchups.setdefault(r["role"], []).append({
+            "our_champ_id": r["our_champ"],
+            "our_champ_name": champ_map.get(r["our_champ"]),
+            "opp_champ_id": r["opp_champ"],
+            "opp_champ_name": champ_map.get(r["opp_champ"]),
+            "games": r["games"],
+            "wins": r["wins"],
+            "win_rate": round(100.0 * r["wins"] / r["games"], 1) if r["games"] else None,
+        })
+
+    # baseline[rol][champ_id] = WR del equipo con ese campeón en ese rol (todos
+    # los rivales). El front resta la fila del matchup para excluirlo.
+    baseline: dict[str, dict[int, dict]] = {}
+    for r in bl_rows:
+        baseline.setdefault(r["role"], {})[r["champ_id"]] = {
+            "games": r["games"],
+            "wins": r["wins"],
+            "win_rate": round(100.0 * r["wins"] / r["games"], 1) if r["games"] else None,
+        }
+    return {"matchups": matchups, "baseline": baseline}

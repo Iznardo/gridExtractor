@@ -7,6 +7,11 @@
   padding: 0 1.2rem 2rem;
 }
 
+/* La ventana Blind/Counter reusa RolePickSection, que ya trae su propio inset
+   horizontal de 1.2rem; dentro de scout-results (también con inset) eso doblaría
+   el margen. Se neutraliza para alinear con el resto de ventanas. */
+.scout-results .rps-section { padding-left: 0; padding-right: 0; }
+
 /* ---- box (un panel envolviendo los tabs) ---- */
 .scout-box {
   background: var(--panel);

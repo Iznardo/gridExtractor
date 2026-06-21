@@ -13,6 +13,7 @@ import type {
   RolePickData,
   ScoutingPool,
   Team,
+  TeamMatchupData,
 } from "./types";
 
 // El catálogo cambia poco: cachéalo agresivamente.
@@ -122,6 +123,7 @@ export type StatsFilters = {
   team_id?: number;
   rival_id?: number;
   game_type?: string;
+  game_types?: string; // CSV multi-fuente: "OFFICIAL,SCRIM"
   pick_phase?: "first" | "second";
   patch?: string;
   tournament?: string;
@@ -178,6 +180,17 @@ export function useRolePickMatchups(
           buildQuery({ ...filters, type, champ_id: champId, role } as QueryParams),
       ),
     enabled: champId != null && role != null,
+  });
+}
+
+export function useTeamMatchups(filters: StatsFilters, enabled = true) {
+  return useQuery({
+    queryKey: ["team-matchups", filters],
+    queryFn: () =>
+      getJSON<TeamMatchupData>(
+        "/draft-stats/team-matchups" + buildQuery(filters as QueryParams),
+      ),
+    enabled,
   });
 }
 

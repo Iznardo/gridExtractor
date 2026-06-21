@@ -1,21 +1,26 @@
 .app-header {
   display: flex;
   align-items: center;
-  gap: 1.4rem;
-  padding: 0.6rem 1.2rem;
+  gap: 1.4em;
+  padding: 0.6em 1.2rem;
   border-bottom: 1px solid var(--border);
   background: var(--panel);
+  /* Barra superior (logo + navegación) congelada a 14px: no escala con el
+     tamaño base de la app (index.css), que se sube para agrandar los datos.
+     Sus hijos usan em o heredan, relativos a este 14px. El padding horizontal
+     queda en rem para alinear con el contenido de las páginas. */
+  font-size: 14px;
 }
 
 .app-header h1 {
-  font-size: 1.05rem;
+  font-size: 1.05em;
   margin: 0;
   font-weight: 600;
 }
 
 .app-nav {
   display: flex;
-  gap: 0.3rem;
+  gap: 0.3em;
 }
 .app-nav a {
   color: var(--muted);
@@ -36,6 +41,6 @@
 
 .api-base {
   margin-left: auto;
-  font-size: 0.78rem;
+  font-size: 0.78em;
   font-family: ui-monospace, Consolas, monospace;
 }

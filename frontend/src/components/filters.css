@@ -1,10 +1,16 @@
 .filter-bar {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.9rem;
+  gap: 0.9em;
   align-items: flex-end;
-  padding: 1rem 1.2rem;
+  padding: 1em 1.2rem;
   border-bottom: 1px solid var(--border);
+  /* La barra de filtros se congela a 14px aunque el tamaño base de la app suba
+     (index.css). Los controles (input/select) usan `font: inherit` y las
+     etiquetas/dropdown usan em — todos relativos a este 14px. Gap y padding
+     vertical en em (alto congelado); padding horizontal en rem para mantener la
+     alineación con el contenido. */
+  font-size: 14px;
 }
 
 .field {
@@ -13,7 +19,7 @@
   gap: 4px;
 }
 .field-label {
-  font-size: 0.72rem;
+  font-size: 0.72em;
   text-transform: uppercase;
   color: var(--muted);
   letter-spacing: 0.04em;
@@ -55,14 +61,14 @@
   white-space: nowrap;
   transition: background 100ms ease-out;
 }
-.champ-opt .cn { font-size: 0.85rem; }
+.champ-opt .cn { font-size: 0.85em; }
 /* Activa: tinte translúcido del acento (no relleno sólido) — legible y on-brand. */
 .champ-opt.active { background: rgba(59, 130, 246, 0.18); }
 
 .champ-none {
   padding: 6px 8px;
   color: var(--muted);
-  font-size: 0.82rem;
+  font-size: 0.82em;
   font-style: italic;
 }
 

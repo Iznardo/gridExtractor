@@ -29,7 +29,12 @@
 
   color-scheme: dark;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  font-size: 14px;
+  /* Tamaño base de la app. Todo el contenido de datos usa rem, así que esta es
+     la palanca única para escalar la densidad de lectura. Subido a 18px (≈130%
+     del 14px original) para que los datos se lean cómodos en portátil. La barra
+     superior (App.css) y la de filtros (filters.css) se congelan a 14px aparte
+     para que NO crezcan con esto: solo crecen los datos. */
+  font-size: 18px;
 }
 
 * { box-sizing: border-box; }

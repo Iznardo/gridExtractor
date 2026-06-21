@@ -1,12 +1,15 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { useSearchParams } from "react-router-dom";
 
-import { useScouting, useTeams } from "../api/hooks";
+import { useScouting, useTeams, type StatsFilters } from "../api/hooks";
 import type { Medium, ScoutPlayer, ScoutingPool } from "../api/types";
 import { Field, FilterBar } from "../components/Field";
 import { ChampIcon } from "../components/icons";
+import { SourceChips } from "../components/SourceChips";
 import { Tabs } from "../components/Tabs";
 import { TeamPicker } from "../components/TeamPicker";
+import { RolePickSection } from "./RolePickSection";
+import { TeamMatchups } from "./TeamMatchups";
 import "./scouting.css";
 
 // ---- constantes ----
@@ -32,8 +35,12 @@ const MEDIUM_LABELS: Record<Medium, string> = {
 const CHAMP_LIMIT = 5;
 const WR_MIN_GAMES = 3;
 
+// Sub-pestañas del pool de campeones (dentro de la ventana "Pool").
 const TAB_IDS = ["oficial", "scrim", "soloq", "agregado"] as const;
 type TabId = (typeof TAB_IDS)[number];
+
+// Ventanas de primer nivel de Scouting (?view=).
+const VIEW_IDS = ["pool", "matchups", "blindcounter"] as const;
 
 // ---- agregado ----
 
@@ -241,26 +248,42 @@ function AggregadoBox({
 
   return (
     <>
-      <div className="agg-source-bar">
-        <span className="agg-source-label">Fuentes:</span>
-        {ALL_MEDIUMS.map((m) => (
-          <button
-            key={m}
-            type="button"
-            aria-pressed={sources.has(m)}
-            className={"agg-chip" + (sources.has(m) ? " active" : "")}
-            onClick={() => onToggle(m)}
-          >
-            {MEDIUM_LABELS[m]}
-          </button>
-        ))}
-        {sources.size < ALL_MEDIUMS.length && (
-          <span className="agg-partial-notice">
-            Mostrando {sources.size}/{ALL_MEDIUMS.length} fuentes
-          </span>
-        )}
-      </div>
+      <SourceChips all={ALL_MEDIUMS} labels={MEDIUM_LABELS} active={sources} onToggle={onToggle} />
       <MediumBox players={aggPlayers} />
+    </>
+  );
+}
+
+// ---- pestañas de draft (Matchups, Blind/Counter): solo OFFICIAL + SCRIM ----
+
+const DRAFT_MEDIUMS: Medium[] = ["official", "scrim"];
+const MEDIUM_TO_GAME_TYPE: Record<Medium, string> = {
+  official: "OFFICIAL",
+  scrim: "SCRIM",
+  soloq: "SOLOQ",
+};
+
+function DraftTab({
+  teamId,
+  sources,
+  onToggle,
+  children,
+}: {
+  teamId: number;
+  sources: Set<Medium>;
+  onToggle: (m: Medium) => void;
+  children: (filters: StatsFilters) => ReactNode;
+}) {
+  const filters: StatsFilters = {
+    team_id: teamId,
+    game_types: DRAFT_MEDIUMS.filter((m) => sources.has(m))
+      .map((m) => MEDIUM_TO_GAME_TYPE[m])
+      .join(","),
+  };
+  return (
+    <>
+      <SourceChips all={DRAFT_MEDIUMS} labels={MEDIUM_LABELS} active={sources} onToggle={onToggle} />
+      {children(filters)}
     </>
   );
 }
@@ -276,6 +299,10 @@ export function Scouting() {
   const [submitError, setSubmitError] = useState("");
 
   const activeTab = (params.get("tab") as TabId) ?? "oficial";
+  const viewParam = params.get("view");
+  const activeView = (VIEW_IDS as readonly string[]).includes(viewParam ?? "")
+    ? (viewParam as (typeof VIEW_IDS)[number])
+    : "pool";
   const appliedTeamId = params.get("team") ? Number(params.get("team")) : null;
   const appliedDateFrom = params.get("dateFrom") || undefined;
 
@@ -284,6 +311,12 @@ export function Scouting() {
   const activeSources: Set<Medium> = sourcesParam
     ? new Set(sourcesParam.split(",").filter((s): s is Medium => (ALL_MEDIUMS as string[]).includes(s)))
     : new Set(ALL_MEDIUMS);
+
+  // Fuentes de las pestañas de draft (?dsources=official,scrim) — sin soloq.
+  const dsourcesParam = params.get("dsources");
+  const draftSources: Set<Medium> = dsourcesParam
+    ? new Set(dsourcesParam.split(",").filter((s): s is Medium => (DRAFT_MEDIUMS as string[]).includes(s)))
+    : new Set(DRAFT_MEDIUMS);
 
   const { data: pool, isFetching, error, refetch } = useScouting(appliedTeamId, appliedDateFrom);
 
@@ -307,6 +340,13 @@ export function Scouting() {
     setParams(next);
   }
 
+  function handleViewChange(id: string) {
+    const next = new URLSearchParams(params);
+    if (id === "pool") next.delete("view"); // estado por defecto, no ensuciar URL
+    else next.set("view", id);
+    setParams(next);
+  }
+
   function toggleSource(m: Medium) {
     if (activeSources.has(m) && activeSources.size === 1) return;
     const next = new Set(activeSources);
@@ -320,7 +360,21 @@ export function Scouting() {
     setParams(nextParams);
   }
 
-  const tabs = [
+  function toggleDraftSource(m: Medium) {
+    if (draftSources.has(m) && draftSources.size === 1) return;
+    const next = new Set(draftSources);
+    next.has(m) ? next.delete(m) : next.add(m);
+    const nextParams = new URLSearchParams(params);
+    if (next.size === DRAFT_MEDIUMS.length) {
+      nextParams.delete("dsources"); // estado por defecto, no ensuciar URL
+    } else {
+      nextParams.set("dsources", Array.from(next).join(","));
+    }
+    setParams(nextParams);
+  }
+
+  // Sub-pestañas del pool de campeones (fuentes), dentro de la ventana "Pool".
+  const poolTabs = [
     {
       id: "oficial",
       label: "Oficiales",
@@ -342,6 +396,44 @@ export function Scouting() {
         ? `Agregado (${activeSources.size}/${ALL_MEDIUMS.length})`
         : "Agregado",
       content: pool ? <AggregadoBox pool={pool} sources={activeSources} onToggle={toggleSource} /> : null,
+    },
+  ];
+
+  // Contenido de la ventana "Pool": skeleton mientras carga, luego el box de tabs.
+  const poolWindow = isFetching ? (
+    <ScoutingSkeleton />
+  ) : pool ? (
+    <div className="scout-box">
+      <Tabs tabs={poolTabs} value={activeTab} onChange={handleTabChange} />
+    </div>
+  ) : null;
+
+  // Ventanas de primer nivel. Matchups y Blind/Counter son independientes del
+  // pool (su propia carga); solo OFFICIAL+SCRIM (sin soloq).
+  const windowTabs = [
+    { id: "pool", label: "Pool de campeones", content: poolWindow },
+    {
+      id: "matchups",
+      label: "Matchups",
+      content: appliedTeamId != null ? (
+        <DraftTab teamId={appliedTeamId} sources={draftSources} onToggle={toggleDraftSource}>
+          {(filters) => <TeamMatchups filters={filters} />}
+        </DraftTab>
+      ) : null,
+    },
+    {
+      id: "blindcounter",
+      label: "Blind/Counter",
+      content: appliedTeamId != null ? (
+        <DraftTab teamId={appliedTeamId} sources={draftSources} onToggle={toggleDraftSource}>
+          {(filters) => (
+            <>
+              <RolePickSection type="blind" filters={filters} initialLimit={10} />
+              <RolePickSection type="counter" filters={filters} initialLimit={5} />
+            </>
+          )}
+        </DraftTab>
+      ) : null,
     },
   ];
 
@@ -371,26 +463,22 @@ export function Scouting() {
       )}
 
       <p
-        className={"status" + (error ? " error" : "")}
+        className={"status" + (error && activeView === "pool" ? " error" : "")}
         role="status"
         aria-live="polite"
       >
-        {error
-          ? <>{(error as Error).message} <button type="button" className="btn-ghost btn-ghost-sm" onClick={() => refetch()}>Reintentar</button></>
-          : appliedTeamId == null
-            ? "Elige un equipo para empezar."
-            : isFetching
+        {appliedTeamId == null
+          ? "Elige un equipo para empezar."
+          : activeView === "pool" && error
+            ? <>{(error as Error).message} <button type="button" className="btn-ghost btn-ghost-sm" onClick={() => refetch()}>Reintentar</button></>
+            : activeView === "pool" && isFetching
               ? "Cargando…"
               : " "}
       </p>
 
-      {isFetching && appliedTeamId != null && <ScoutingSkeleton />}
-
-      {pool && appliedTeamId != null && !isFetching && (
+      {appliedTeamId != null && (
         <div className="scout-results">
-          <div className="scout-box">
-            <Tabs tabs={tabs} value={activeTab} onChange={handleTabChange} />
-          </div>
+          <Tabs tabs={windowTabs} value={activeView} onChange={handleViewChange} />
         </div>
       )}
     </div>

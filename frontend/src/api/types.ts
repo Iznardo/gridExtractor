@@ -198,6 +198,25 @@ export type PickOrderData = {
   role_dist: RoleDistEntry[];
 };
 
+// ---- /draft-stats/team-matchups ----
+export type TeamMatchupEntry = {
+  our_champ_id: number;
+  our_champ_name: string | null;
+  opp_champ_id: number;
+  opp_champ_name: string | null;
+  games: number;
+  wins: number;
+  win_rate: number | null;
+};
+export type BaselineEntry = { games: number; wins: number; win_rate: number | null };
+export type TeamMatchupData = {
+  /** Keyed by role (TOP/JUNGLE/MID/ADC/SUPPORT). */
+  matchups: Partial<Record<string, TeamMatchupEntry[]>>;
+  /** role → champ_id → WR del equipo con ese campeón EN ESE ROL (todos los
+   *  rivales). El front resta la fila del matchup para excluirlo del delta. */
+  baseline: Partial<Record<string, Record<number, BaselineEntry>>>;
+};
+
 // ---- /scouting/champion-pool ----
 export type ScoutChampion = {
   champion: { id: number; name: string };
