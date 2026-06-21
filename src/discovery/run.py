@@ -28,7 +28,7 @@ import logging
 import os
 import sys
 from pathlib import Path
-from typing import Any, Generator
+from typing import Any
 
 import yaml
 from dotenv import load_dotenv
@@ -37,7 +37,7 @@ from grid_minion import GridError, GridGraphQLClient
 from src.db.conn import get_conn
 from src.db.upsert import ensure_player, ensure_team
 
-from src.common.graphql import paginate as _paginate_common
+from src.common.graphql import paginate
 from src.common.roles import normalize_role
 
 from .queries import PLAYERS_BY_TEAM, SERIES_BY_TOURNAMENTS, TOURNAMENTS_BY_NAME
@@ -73,17 +73,8 @@ def build_client() -> GridGraphQLClient:
 
 
 # ---------------------------------------------------------------------------
-# GraphQL: paginacion Relay generica + queries especificas
+# GraphQL: queries especificas (paginacion Relay en src.common.graphql)
 # ---------------------------------------------------------------------------
-
-def _paginate(
-    client: GridGraphQLClient,
-    query: str,
-    root_key: str,
-    variables: dict[str, Any],
-) -> Generator[dict, None, None]:
-    """Alias local hacia src.common.graphql.paginate."""
-    yield from _paginate_common(client, query, root_key, variables)
 
 
 def resolve_tournament_id(
@@ -154,7 +145,7 @@ def accumulate_players(
     evitar asociaciones erroneas si un jugador cambio de equipo recientemente.
     """
     for team_grid_id in teams_by_grid:
-        for p in _paginate(client, PLAYERS_BY_TEAM, "players",
+        for p in paginate(client, PLAYERS_BY_TEAM, "players",
                            {"teamId": str(team_grid_id)}):
             pid = p.get("id")
             if pid is None:
@@ -185,18 +176,24 @@ def write_to_db(
     with get_conn() as conn:
         team_grid_to_local: dict[int, int] = {}
         for t in teams_by_grid.values():
+            # Guard: GRID puede no aportar name; teams.name es NOT NULL y un
+            # None tumbaria el unico commit del discovery (mismo fallback que
+            # usa el extractor por partida).
+            name = t["name"] or f"Team_{t['grid_id']}"
             local_id, is_new = ensure_team(
-                conn, grid_id=t["grid_id"], name=t["name"], tag=t["tag"],
+                conn, grid_id=t["grid_id"], name=name, tag=t["tag"],
             )
             team_grid_to_local[t["grid_id"]] = local_id
             teams_new += is_new
 
         for p in players_by_grid.values():
             team_local = team_grid_to_local.get(p["team_grid_id"])
+            # Guard analogo: players.name es NOT NULL.
+            nickname = p["nickname"] or f"Player_{p['grid_id']}"
             _, is_new = ensure_player(
                 conn,
                 grid_id=p["grid_id"],
-                nickname=p["nickname"],
+                nickname=nickname,
                 team_local_id=team_local,
                 role=p.get("role"),
             )
@@ -242,7 +239,7 @@ def main() -> int:
         log.info("Torneo %r -> id %s. Descubriendo equipos...", name, tid)
         try:
             accumulate_teams(
-                _paginate(client, SERIES_BY_TOURNAMENTS, "allSeries", {"tid": tid}),
+                paginate(client, SERIES_BY_TOURNAMENTS, "allSeries", {"tid": tid}),
                 teams_by_grid,
             )
         except GridError as e:

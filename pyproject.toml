@@ -1,0 +1,12 @@
+[tool.pytest.ini_options]
+# Limita la recoleccion a tests/ — sin esto, `pytest` (sin args) recursa en
+# postgres_data/ (volumen de Docker, propiedad de root) y muere con
+# PermissionError al intentar leer ficheros del contenedor.
+testpaths = ["tests"]
+norecursedirs = [
+    "postgres_data",
+    "data",
+    ".venv",
+    "frontend",
+    "*.egg-info",
+]

@@ -15,7 +15,9 @@ services:
       POSTGRES_PASSWORD: ${PGPASSWORD}
       POSTGRES_DB: ${PGDATABASE}
     ports:
-      - "${PGPORT}:5432"
+      # Bind solo a localhost: la BD no se expone a la red. Suficiente para
+      # DBeaver y la API (que dentro de compose usa el host interno `db`).
+      - "127.0.0.1:${PGPORT}:5432"
     volumes:
       - ./postgres_data:/var/lib/postgresql/data
       - ./db/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro

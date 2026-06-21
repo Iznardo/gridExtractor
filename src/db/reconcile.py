@@ -51,9 +51,11 @@ def reconcile_player_roster(
 
         last_update = row[0]  # puede ser None (jugador recien creado)
 
-        # 2. Proteccion de orden cronologico: no reconciliar si la partida
-        #    es anterior o igual a la ultima ya reconciliada.
-        if last_update is not None and game_date <= last_update.date():
+        # 2. Proteccion de orden cronologico: no reconciliar si la partida es
+        #    ANTERIOR a la ultima ya reconciliada. Las del mismo dia si pasan:
+        #    como el caller procesa en orden cronologico global por
+        #    startTimeScheduled (§5.5), la ultima del dia gana correctamente.
+        if last_update is not None and game_date < last_update.date():
             return
 
         # 3. Actualizar campos posicionales del jugador.

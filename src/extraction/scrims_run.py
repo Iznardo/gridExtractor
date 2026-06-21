@@ -26,7 +26,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from grid_minion import GridError, GridRestClient
 
-from src.common.champions import build_lookup, ensure_loaded
+from src.common.champions import build_lookup, ensure_loaded, refresh_champions
 from src.db.conn import get_conn
 from src.discovery.run import build_client as build_graphql_client
 
@@ -68,7 +68,14 @@ def main() -> int:
     totals = RunStats()
 
     with get_conn() as conn:
-        ensure_loaded(conn)
+        # audit #3: refrescar champions en cada corrida (idempotente). Si Data
+        # Dragon no responde, caer a lo que haya en BD.
+        try:
+            refresh_champions(conn)
+        except Exception as e:
+            log.warning("No se pudo refrescar champions desde Data Dragon "
+                        "(%s); uso lo que haya en BD.", e)
+            ensure_loaded(conn)
         champ_lookup = build_lookup(conn)
         log.info("Champions cargados: %d en lookup.", len(champ_lookup) // 2)
 

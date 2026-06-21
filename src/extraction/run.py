@@ -19,7 +19,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from grid_minion import GridError, GridRestClient
 
-from src.common.champions import build_lookup, ensure_loaded
+from src.common.champions import build_lookup, ensure_loaded, refresh_champions
 from src.db.conn import get_conn
 from src.discovery.run import build_client as build_graphql_client
 from src.discovery.run import load_tournament_names, resolve_tournament_id
@@ -84,14 +84,31 @@ def main() -> int:
     totals = RunStats()
 
     with get_conn() as conn:
-        # Bootstrap: cargar tabla champions si esta vacia
-        ensure_loaded(conn)
+        # audit #3: refrescar el catalogo de campeones en cada corrida (barato
+        # e idempotente) para no perder partidas donde se jugo un campeon nuevo.
+        # Si Data Dragon no responde, caer a lo que haya en BD.
+        try:
+            refresh_champions(conn)
+        except Exception as e:
+            log.warning("No se pudo refrescar champions desde Data Dragon "
+                        "(%s); uso lo que haya en BD.", e)
+            ensure_loaded(conn)
         champ_lookup = build_lookup(conn)
         log.info("Champions cargados: %d en lookup.", len(champ_lookup) // 2)
 
         role_cache = RoleCache(client_gql)
 
-        for series_node in iter_official_series(client_gql, tournament_ids, since_iso):
+        # §5.5: orden cronologico GLOBAL entre torneos (no solo dentro de cada
+        # uno) para que la reconciliacion posicional nunca aplique roster
+        # caducado. startTimeScheduled es ISO 8601 -> orden lexicografico valido.
+        all_series = sorted(
+            iter_official_series(client_gql, tournament_ids, since_iso),
+            key=lambda s: s.get("startTimeScheduled") or "",
+        )
+        log.info("Series a procesar (orden cronologico global): %d",
+                 len(all_series))
+
+        for series_node in all_series:
             try:
                 r = process_series(
                     client_rest, client_gql, conn,
