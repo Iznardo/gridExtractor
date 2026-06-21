@@ -22,7 +22,7 @@ function TeamHead({ team, phase, result }: { team: TeamSide; phase: "fp" | "sp";
   return (
     <div className={"dh-team " + phase}>
       <span className="dh-name">{team ? team.tag ?? team.name : "(?)"}</span>
-      {team?.side && <span className={"pill " + team.side}>{team.side}</span>}
+      {team?.side && <span className={"pill dh-side " + team.side}>{team.side}</span>}
       {win && <span className="pill win">W</span>}
     </div>
   );
@@ -73,15 +73,16 @@ export function DraftBoardSkeleton() {
   return (
     <div className="draftboard skeleton" aria-hidden="true">
       <div className="db-head">
-        <div className="dh-team fp">
-          <span className="sk-line" style={{ width: "55%", height: 12 }} />
-        </div>
         <div className="db-meta">
-          <span className="sk-line" style={{ width: 40, height: 8 }} />
-          <span className="sk-line" style={{ width: 30, height: 8 }} />
+          <span className="sk-line" style={{ width: 120, height: 8 }} />
         </div>
-        <div className="dh-team sp">
-          <span className="sk-line" style={{ width: "55%", height: 12 }} />
+        <div className="db-teams">
+          <div className="dh-team fp">
+            <span className="sk-line" style={{ width: "55%", height: 12 }} />
+          </div>
+          <div className="dh-team sp">
+            <span className="sk-line" style={{ width: "55%", height: 12 }} />
+          </div>
         </div>
       </div>
       {SK_KINDS.map((kind, i) => (
@@ -103,17 +104,26 @@ export function DraftBoardSkeleton() {
 export function DraftBoard({ d }: { d: Draft }) {
   const fp = d.first_pick_team;
   const sp = secondPickTeam(d);
+  // Arriba mostramos el torneo recortado hasta el primer "-" (en scrims es
+  // "SCRIM"); no mostramos el game_type ("OFFICIAL"). El nombre completo va
+  // debajo de los equipos, solo si difiere del recorte (evita duplicar "SCRIM").
+  const tournFull = d.tournament ?? null;
+  const tournShort = tournFull ? tournFull.split("-")[0].trim() : null;
   return (
     <div className="draftboard">
       <div className="db-head">
-        <TeamHead team={fp} phase="fp" result={d.result} />
         <div className="db-meta">
           <span>{d.date}</span>
-          <span className="muted">{d.game_type}</span>
+          {tournShort && <span className="muted db-tourn">{tournShort}</span>}
           {d.version && <span className="muted">v{d.version}</span>}
-          {d.tournament && <span className="muted db-tourn">{d.tournament}</span>}
         </div>
-        <TeamHead team={sp} phase="sp" result={d.result} />
+        <div className="db-teams">
+          <TeamHead team={fp} phase="fp" result={d.result} />
+          <TeamHead team={sp} phase="sp" result={d.result} />
+        </div>
+        {tournFull && tournFull !== tournShort && (
+          <div className="db-tourn-full">{tournFull}</div>
+        )}
       </div>
 
       <PhaseRows d={d} kind="bans" idx={[0, 1, 2]} />

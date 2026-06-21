@@ -264,9 +264,13 @@ export function Drafts() {
             label: "Drafts",
             content: (
               <>
-                <p className={"status" + (error ? " error" : "")} role="status" aria-live="polite">
-                  {error ? "Error al cargar." : isFetching ? "Buscando…" : `${drafts?.length ?? 0} drafts.`}
-                </p>
+                {/* Solo feedback transitorio: el contador "N drafts" sobra
+                    porque el límite lo elige el usuario en el filtro "Mostrar". */}
+                {(isFetching || error) && (
+                  <p className={"status" + (error ? " error" : "")} role="status" aria-live="polite">
+                    {error ? "Error al cargar." : "Buscando…"}
+                  </p>
+                )}
                 {results}
               </>
             ),
