@@ -110,4 +110,11 @@ CREATE INDEX idx_games_game_type  ON games(game_type);
 CREATE INDEX idx_picks_game_id    ON picks(game_id);
 CREATE INDEX idx_picks_player_id  ON picks(player_id);
 
+-- Indices para la API read-only (= migracion 003; aqui para instalaciones nuevas).
+CREATE INDEX idx_picks_champ_id   ON picks(champ_id);
+CREATE INDEX idx_games_team1_id   ON games(team1_id);
+CREATE INDEX idx_games_team2_id   ON games(team2_id);
+CREATE INDEX idx_games_version    ON games(version);
+CREATE INDEX idx_games_tournament ON games(tournament);
+
 COMMIT;

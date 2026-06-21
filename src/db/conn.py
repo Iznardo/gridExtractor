@@ -16,16 +16,24 @@ import psycopg
 
 
 
+def db_kwargs() -> dict:
+    """Parametros de conexion a Postgres desde el entorno.
+
+    Compartido por get_conn (extractores, autocommit=False) y por el pool
+    read-only de la API (que ademas fija autocommit=True y row_factory).
+    """
+    return {
+        "host": os.environ.get("PGHOST", "localhost"),
+        "port": int(os.environ.get("PGPORT", "5432")),
+        "user": os.environ["PGUSER"],
+        "password": os.environ["PGPASSWORD"],
+        "dbname": os.environ["PGDATABASE"],
+    }
+
+
 @contextmanager
 def get_conn() -> Iterator[psycopg.Connection]:
-    conn = psycopg.connect(
-        host=os.environ.get("PGHOST", "localhost"),
-        port=int(os.environ.get("PGPORT", "5432")),
-        user=os.environ["PGUSER"],
-        password=os.environ["PGPASSWORD"],
-        dbname=os.environ["PGDATABASE"],
-        autocommit=False,
-    )
+    conn = psycopg.connect(**db_kwargs(), autocommit=False)
     try:
         yield conn
     finally:

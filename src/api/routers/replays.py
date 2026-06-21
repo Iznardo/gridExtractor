@@ -20,11 +20,8 @@ import os
 import re
 
 import requests
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
-from psycopg.rows import dict_row
-
-from src.db.conn import get_conn
 
 log = logging.getLogger("api.replays")
 router = APIRouter(tags=["replays"])
@@ -54,16 +51,16 @@ def _filename(row: dict) -> str:
 
 
 @router.get("/games/{game_id}/replay")
-def download_replay(game_id: int):
+def download_replay(game_id: int, request: Request):
     api_key = os.environ.get("GRID_API_KEY")
     if not api_key:
         log.error("GRID_API_KEY ausente en el entorno de la API.")
         raise HTTPException(503, "Descarga de replays no configurada en el servidor.")
 
-    # Conexion corta solo para resolver la serie/numero; se cierra antes de
-    # empezar el streaming (no retenemos conexion de BD durante la descarga).
-    with get_conn() as conn:
-        conn.row_factory = dict_row
+    # Conexion corta del pool solo para resolver la serie/numero; se devuelve al
+    # pool ANTES de empezar el streaming (no retenemos conexion durante la
+    # descarga, que puede durar minutos y agotaria el pool).
+    with request.app.state.pool.connection() as conn:
         with conn.cursor() as cur:
             cur.execute(_META_SQL, {"game_id": game_id})
             row = cur.fetchone()

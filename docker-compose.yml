@@ -54,5 +54,12 @@ services:
     volumes:
       # Codigo en vivo: editar src/ recarga la API sin reconstruir la imagen.
       - ./src:/app/src:ro
+    healthcheck:
+      # /health devuelve 503 si la BD no responde; urlopen lanza en !=200.
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     command:
       ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

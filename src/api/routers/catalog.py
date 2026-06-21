@@ -40,10 +40,23 @@ def list_tournaments(conn: psycopg.Connection = Depends(db_conn)):
 
 @router.get("/patches")
 def list_patches(conn: psycopg.Connection = Depends(db_conn)):
+    # Orden semantico (major.minor) por numero, no lexicografico: si no, "16.9"
+    # saldria por encima de "16.12". Solo versiones con formato N.N; el resto
+    # (p. ej. 'Unknown', ya excluido) caeria fuera del split numerico.
     with conn.cursor() as cur:
         cur.execute(
-            "SELECT DISTINCT version FROM games "
-            "WHERE version IS NOT NULL AND version != 'Unknown' ORDER BY version DESC"
+            """
+            SELECT version FROM (
+              SELECT DISTINCT version,
+                     split_part(version, '.', 1)::int AS major,
+                     split_part(version, '.', 2)::int AS minor
+              FROM games
+              WHERE version IS NOT NULL
+                AND version <> 'Unknown'
+                AND version ~ '^[0-9]+\\.[0-9]+$'
+            ) v
+            ORDER BY major DESC, minor DESC
+            """
         )
         return [r["version"] for r in cur.fetchall()]
 
@@ -59,8 +72,8 @@ def list_players(
             """
             SELECT id, name, role, team_id, starter
             FROM players
-            WHERE (%(team_id)s IS NULL OR team_id = %(team_id)s)
-              AND (%(role)s    IS NULL OR role    = %(role)s)
+            WHERE (%(team_id)s::int  IS NULL OR team_id = %(team_id)s::int)
+              AND (%(role)s::text    IS NULL OR role    = %(role)s::text)
             ORDER BY name
             """,
             {"team_id": team_id, "role": role},

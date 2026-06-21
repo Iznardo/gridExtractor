@@ -19,6 +19,9 @@ router = APIRouter(tags=["draft-stats"], prefix="/draft-stats")
 _BASE_FROM = """
 FROM games g JOIN drafts d ON d.id = g.draft_id
 WHERE g.draft_id IS NOT NULL
+  -- audit M2: solo partidas con ganador; una NONE contaria como derrota para
+  -- todos los picks y sesgaria el win_rate (y el denominador de presencia).
+  AND g.result IN ('BLUE','RED')
   AND (%(team_id)s::int    IS NULL OR g.team1_id = %(team_id)s  OR g.team2_id = %(team_id)s)
   AND (%(rival_id)s::int   IS NULL OR g.team1_id = %(rival_id)s OR g.team2_id = %(rival_id)s)
   AND (%(patch)s::text     IS NULL OR g.version   = %(patch)s)
@@ -341,6 +344,7 @@ WITH base_ids AS (
   SELECT g.id, g.team1_id, g.team2_id
   FROM games g JOIN drafts d ON d.id = g.draft_id
   WHERE g.draft_id IS NOT NULL
+    AND g.result IN ('BLUE','RED')  -- audit M2: excluir NONE del win_rate
     AND (%(team_id)s::int    IS NULL OR g.team1_id = %(team_id)s  OR g.team2_id = %(team_id)s)
     AND (%(rival_id)s::int   IS NULL OR g.team1_id = %(rival_id)s OR g.team2_id = %(rival_id)s)
     AND (%(patch)s::text     IS NULL OR g.version   = %(patch)s)
@@ -559,6 +563,7 @@ WITH base_ids AS (
   SELECT g.id, g.team1_id, g.team2_id
   FROM games g JOIN drafts d ON d.id = g.draft_id
   WHERE g.draft_id IS NOT NULL
+    AND g.result IN ('BLUE','RED')  -- audit M2: excluir NONE del win_rate
     AND (g.team1_id = %(team_id)s OR g.team2_id = %(team_id)s)
     AND (%(game_types)s::text[] IS NULL OR g.game_type = ANY(%(game_types)s))
     AND (%(patch)s::text      IS NULL OR g.version    = %(patch)s)
