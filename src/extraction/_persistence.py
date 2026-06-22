@@ -30,8 +30,10 @@ from grid_minion.observers import (
     BuildObserver,
     DraftObserver,
     GameEventProcessor,
+    MidGameStatsObserver,
     ObjectiveKilledObserver,
     PostGameObserver,
+    SoloKillObserver,
     TeamsObserver,
     WardsObserver,
 )
@@ -333,6 +335,7 @@ def insert_game(
     game_stats: dict,
     objs_data: dict,
     wards_data: list,
+    solokills_data: list,
     game_type: str,
     tournament: str | None,
 ) -> int | None:
@@ -349,6 +352,7 @@ def insert_game(
         "meta":       game_stats.get("meta", {}),
         "objectives": objs_data,
         "wards":      wards_data,
+        "solokills":  solokills_data,
     }
 
     with conn.cursor() as cur:
@@ -391,15 +395,17 @@ def insert_picks(
     champ_lookup: dict[str, int],
     draft_data: dict,
     builds_data: dict[int, dict] | None = None,
+    midgame_data: dict[int, dict] | None = None,
 ) -> None:
     """Inserta 10 filas en picks (una por participante).
 
-    `builds_data` es la salida de `BuildObserver.get_builds()` (v0.2.0):
-    `{participantId: {"build_path": [...], "skill_order": "..."}}`. Puede ser
-    None / vacio si la partida no traia riot_livestats.
+    `builds_data`: salida de `BuildObserver.get_builds()` — `{pid: {build_path, skill_order}}`.
+    `midgame_data`: salida de `MidGameStatsObserver.get_mid_game_stats()` — `{pid: {marks: {7: {...}, 14: {...}}}}`.
+    Ambos pueden ser None/vacío si no había riot_livestats.
     """
     players_stats = game_stats.get("players") or {}
     builds_data   = builds_data or {}
+    midgame_data  = midgame_data or {}
 
     with conn.cursor() as cur:
         for p in participants:
@@ -426,10 +432,12 @@ def insert_picks(
 
             p_stats = players_stats.get(p.riot_id) or {}
             b_stats = builds_data.get(p.riot_id) or {}
+            m_stats = midgame_data.get(p.riot_id) or {}
             # Contrato alineado con SoloQ (CLAUDE.md §10). runes/final_items
             # salen del PostGameObserver (Riot summary); skill_order/build_path
-            # del BuildObserver (Riot livestats). Quedan fuera de alcance en
-            # GRID: team_position, champ_level, vision_score, summoner_spells.
+            # del BuildObserver (Riot livestats); midgame del MidGameStatsObserver.
+            # Quedan fuera de alcance en GRID: team_position, champ_level,
+            # vision_score, summoner_spells.
             stats_json = {
                 "kills":        p_stats.get("kills"),
                 "deaths":       p_stats.get("deaths"),
@@ -442,6 +450,7 @@ def insert_picks(
                 "final_items":  p_stats.get("final_items"),
                 "skill_order":  b_stats.get("skill_order") or None,
                 "build_path":   b_stats.get("build_path") or None,
+                "midgame":      m_stats.get("marks") or None,
             }
 
             cur.execute(
@@ -491,16 +500,18 @@ class GameProcessingConfig:
 
 def _build_processor():
     """Crea el processor y los observers en el orden correcto (§ libreria)."""
-    proc   = GameEventProcessor()
-    teams  = TeamsObserver()
-    draft  = DraftObserver()
-    stats  = PostGameObserver()
-    objs   = ObjectiveKilledObserver()
-    wards  = WardsObserver(teams_observer=teams)
-    builds = BuildObserver()
-    for o in (teams, draft, stats, objs, wards, builds):
+    proc    = GameEventProcessor()
+    teams   = TeamsObserver()
+    draft   = DraftObserver()
+    stats   = PostGameObserver()
+    objs    = ObjectiveKilledObserver()
+    wards   = WardsObserver(teams_observer=teams)
+    builds  = BuildObserver()
+    midgame = MidGameStatsObserver()
+    solos   = SoloKillObserver(teams_observer=teams)
+    for o in (teams, draft, stats, objs, wards, builds, midgame, solos):
         proc.attach(o)
-    return proc, teams, draft, stats, objs, wards, builds
+    return proc, teams, draft, stats, objs, wards, builds, midgame, solos
 
 
 def _gather_participants(teams: TeamsObserver) -> list:
@@ -547,7 +558,7 @@ def process_one_game(
     Devuelve True si se inserto, False si se salto. Lanza GameAlreadyInDB
     si insert_game choca con ON CONFLICT (para hacer rollback del savepoint).
     """
-    proc, teams, draft, stats, objs, wards, builds = _build_processor()
+    proc, teams, draft, stats, objs, wards, builds, midgame, solos = _build_processor()
 
     proc.process_bundle(
         grid_game_state=grid_game_state,
@@ -675,6 +686,7 @@ def process_one_game(
         game_stats=game_stats,
         objs_data=objs.get_all_objectives(),
         wards_data=wards.get_wards(),
+        solokills_data=solos.get_solokills(),
         game_type=cfg.game_type,
         tournament=cfg.tournament,
     )
@@ -697,6 +709,7 @@ def process_one_game(
         champ_lookup=champ_lookup,
         draft_data=draft_data,
         builds_data=builds.get_builds(),
+        midgame_data=midgame.get_mid_game_stats(),
     )
     return True
 
