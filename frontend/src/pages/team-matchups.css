@@ -115,15 +115,20 @@
 .tm-wr-neutral { color: var(--muted); }
 .tm-wr-arrow   { font-size: 0.6rem; margin-right: 2px; }
 
-/* Popover de delta — aparece en hover/focus de la entrada. */
+/* Popover de delta — aparece en hover/focus de la entrada. Crece a la derecha
+   (max-content) porque ahora lleva tres referencias + columna de delta y no cabe
+   en el ancho de la columna del rol. */
 .tm-pop {
   position: absolute;
   top: 100%;
-  left: 6px;
-  right: 6px;
+  left: 4px;
+  right: auto;
+  width: max-content;
+  min-width: 200px;
+  max-width: 260px;
   z-index: var(--z-tooltip);
   margin-top: -2px;
-  padding: 7px 9px;
+  padding: 8px 10px;
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 6px;
@@ -142,27 +147,63 @@
   transition: opacity 100ms ease-out, transform 100ms ease-out;
 }
 
-.tm-pop-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
+/* Bloque de referencias: 3 filas (label | WR·g | delta). */
+.tm-pop-refs { display: flex; flex-direction: column; gap: 1px; }
+.tm-pop-ref {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: baseline;
+  gap: 10px;
   font-size: 0.7rem;
-  line-height: 1.7;
+  line-height: 1.65;
 }
-.tm-pop-label { color: var(--muted); }
+.tm-pop-label {
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .tm-pop-val {
   color: var(--text);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
+  text-align: right;
 }
-.tm-pop-delta {
-  margin-top: 4px;
-  padding-top: 4px;
-  border-top: 1px solid var(--border);
-  font-size: 0.74rem;
-  font-weight: 600;
+.tm-pop-g { color: var(--muted); }
+.tm-pop-d {
   font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  min-width: 46px;
+  text-align: right;
+  white-space: nowrap;
 }
+.tm-pop-d-anchor { min-width: 46px; } /* reserva la columna delta en la fila base */
+
+/* Bloque de diferencias de carril: 3 columnas (stat | @7 | @14). */
+.tm-pop-lane {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.tm-lane-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.55;
+}
+.tm-lane-head {
+  color: var(--muted);
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.tm-lane-stat { color: var(--muted); }
+.tm-lane-col { text-align: right; }
 
 @media (prefers-reduced-motion: reduce) {
   .tm-pop { transition: opacity 100ms ease-out, visibility 0s linear 100ms; transform: none; }

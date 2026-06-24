@@ -64,6 +64,12 @@ export type Runes = {
   stat_perks: number[];
 };
 export type BuildStep = { ts_s: number; action: "BUY" | "SELL"; item_id: number };
+export type MidGameMark = {
+  cs: number | null;
+  gold: number | null;
+  xp: number | null;
+  game_time_s: number | null;
+};
 export type PickStats = {
   kills?: number;
   deaths?: number;
@@ -80,6 +86,7 @@ export type PickStats = {
   final_items?: number[] | null;
   skill_order?: string | null;
   build_path?: BuildStep[] | null;
+  midgame?: Record<string, MidGameMark> | null; // keys "7" and "14"
 };
 export type Pick = {
   pick_id: number;
@@ -91,6 +98,7 @@ export type Pick = {
   side: Side;
   result: boolean;
   pick_order: number | null;
+  game_duration_s: number | null;
   player: { id: number; name: string; role: string | null };
   champion: { id: number; name: string };
   stats: PickStats;
@@ -131,19 +139,23 @@ export type ChampionPresenceRow = {
   picked_by: number;
   picked_vs: number;
   wins: number;
+  wins_by: number;
+  wins_vs: number;
   phase1: number;
   phase2: number;
   bans: number;
+  banned_by: number;
+  banned_vs: number;
   total_games: number;
   presence_pct: number;
   picked_pct: number;
   win_rate: number | null;
-  // picks y wins por game number (G1=primero del día vs mismo rival, etc.)
-  picks_g1: number; wins_g1: number;
-  picks_g2: number; wins_g2: number;
-  picks_g3: number; wins_g3: number;
-  picks_g4: number; wins_g4: number;
-  picks_g5: number; wins_g5: number;
+  // picks y wins por game number
+  picks_g1: number; wins_g1: number; picks_g1_by: number; picks_g1_vs: number;
+  picks_g2: number; wins_g2: number; picks_g2_by: number; picks_g2_vs: number;
+  picks_g3: number; wins_g3: number; picks_g3_by: number; picks_g3_vs: number;
+  picks_g4: number; wins_g4: number; picks_g4_by: number; picks_g4_vs: number;
+  picks_g5: number; wins_g5: number; picks_g5_by: number; picks_g5_vs: number;
   // total de partidas en cada game number (igual en todas las filas)
   total_g1: number;
   total_g2: number;
@@ -207,6 +219,13 @@ export type TeamMatchupEntry = {
   games: number;
   wins: number;
   win_rate: number | null;
+  // diferencias de carril (media nuestro − rival) desde midgame; null sin muestra
+  cs_diff_7: number | null;
+  gold_diff_7: number | null;
+  cs_diff_14: number | null;
+  gold_diff_14: number | null;
+  diff_games_7: number;
+  diff_games_14: number;
 };
 export type BaselineEntry = { games: number; wins: number; win_rate: number | null };
 export type TeamMatchupData = {

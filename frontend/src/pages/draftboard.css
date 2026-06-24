@@ -83,8 +83,16 @@
   align-items: center;
   border-bottom: 1px solid #00000030;
 }
-.ban-row { background: #3a1d22; }
-.pick-row { background: #173024; }
+.ban-row  { background: #202024; }       /* gris neutro — iconos en greyscale ya dan el tono */
+.pick-row { /* fondo gestionado por celda */ }
+
+/* FP (izquierda): 2 azules alternos — B1=a  B2-3=b  B4-5=a */
+.cell.ph-fp-a { background: #1f3558; }
+.cell.ph-fp-b { background: #132240; }
+
+/* SP (derecha): 2 rojos alternos — R1-2=a  R3=b  R4=a  R5=b */
+.cell.ph-sp-a { background: #4d1c1c; }
+.cell.ph-sp-b { background: #341010; }
 
 .cell {
   display: flex;

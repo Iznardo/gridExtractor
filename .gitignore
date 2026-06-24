@@ -42,3 +42,4 @@ diag_*.py
 .claude/
 # Reglas de agentes IA (Cursor) — no versionar
 .cursor/
+.impeccable/

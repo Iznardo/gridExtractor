@@ -4,7 +4,7 @@ import { useGamePicks } from "../api/hooks";
 import { BuildCard } from "../components/BuildCard";
 import { ChampIcon, ItemIcon, RuneIcon, SpellIcon } from "../components/icons";
 import { Tabs } from "../components/Tabs";
-import { kdaRatio, kpPct } from "../lib/format";
+import { kdaRatio } from "../lib/format";
 import "./gamedetail.css";
 
 const ROLE_RANK: Record<string, number> = {
@@ -23,8 +23,12 @@ function sortPlayers(picks: Pick[]): Pick[] {
   });
 }
 
-function teamKills(picks: Pick[]): number {
-  return picks.reduce((s, p) => s + (p.stats.kills ?? 0), 0);
+function fmtGoldDiff(diff: number): string {
+  return (diff >= 0 ? "+" : "") + diff.toLocaleString();
+}
+
+function goldDiffClass(diff: number): string {
+  return diff > 0 ? "gd-pos" : diff < 0 ? "gd-neg" : "";
 }
 
 // ----------------------------- General -----------------------------
@@ -42,10 +46,17 @@ function Scoreboard({
   const hasSpells = all.some((p) => p.stats.summoner_spells?.length);
   const hasLevel = all.some((p) => p.stats.champ_level != null);
   const hasVision = all.some((p) => p.stats.vision_score != null);
+  const hasMidgame = all.some((p) => p.stats.midgame != null);
+  const durationS = all.find((p) => p.game_duration_s != null)?.game_duration_s ?? null;
+  const durationMin = durationS != null ? durationS / 60 : null;
 
-  function sideBlock(side: Side, picks: Pick[], team?: TeamRef) {
-    const tk = teamKills(picks);
+  function sideBlock(side: Side, picks: Pick[], opponents: Pick[], team?: TeamRef) {
     const won = picks[0]?.result;
+    const teamDmg = hasDamage
+      ? picks.reduce((s, p) => s + (p.stats.damage_dealt ?? 0), 0)
+      : 0;
+    const teamGold = picks.reduce((s, p) => s + (p.stats.gold ?? 0), 0);
+
     return (
       <div className="sb-block">
         <div className="sb-side">
@@ -59,18 +70,43 @@ function Scoreboard({
               <th scope="col">Campeón</th>
               {hasSpells && <th scope="col" />}
               <th scope="col">KDA</th>
-              <th scope="col">KP</th>
               <th scope="col" className="num">CS</th>
-              <th scope="col" className="num">Oro</th>
-              {hasDamage && <th scope="col" className="num">Daño</th>}
+              <th scope="col" className="num" title="% del oro total del equipo">Oro%</th>
+              {hasDamage && <th scope="col" className="num" title="% del daño total del equipo">Daño%</th>}
+              {hasDamage && durationMin != null && <th scope="col" className="num">DPM</th>}
+              {durationMin != null && <th scope="col" className="num">CS/min</th>}
+              {hasMidgame && <th scope="col" className="num" title="Diferencia de oro vs su laner a los 7 min">GD@7</th>}
+              {hasMidgame && <th scope="col" className="num" title="Diferencia de oro vs su laner a los 14 min">GD@14</th>}
               {hasLevel && <th scope="col" className="num">Nv</th>}
               {hasVision && <th scope="col" className="num">Vis</th>}
               <th scope="col">Items</th>
             </tr>
           </thead>
           <tbody>
-            {picks.map((p) => {
+            {picks.map((p, i) => {
               const s = p.stats;
+              const opp = opponents[i];
+
+              const goldPct = teamGold > 0 && s.gold != null
+                ? ((s.gold / teamGold) * 100).toFixed(0) + "%"
+                : "—";
+              const dmgPct = hasDamage && teamDmg > 0 && s.damage_dealt != null
+                ? ((s.damage_dealt / teamDmg) * 100).toFixed(0) + "%"
+                : "—";
+              const dpm = durationMin != null && s.damage_dealt != null
+                ? Math.round(s.damage_dealt / durationMin).toLocaleString()
+                : "—";
+              const csMin = durationMin != null && s.cs != null
+                ? (s.cs / durationMin).toFixed(1)
+                : "—";
+
+              const pg7  = s.midgame?.["7"]?.gold ?? null;
+              const pg14 = s.midgame?.["14"]?.gold ?? null;
+              const og7  = opp?.stats.midgame?.["7"]?.gold ?? null;
+              const og14 = opp?.stats.midgame?.["14"]?.gold ?? null;
+              const gd7  = pg7 != null && og7 != null ? pg7 - og7 : null;
+              const gd14 = pg14 != null && og14 != null ? pg14 - og14 : null;
+
               return (
                 <tr key={p.pick_id}>
                   <td>
@@ -95,10 +131,27 @@ function Scoreboard({
                     </span>{" "}
                     <span className="muted">({kdaRatio(s.kills, s.deaths, s.assists)})</span>
                   </td>
-                  <td>{kpPct(s.kills ?? 0, s.assists ?? 0, tk)}</td>
                   <td className="num">{s.cs ?? "—"}</td>
-                  <td className="num">{s.gold != null ? s.gold.toLocaleString() : "—"}</td>
-                  {hasDamage && <td className="num">{s.damage_dealt?.toLocaleString() ?? "—"}</td>}
+                  <td className="num" title={s.gold != null ? s.gold.toLocaleString() : undefined}>
+                    {goldPct}
+                  </td>
+                  {hasDamage && (
+                    <td className="num" title={s.damage_dealt != null ? s.damage_dealt.toLocaleString() : undefined}>
+                      {dmgPct}
+                    </td>
+                  )}
+                  {hasDamage && durationMin != null && <td className="num">{dpm}</td>}
+                  {durationMin != null && <td className="num">{csMin}</td>}
+                  {hasMidgame && (
+                    <td className={`num ${gd7 != null ? goldDiffClass(gd7) : ""}`}>
+                      {gd7 != null ? fmtGoldDiff(gd7) : "—"}
+                    </td>
+                  )}
+                  {hasMidgame && (
+                    <td className={`num ${gd14 != null ? goldDiffClass(gd14) : ""}`}>
+                      {gd14 != null ? fmtGoldDiff(gd14) : "—"}
+                    </td>
+                  )}
                   {hasLevel && <td className="num">{s.champ_level ?? "—"}</td>}
                   {hasVision && <td className="num">{s.vision_score ?? "—"}</td>}
                   <td>
@@ -119,8 +172,8 @@ function Scoreboard({
 
   return (
     <div className="scoreboard">
-      {sideBlock("BLUE", blue, blueTeam)}
-      {sideBlock("RED", red, redTeam)}
+      {sideBlock("BLUE", blue, red, blueTeam)}
+      {sideBlock("RED", red, blue, redTeam)}
     </div>
   );
 }

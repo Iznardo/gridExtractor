@@ -26,6 +26,7 @@ from grid_minion import (
     group_riot_livestats_fragments,
     split_grid_series,
 )
+from grid_minion.sources import normalize_tencent_details
 from grid_minion.observers import (
     BuildObserver,
     DraftObserver,
@@ -338,6 +339,7 @@ def insert_game(
     solokills_data: list,
     game_type: str,
     tournament: str | None,
+    duration_s: float | None = None,
 ) -> int | None:
     """Inserta una fila en games. Devuelve games.id o None si ya existia.
 
@@ -348,8 +350,12 @@ def insert_game(
     game_date = parse_date(series_node["startTimeScheduled"])
     result    = winner if winner in ("BLUE", "RED") else "NONE"
 
+    meta = dict(game_stats.get("meta", {}))
+    if duration_s is not None:
+        meta["duration_s"] = round(duration_s, 1)
+
     stats_json = {
-        "meta":       game_stats.get("meta", {}),
+        "meta":       meta,
         "objectives": objs_data,
         "wards":      wards_data,
         "solokills":  solokills_data,
@@ -498,6 +504,29 @@ class GameProcessingConfig:
     pass_tencent: bool                # incluir tencent_details en el bundle
 
 
+def _extract_duration_s(
+    riot_summary: dict | None,
+    tencent_raw: dict | None,
+    midgame: MidGameStatsObserver,
+) -> float | None:
+    """Duración de partida en segundos. Prioridad: Riot Summary > Tencent > proxy midgame.
+
+    Riot cambió las unidades de gameDuration de segundos a ms en el parche 11.20.
+    Heurística: si el valor > 7200 (2h en segundos, imposible) → es ms.
+    """
+    if riot_summary:
+        raw = riot_summary.get("gameDuration")
+        if raw:
+            return raw / 1000 if raw > 7200 else float(raw)
+    if tencent_raw:
+        dur = normalize_tencent_details(tencent_raw).get("game_duration_s")
+        if dur:
+            return float(dur)
+    if midgame._max_game_time >= 0:
+        return midgame._max_game_time / 1000
+    return None
+
+
 def _build_processor():
     """Crea el processor y los observers en el orden correcto (§ libreria)."""
     proc    = GameEventProcessor()
@@ -560,15 +589,16 @@ def process_one_game(
     """
     proc, teams, draft, stats, objs, wards, builds, midgame, solos = _build_processor()
 
+    tencent_raw    = (client_rest.get_tencent_details(series_id, game_number)
+                       if cfg.pass_tencent else None)
+    riot_summary_raw = client_rest.get_riot_summary(series_id,
+                                                     game_number=game_number)
+
     proc.process_bundle(
         grid_game_state=grid_game_state,
-        tencent_details=(
-            client_rest.get_tencent_details(series_id, game_number)
-            if cfg.pass_tencent else None
-        ),
+        tencent_details=tencent_raw,
         grid_livestats=raw_game,
-        riot_summary=client_rest.get_riot_summary(series_id,
-                                                  game_number=game_number),
+        riot_summary=riot_summary_raw,
         riot_livestats=riot_livestats,
     )
 
@@ -689,6 +719,7 @@ def process_one_game(
         solokills_data=solos.get_solokills(),
         game_type=cfg.game_type,
         tournament=cfg.tournament,
+        duration_s=_extract_duration_s(riot_summary_raw, tencent_raw, midgame),
     )
 
     # audit #5: ON CONFLICT -> rollback del savepoint para no dejar el draft

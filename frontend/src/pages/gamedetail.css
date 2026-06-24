@@ -49,6 +49,10 @@ table.grid th.num { text-align: right; font-variant-numeric: tabular-nums; }
 .sb-side { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.4rem; }
 .sb-team { font-weight: 600; font-size: 0.88rem; }
 
+/* lane gold diff colors */
+.gd-pos { color: #4caf78; font-weight: 600; }
+.gd-neg { color: var(--red); font-weight: 600; }
+
 /* runas */
 .runes-grid {
   display: grid;

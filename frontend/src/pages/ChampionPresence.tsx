@@ -61,11 +61,31 @@ function gnPct(picks: number, total: number): string {
   return `${((picks / total) * 100).toFixed(0)}%`; // picks=0 → «0%», dato real
 }
 
-function gnTooltip(picks: number, wins: number, total: number, n: number): string {
+function gnTooltip(
+  picks: number, wins: number, total: number, n: number,
+  by?: number, vs?: number,
+): string {
   if (total === 0) return `G${n}: sin partidas en esta posición de serie`;
   if (picks === 0) return `G${n}: no pickeado (de ${total} partidas)`;
   const losses = picks - wins;
-  return `G${n}: ${picks}g · ${wins}W / ${losses}L (de ${total} partidas)`;
+  const base = `G${n}: ${picks}g · ${wins}W / ${losses}L (de ${total} partidas)`;
+  if (by == null || vs == null) return base;
+  return `${base}\nBy: ${by}g · Vs: ${vs}g`;
+}
+
+function wrTooltip(
+  winRate: number | null,
+  pickedBy: number, winsBy: number,
+  pickedVs: number, winsVs: number,
+): string {
+  if (winRate == null) return "";
+  const wrBy = pickedBy > 0 ? `${((winsBy / pickedBy) * 100).toFixed(1)}%` : "—";
+  const wrVs = pickedVs > 0 ? `${((winsVs / pickedVs) * 100).toFixed(1)}%` : "—";
+  return `WR by: ${wrBy} (${winsBy}W / ${pickedBy - winsBy}L)\nWR vs: ${wrVs} (${winsVs}W / ${pickedVs - winsVs}L)`;
+}
+
+function bansTooltip(bannedBy: number, bannedVs: number): string {
+  return `Banned by: ${bannedBy} · Banned vs: ${bannedVs}`;
 }
 
 function Skeleton({ cols }: { cols: number }) {
@@ -269,7 +289,10 @@ export function ChampionPresence({
                     <td>{numCell(row.picks)}</td>
                   )}
                   <td>{numCell(row.wins)}</td>
-                  <td className={wrClass(row.win_rate)}>
+                  <td
+                    className={wrClass(row.win_rate)}
+                    title={hasTeam ? wrTooltip(row.win_rate, row.picked_by, row.wins_by, row.picked_vs, row.wins_vs) : undefined}
+                  >
                     {row.win_rate != null ? (
                       <>
                         {wrArrow(row.win_rate) && (
@@ -283,18 +306,22 @@ export function ChampionPresence({
                       "—"
                     )}
                   </td>
-                  <td>{numCell(row.bans)}</td>
+                  <td title={hasTeam ? bansTooltip(row.banned_by, row.banned_vs) : undefined}>
+                    {numCell(row.bans)}
+                  </td>
                   <td>{numCell(row.phase1)}</td>
                   <td>{numCell(row.phase2)}</td>
                   {gnCols.map((n) => {
                     const picks = row[`picks_g${n}` as keyof ChampionPresenceRow] as number;
                     const wins  = row[`wins_g${n}`  as keyof ChampionPresenceRow] as number;
                     const total = row[`total_g${n}` as keyof ChampionPresenceRow] as number;
+                    const by    = hasTeam ? row[`picks_g${n}_by` as keyof ChampionPresenceRow] as number : undefined;
+                    const vs    = hasTeam ? row[`picks_g${n}_vs` as keyof ChampionPresenceRow] as number : undefined;
                     return (
                       <td
                         key={n}
                         className="cp-gn-cell"
-                        title={gnTooltip(picks, wins, total, n)}
+                        title={gnTooltip(picks, wins, total, n, by, vs)}
                       >
                         {gnPct(picks, total)}
                       </td>

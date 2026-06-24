@@ -20,6 +20,10 @@ _SQL = """
 SELECT
   pk.id AS pick_id, pk.game_id, pk.side, pk.result, pk.pick_order, pk.stats,
   g.date, g.version, g.game_type, g.tournament,
+  COALESCE(
+    (g.stats->'meta'->>'duration_s')::float,
+    (g.stats->>'game_duration_s')::float
+  ) AS game_duration_s,
   pl.id AS player_id, pl.name AS player_name, pl.role AS player_role,
   c.id  AS champ_id,  c.name  AS champ_name
 FROM picks pk
@@ -47,6 +51,7 @@ def _shape(row: dict) -> dict:
         "side": row["side"],
         "result": row["result"],
         "pick_order": row["pick_order"],
+        "game_duration_s": row["game_duration_s"],
         "player": {"id": row["player_id"], "name": row["player_name"], "role": row["player_role"]},
         "champion": {"id": row["champ_id"], "name": row["champ_name"]},
         "stats": row["stats"],

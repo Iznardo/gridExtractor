@@ -8,7 +8,16 @@
 #   - "LVP SuperLiga Spring 2026"
 
 tournaments: 
+- "LEC - LEC Versus 2026"
+- "LCS - Split 1 2026"
+- "LCK - LCK Cup 2026"
+- "LES - Kickoff 2026"
+- "LPL - Split 1 2026"
+- "EMEA Masters - Winter 2026"
 - "LEC - Spring 2026"
 - "LPL - Split 2 2026"
 - "LCS - Split 2 2026"
 - "LCK - Split 2 2026"
+- "LES"
+- "EMEA Masters - Spring 2026"
+- "First Stand - 2026"

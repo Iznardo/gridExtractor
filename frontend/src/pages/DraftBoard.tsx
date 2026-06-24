@@ -28,12 +28,25 @@ function TeamHead({ team, phase, result }: { team: TeamSide; phase: "fp" | "sp";
   );
 }
 
-function Cell({ entry, align, ban }: { entry: ChampRef | null; align: "left" | "right"; ban?: boolean }) {
+function pickPhaseClass(align: "left" | "right", idx: number): string {
+  if (align === "left") {
+    // B1=a  B2-3=b  B4-5=a
+    const v = (idx === 0 || idx >= 3) ? "a" : "b";
+    return `ph-fp-${v}`;
+  } else {
+    // R1-2=a  R3=b  R4=a  R5=b
+    const v = (idx <= 1 || idx === 3) ? "a" : "b";
+    return `ph-sp-${v}`;
+  }
+}
+
+function Cell({ entry, align, ban, phase }: { entry: ChampRef | null; align: "left" | "right"; ban?: boolean; phase?: string }) {
   const empty = !entry || entry.id == null;
   const label = empty ? "—" : (entry!.name ?? `#${entry!.id}`);
   const icon = empty ? null : <ChampIcon id={entry!.id} name={entry!.name} size={28} />;
+  const cls = ["cell", align, empty && "empty", ban && "ban", phase].filter(Boolean).join(" ");
   return (
-    <div className={"cell " + align + (empty ? " empty" : "") + (ban ? " ban" : "")}>
+    <div className={cls}>
       {align === "left" ? (
         <>
           <span className="cn">{label}</span>
@@ -54,8 +67,18 @@ function PhaseRows({ d, kind, idx }: { d: Draft; kind: "bans" | "picks"; idx: nu
     <>
       {idx.map((i) => (
         <div key={`${kind}-${i}`} className={"row " + (kind === "bans" ? "ban-row" : "pick-row")}>
-          <Cell entry={d.first_pick[kind][i]} align="left" ban={kind === "bans"} />
-          <Cell entry={d.second_pick[kind][i]} align="right" ban={kind === "bans"} />
+          <Cell
+            entry={d.first_pick[kind][i]}
+            align="left"
+            ban={kind === "bans"}
+            phase={kind === "picks" ? pickPhaseClass("left", i) : undefined}
+          />
+          <Cell
+            entry={d.second_pick[kind][i]}
+            align="right"
+            ban={kind === "bans"}
+            phase={kind === "picks" ? pickPhaseClass("right", i) : undefined}
+          />
         </div>
       ))}
     </>

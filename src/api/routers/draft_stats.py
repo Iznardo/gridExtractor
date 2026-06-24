@@ -103,59 +103,87 @@ picks_raw AS (
   WHERE v.champ_id IS NOT NULL
 ),
 bans_raw AS (
-  SELECT v.champ_id
+  SELECT v.champ_id,
+    CASE
+      WHEN %(team_id)s::int IS NULL                                              THEN NULL
+      WHEN     v.is_fp AND g.first_pick_team_id =  %(team_id)s::int             THEN 'by'
+      WHEN NOT v.is_fp AND g.first_pick_team_id <> %(team_id)s::int             THEN 'by'
+      ELSE 'vs'
+    END AS ban_side
   FROM base g
   CROSS JOIN LATERAL (VALUES
-    (g.ban1),(g.ban2),(g.ban3),(g.ban4),(g.ban5),
-    (g.ban6),(g.ban7),(g.ban8),(g.ban9),(g.ban10)
-  ) AS v(champ_id)
+    (g.ban1,  true),(g.ban2,  true),(g.ban3,  true),(g.ban4,  true),(g.ban5,  true),
+    (g.ban6, false),(g.ban7, false),(g.ban8, false),(g.ban9, false),(g.ban10, false)
+  ) AS v(champ_id, is_fp)
   WHERE v.champ_id IS NOT NULL
 ),
 pagg AS (
   SELECT champ_id,
-    COUNT(*)                                              AS picks,
-    COUNT(*) FILTER (WHERE pick_side = 'by')             AS picked_by,
-    COUNT(*) FILTER (WHERE pick_side = 'vs')             AS picked_vs,
-    COUNT(*) FILTER (WHERE won)                          AS wins,
-    COUNT(*) FILTER (WHERE phase = 1)                    AS phase1,
-    COUNT(*) FILTER (WHERE phase = 2)                    AS phase2,
-    COUNT(*) FILTER (WHERE game_number = 1)              AS g1,
-    COUNT(*) FILTER (WHERE game_number = 1 AND won)      AS g1_wins,
-    COUNT(*) FILTER (WHERE game_number = 2)              AS g2,
-    COUNT(*) FILTER (WHERE game_number = 2 AND won)      AS g2_wins,
-    COUNT(*) FILTER (WHERE game_number = 3)              AS g3,
-    COUNT(*) FILTER (WHERE game_number = 3 AND won)      AS g3_wins,
-    COUNT(*) FILTER (WHERE game_number = 4)              AS g4,
-    COUNT(*) FILTER (WHERE game_number = 4 AND won)      AS g4_wins,
-    COUNT(*) FILTER (WHERE game_number = 5)              AS g5,
-    COUNT(*) FILTER (WHERE game_number = 5 AND won)      AS g5_wins
+    COUNT(*)                                                        AS picks,
+    COUNT(*) FILTER (WHERE pick_side = 'by')                       AS picked_by,
+    COUNT(*) FILTER (WHERE pick_side = 'vs')                       AS picked_vs,
+    COUNT(*) FILTER (WHERE won)                                     AS wins,
+    COUNT(*) FILTER (WHERE pick_side = 'by' AND won)               AS wins_by,
+    COUNT(*) FILTER (WHERE pick_side = 'vs' AND won)               AS wins_vs,
+    COUNT(*) FILTER (WHERE phase = 1)                              AS phase1,
+    COUNT(*) FILTER (WHERE phase = 2)                              AS phase2,
+    COUNT(*) FILTER (WHERE game_number = 1)                        AS g1,
+    COUNT(*) FILTER (WHERE game_number = 1 AND won)                AS g1_wins,
+    COUNT(*) FILTER (WHERE game_number = 1 AND pick_side = 'by')   AS g1_by,
+    COUNT(*) FILTER (WHERE game_number = 1 AND pick_side = 'vs')   AS g1_vs,
+    COUNT(*) FILTER (WHERE game_number = 2)                        AS g2,
+    COUNT(*) FILTER (WHERE game_number = 2 AND won)                AS g2_wins,
+    COUNT(*) FILTER (WHERE game_number = 2 AND pick_side = 'by')   AS g2_by,
+    COUNT(*) FILTER (WHERE game_number = 2 AND pick_side = 'vs')   AS g2_vs,
+    COUNT(*) FILTER (WHERE game_number = 3)                        AS g3,
+    COUNT(*) FILTER (WHERE game_number = 3 AND won)                AS g3_wins,
+    COUNT(*) FILTER (WHERE game_number = 3 AND pick_side = 'by')   AS g3_by,
+    COUNT(*) FILTER (WHERE game_number = 3 AND pick_side = 'vs')   AS g3_vs,
+    COUNT(*) FILTER (WHERE game_number = 4)                        AS g4,
+    COUNT(*) FILTER (WHERE game_number = 4 AND won)                AS g4_wins,
+    COUNT(*) FILTER (WHERE game_number = 4 AND pick_side = 'by')   AS g4_by,
+    COUNT(*) FILTER (WHERE game_number = 4 AND pick_side = 'vs')   AS g4_vs,
+    COUNT(*) FILTER (WHERE game_number = 5)                        AS g5,
+    COUNT(*) FILTER (WHERE game_number = 5 AND won)                AS g5_wins,
+    COUNT(*) FILTER (WHERE game_number = 5 AND pick_side = 'by')   AS g5_by,
+    COUNT(*) FILTER (WHERE game_number = 5 AND pick_side = 'vs')   AS g5_vs
   FROM picks_raw GROUP BY champ_id
 ),
-bagg AS (SELECT champ_id, COUNT(*) AS bans FROM bans_raw GROUP BY champ_id)
+bagg AS (
+  SELECT champ_id,
+    COUNT(*)                                   AS bans,
+    COUNT(*) FILTER (WHERE ban_side = 'by')    AS banned_by,
+    COUNT(*) FILTER (WHERE ban_side = 'vs')    AS banned_vs
+  FROM bans_raw GROUP BY champ_id
+)
 SELECT
   COALESCE(p.champ_id, b.champ_id)                                              AS champ_id,
   COALESCE(p.picks, 0)                                                           AS picks,
   COALESCE(p.picked_by, 0)                                                       AS picked_by,
   COALESCE(p.picked_vs, 0)                                                       AS picked_vs,
   COALESCE(p.wins, 0)                                                             AS wins,
+  COALESCE(p.wins_by, 0)                                                         AS wins_by,
+  COALESCE(p.wins_vs, 0)                                                         AS wins_vs,
   COALESCE(p.phase1, 0)                                                           AS phase1,
   COALESCE(p.phase2, 0)                                                           AS phase2,
   COALESCE(b.bans, 0)                                                             AS bans,
+  COALESCE(b.banned_by, 0)                                                       AS banned_by,
+  COALESCE(b.banned_vs, 0)                                                       AS banned_vs,
   t.n                                                                             AS total_games,
   ROUND(100.0*(COALESCE(p.picks,0)+COALESCE(b.bans,0))/NULLIF(t.n,0), 1)       AS presence_pct,
   ROUND(100.0*COALESCE(p.picks,0)/NULLIF(t.n,0), 1)                             AS picked_pct,
   CASE WHEN COALESCE(p.picks,0) > 0
     THEN ROUND(100.0*p.wins/p.picks, 1) ELSE NULL END                           AS win_rate,
-  COALESCE(p.g1, 0)       AS picks_g1,
-  COALESCE(p.g1_wins, 0)  AS wins_g1,
-  COALESCE(p.g2, 0)       AS picks_g2,
-  COALESCE(p.g2_wins, 0)  AS wins_g2,
-  COALESCE(p.g3, 0)       AS picks_g3,
-  COALESCE(p.g3_wins, 0)  AS wins_g3,
-  COALESCE(p.g4, 0)       AS picks_g4,
-  COALESCE(p.g4_wins, 0)  AS wins_g4,
-  COALESCE(p.g5, 0)       AS picks_g5,
-  COALESCE(p.g5_wins, 0)  AS wins_g5,
+  COALESCE(p.g1, 0)       AS picks_g1,  COALESCE(p.g1_wins, 0)  AS wins_g1,
+  COALESCE(p.g1_by, 0)    AS picks_g1_by, COALESCE(p.g1_vs, 0)  AS picks_g1_vs,
+  COALESCE(p.g2, 0)       AS picks_g2,  COALESCE(p.g2_wins, 0)  AS wins_g2,
+  COALESCE(p.g2_by, 0)    AS picks_g2_by, COALESCE(p.g2_vs, 0)  AS picks_g2_vs,
+  COALESCE(p.g3, 0)       AS picks_g3,  COALESCE(p.g3_wins, 0)  AS wins_g3,
+  COALESCE(p.g3_by, 0)    AS picks_g3_by, COALESCE(p.g3_vs, 0)  AS picks_g3_vs,
+  COALESCE(p.g4, 0)       AS picks_g4,  COALESCE(p.g4_wins, 0)  AS wins_g4,
+  COALESCE(p.g4_by, 0)    AS picks_g4_by, COALESCE(p.g4_vs, 0)  AS picks_g4_vs,
+  COALESCE(p.g5, 0)       AS picks_g5,  COALESCE(p.g5_wins, 0)  AS wins_g5,
+  COALESCE(p.g5_by, 0)    AS picks_g5_by, COALESCE(p.g5_vs, 0)  AS picks_g5_vs,
   gt.g1                   AS total_g1,
   gt.g2                   AS total_g2,
   gt.g3                   AS total_g3,
@@ -310,23 +338,27 @@ def champion_presence(
             "picked_by": r["picked_by"],
             "picked_vs": r["picked_vs"],
             "wins": r["wins"],
+            "wins_by": r["wins_by"],
+            "wins_vs": r["wins_vs"],
             "phase1": r["phase1"],
             "phase2": r["phase2"],
             "bans": r["bans"],
+            "banned_by": r["banned_by"],
+            "banned_vs": r["banned_vs"],
             "total_games": r["total_games"],
             "presence_pct": float(r["presence_pct"] or 0),
             "picked_pct": float(r["picked_pct"] or 0),
             "win_rate": float(r["win_rate"]) if r["win_rate"] is not None else None,
-            "picks_g1": r["picks_g1"],
-            "wins_g1": r["wins_g1"],
-            "picks_g2": r["picks_g2"],
-            "wins_g2": r["wins_g2"],
-            "picks_g3": r["picks_g3"],
-            "wins_g3": r["wins_g3"],
-            "picks_g4": r["picks_g4"],
-            "wins_g4": r["wins_g4"],
-            "picks_g5": r["picks_g5"],
-            "wins_g5": r["wins_g5"],
+            "picks_g1": r["picks_g1"], "wins_g1": r["wins_g1"],
+            "picks_g1_by": r["picks_g1_by"], "picks_g1_vs": r["picks_g1_vs"],
+            "picks_g2": r["picks_g2"], "wins_g2": r["wins_g2"],
+            "picks_g2_by": r["picks_g2_by"], "picks_g2_vs": r["picks_g2_vs"],
+            "picks_g3": r["picks_g3"], "wins_g3": r["wins_g3"],
+            "picks_g3_by": r["picks_g3_by"], "picks_g3_vs": r["picks_g3_vs"],
+            "picks_g4": r["picks_g4"], "wins_g4": r["wins_g4"],
+            "picks_g4_by": r["picks_g4_by"], "picks_g4_vs": r["picks_g4_vs"],
+            "picks_g5": r["picks_g5"], "wins_g5": r["wins_g5"],
+            "picks_g5_by": r["picks_g5_by"], "picks_g5_vs": r["picks_g5_vs"],
             "total_g1": r["total_g1"],
             "total_g2": r["total_g2"],
             "total_g3": r["total_g3"],
@@ -574,15 +606,26 @@ WITH base_ids AS (
 # Una fila por pick del equipo scouteado, emparejada con el rival del mismo
 # carril. LATERAL ... LIMIT 1 deduplica scrims con roles duplicados (igual que
 # matchups.py). "our" = lado del equipo scouteado en cada partida.
+# Arrastra además los snapshots de carril (CS/oro @7 y @14, de picks.stats.midgame)
+# de ambos lados para calcular las diferencias de carril por matchup.
 _TEAM_LANE_PAIRS_CTE = _TEAM_MATCHUP_BASE + """,
 lane_pairs AS (
   SELECT pl.role AS role, our.champ_id AS our_champ,
-         opp.opp_champ, our.result AS won
+         opp.opp_champ, our.result AS won,
+         (our.stats->'midgame'->'7'->>'cs')::numeric     AS our_cs7,
+         (our.stats->'midgame'->'7'->>'gold')::numeric   AS our_gold7,
+         (our.stats->'midgame'->'14'->>'cs')::numeric    AS our_cs14,
+         (our.stats->'midgame'->'14'->>'gold')::numeric  AS our_gold14,
+         opp.opp_cs7, opp.opp_gold7, opp.opp_cs14, opp.opp_gold14
   FROM picks our
   JOIN base_ids g ON g.id = our.game_id
   JOIN players pl ON pl.id = our.player_id
   JOIN LATERAL (
-    SELECT o.champ_id AS opp_champ
+    SELECT o.champ_id AS opp_champ,
+           (o.stats->'midgame'->'7'->>'cs')::numeric     AS opp_cs7,
+           (o.stats->'midgame'->'7'->>'gold')::numeric   AS opp_gold7,
+           (o.stats->'midgame'->'14'->>'cs')::numeric    AS opp_cs14,
+           (o.stats->'midgame'->'14'->>'gold')::numeric  AS opp_gold14
     FROM picks o JOIN players plo ON plo.id = o.player_id AND plo.role = pl.role
     WHERE o.game_id = our.game_id AND o.side <> our.side
     LIMIT 1
@@ -593,10 +636,19 @@ lane_pairs AS (
 )
 """
 
+# Diferencias de carril: media de (nuestro - rival) en CS/oro @7 y @14. AVG ignora
+# los NULL, así que solo promedia partidas donde ambos lados tienen el snapshot;
+# diff_games_N expone ese tamaño de muestra (puede ser < games si faltó midgame).
 _TEAM_MATCHUP_SQL = _TEAM_LANE_PAIRS_CTE + """
 SELECT role, our_champ, opp_champ,
   COUNT(*) AS games,
-  COUNT(*) FILTER (WHERE won) AS wins
+  COUNT(*) FILTER (WHERE won) AS wins,
+  AVG(our_cs7    - opp_cs7)    AS cs_diff_7,
+  AVG(our_gold7  - opp_gold7)  AS gold_diff_7,
+  AVG(our_cs14   - opp_cs14)   AS cs_diff_14,
+  AVG(our_gold14 - opp_gold14) AS gold_diff_14,
+  COUNT(*) FILTER (WHERE our_cs7  IS NOT NULL AND opp_cs7  IS NOT NULL) AS diff_games_7,
+  COUNT(*) FILTER (WHERE our_cs14 IS NOT NULL AND opp_cs14 IS NOT NULL) AS diff_games_14
 FROM lane_pairs
 GROUP BY role, our_champ, opp_champ
 ORDER BY role, games DESC
@@ -613,7 +665,6 @@ SELECT role, our_champ AS champ_id,
 FROM lane_pairs
 GROUP BY role, our_champ
 """
-
 
 @router.get("/team-matchups")
 def team_matchups(
@@ -636,6 +687,9 @@ def team_matchups(
         cur.execute(_TEAM_BASELINE_SQL, params)
         bl_rows = cur.fetchall()
 
+    def _avg(v, nd: int = 1):
+        return round(float(v), nd) if v is not None else None
+
     matchups: dict[str, list] = {}
     for r in mu_rows:
         matchups.setdefault(r["role"], []).append({
@@ -646,6 +700,13 @@ def team_matchups(
             "games": r["games"],
             "wins": r["wins"],
             "win_rate": round(100.0 * r["wins"] / r["games"], 1) if r["games"] else None,
+            # diferencias de carril (media nuestro - rival); oro redondeado a entero
+            "cs_diff_7":    _avg(r["cs_diff_7"]),
+            "gold_diff_7":  _avg(r["gold_diff_7"], 0),
+            "cs_diff_14":   _avg(r["cs_diff_14"]),
+            "gold_diff_14": _avg(r["gold_diff_14"], 0),
+            "diff_games_7":  r["diff_games_7"],
+            "diff_games_14": r["diff_games_14"],
         })
 
     # baseline[rol][champ_id] = WR del equipo con ese campeón en ese rol (todos
@@ -658,3 +719,90 @@ def team_matchups(
             "win_rate": round(100.0 * r["wins"] / r["games"], 1) if r["games"] else None,
         }
     return {"matchups": matchups, "baseline": baseline}
+
+
+# ─── lane-matchup: WR de UN matchup jugado por otros equipos (on-demand) ──────
+#
+# Por qué un endpoint aparte y no un campo más en /team-matchups: calcular este
+# "vs otros equipos" para TODOS los matchups de un equipo a la vez exige emparejar
+# por carril (LATERAL) cada pick de toda la BD → ~17s, inaceptable al cargar la
+# página. En cambio, UN solo par (rol, nuestro champ, rival) filtra por champ_id
+# (indexado) y resuelve en ~4-12ms. El front lo pide on-demand al hacer hover
+# sobre un matchup concreto y React Query lo cachea por par.
+#
+# ALTERNATIVA FUTURA (si interesa tenerlo precargado e instantáneo en vez de
+# on-demand): materializar el emparejamiento de carril una sola vez en una
+# MATERIALIZED VIEW `lane_pairs_mv(game_id, role, champ, opp_champ, team_id, won)`
+# con índice en (role, champ, opp_champ). Entonces tanto este "vs otros" como el
+# baseline/matchups del equipo pasan a ser GROUP BY triviales (ms) y se pueden
+# precargar todos de golpe. Coste: una migración + un `REFRESH MATERIALIZED VIEW
+# lane_pairs_mv` al final de cada corrida de extracción (official.py / scrims.py).
+# Mientras la cadencia de "abrir página" >> "extraer", el on-demand basta y es
+# cero-mantenimiento; si eso se invierte, migrar a la MV.
+_LANE_MATCHUP_SQL = """
+WITH all_ids AS (
+  SELECT g.id, g.team1_id, g.team2_id
+  FROM games g JOIN drafts d ON d.id = g.draft_id
+  WHERE g.draft_id IS NOT NULL
+    AND g.result IN ('BLUE','RED')
+    AND (%(game_types)s::text[] IS NULL OR g.game_type = ANY(%(game_types)s))
+    AND (%(patch)s::text      IS NULL OR g.version    = %(patch)s)
+    AND (%(tournament)s::text IS NULL OR g.tournament = %(tournament)s)
+),
+pairs AS (
+  SELECT a.result AS won,
+         CASE WHEN a.side = 'BLUE' THEN g.team1_id ELSE g.team2_id END AS team_id
+  FROM picks a
+  JOIN all_ids g ON g.id = a.game_id
+  JOIN players pl ON pl.id = a.player_id AND pl.role = %(role)s
+  JOIN LATERAL (
+    SELECT 1
+    FROM picks o JOIN players plo ON plo.id = o.player_id AND plo.role = pl.role
+    WHERE o.game_id = a.game_id AND o.side <> a.side AND o.champ_id = %(opp)s
+    LIMIT 1
+  ) opp ON true
+  WHERE a.champ_id = %(our)s
+)
+SELECT COUNT(*) AS games, COUNT(*) FILTER (WHERE won) AS wins
+FROM pairs
+WHERE team_id IS DISTINCT FROM %(team_id)s
+"""
+
+
+@router.get("/lane-matchup")
+def lane_matchup(
+    team_id: int = Query(..., description="Equipo a excluir del sample (el scouteado)"),
+    role: str = Query(..., description="TOP/JUNGLE/MID/ADC/SUPPORT"),
+    our: int = Query(..., description="champ_id del lado scouteado"),
+    opp: int = Query(..., description="champ_id del rival de carril"),
+    game_types: str | None = Query(None, description="CSV: OFFICIAL,SCRIM"),
+    patch: str | None = Query(None),
+    tournament: str | None = None,
+    conn: psycopg.Connection = Depends(db_conn),
+):
+    """WR de `our` vs `opp` en `role` jugado por TODOS los equipos menos `team_id`.
+
+    Referencia "otros jugándolo": cómo le va este mismo matchup al resto de
+    equipos, para contrastar con el rendimiento propio. Respeta los filtros de
+    contexto (tipo de partida, parche, torneo) que la vista tenga activos.
+    """
+    params = {
+        "team_id": team_id,
+        "role": role,
+        "our": our,
+        "opp": opp,
+        "game_types": _parse_game_types(game_types),
+        "patch": patch,
+        "tournament": tournament,
+    }
+    with conn.cursor() as cur:
+        cur.execute(_LANE_MATCHUP_SQL, params)
+        r = cur.fetchone()
+
+    games = r["games"] if r else 0
+    wins = r["wins"] if r else 0
+    return {
+        "games": games,
+        "wins": wins,
+        "win_rate": round(100.0 * wins / games, 1) if games else None,
+    }

@@ -1,0 +1,650 @@
+2026-06-23 22:19:29,009 [INFO] patch_lpl_cs: 447 partidas LPL a parchear.
+2026-06-23 22:19:30,400 [INFO] patch_lpl_cs: [1/447] series=2881812 g1: 5 picks actualizados.
+2026-06-23 22:19:30,831 [INFO] patch_lpl_cs: [2/447] series=2881812 g2: 6 picks actualizados.
+2026-06-23 22:19:31,228 [INFO] patch_lpl_cs: [3/447] series=2881812 g3: 6 picks actualizados.
+2026-06-23 22:19:33,427 [INFO] patch_lpl_cs: [4/447] series=2881813 g1: 3 picks actualizados.
+2026-06-23 22:19:33,624 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:19:38,674 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:19:46,224 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 11.25s... (3/5)
+2026-06-23 22:19:57,524 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 16.88s... (4/5)
+2026-06-23 22:20:16,550 [INFO] patch_lpl_cs: [5/447] series=2881813 g2: 6 picks actualizados.
+2026-06-23 22:20:19,412 [INFO] patch_lpl_cs: [6/447] series=2888326 g1: 4 picks actualizados.
+2026-06-23 22:20:19,820 [INFO] patch_lpl_cs: [7/447] series=2888326 g2: 6 picks actualizados.
+2026-06-23 22:20:21,672 [INFO] patch_lpl_cs: [8/447] series=2881815 g1: 6 picks actualizados.
+2026-06-23 22:20:22,202 [INFO] patch_lpl_cs: [9/447] series=2881815 g2: 6 picks actualizados.
+2026-06-23 22:20:23,747 [INFO] patch_lpl_cs: [10/447] series=2881816 g1: 6 picks actualizados.
+2026-06-23 22:20:24,258 [INFO] patch_lpl_cs: [11/447] series=2881816 g2: 7 picks actualizados.
+2026-06-23 22:20:24,740 [INFO] patch_lpl_cs: [12/447] series=2881816 g3: 7 picks actualizados.
+2026-06-23 22:20:26,982 [INFO] patch_lpl_cs: [13/447] series=2881860 g1: 4 picks actualizados.
+2026-06-23 22:20:27,410 [INFO] patch_lpl_cs: [14/447] series=2881860 g2: 5 picks actualizados.
+2026-06-23 22:20:28,830 [INFO] patch_lpl_cs: [15/447] series=2881818 g1: 6 picks actualizados.
+2026-06-23 22:20:29,029 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:20:34,142 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:20:41,693 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 11.25s... (3/5)
+2026-06-23 22:20:52,992 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 16.88s... (4/5)
+2026-06-23 22:21:10,198 [INFO] patch_lpl_cs: [16/447] series=2881818 g2: 8 picks actualizados.
+2026-06-23 22:21:13,069 [INFO] patch_lpl_cs: [17/447] series=2881819 g1: 7 picks actualizados.
+2026-06-23 22:21:13,662 [INFO] patch_lpl_cs: [18/447] series=2881819 g2: 6 picks actualizados.
+2026-06-23 22:21:14,065 [INFO] patch_lpl_cs: [19/447] series=2881819 g3: 6 picks actualizados.
+2026-06-23 22:21:15,871 [INFO] patch_lpl_cs: [20/447] series=2881820 g1: 7 picks actualizados.
+2026-06-23 22:21:16,288 [INFO] patch_lpl_cs: [21/447] series=2881820 g2: 6 picks actualizados.
+2026-06-23 22:21:16,831 [INFO] patch_lpl_cs: [22/447] series=2881820 g3: 6 picks actualizados.
+2026-06-23 22:21:18,604 [INFO] patch_lpl_cs: [23/447] series=2881822 g1: 6 picks actualizados.
+2026-06-23 22:21:19,062 [INFO] patch_lpl_cs: [24/447] series=2881822 g2: 9 picks actualizados.
+2026-06-23 22:21:20,576 [INFO] patch_lpl_cs: [25/447] series=2881823 g1: 6 picks actualizados.
+2026-06-23 22:21:20,777 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:21:25,827 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:21:33,376 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 11.25s... (3/5)
+2026-06-23 22:21:44,677 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 16.88s... (4/5)
+2026-06-23 22:22:02,010 [INFO] patch_lpl_cs: [26/447] series=2881823 g2: 8 picks actualizados.
+2026-06-23 22:22:02,636 [INFO] patch_lpl_cs: [27/447] series=2881823 g3: 5 picks actualizados.
+2026-06-23 22:22:04,224 [INFO] patch_lpl_cs: [28/447] series=2881824 g1: 3 picks actualizados.
+2026-06-23 22:22:04,722 [INFO] patch_lpl_cs: [29/447] series=2881824 g2: 6 picks actualizados.
+2026-06-23 22:22:05,945 [INFO] patch_lpl_cs: [30/447] series=2881825 g1: 8 picks actualizados.
+2026-06-23 22:22:06,397 [INFO] patch_lpl_cs: [31/447] series=2881825 g2: 6 picks actualizados.
+2026-06-23 22:22:06,790 [INFO] patch_lpl_cs: [32/447] series=2881825 g3: 3 picks actualizados.
+2026-06-23 22:22:08,620 [INFO] patch_lpl_cs: [33/447] series=2881826 g1: 8 picks actualizados.
+2026-06-23 22:22:09,154 [INFO] patch_lpl_cs: [34/447] series=2881826 g2: 7 picks actualizados.
+2026-06-23 22:22:09,800 [INFO] patch_lpl_cs: [35/447] series=2881826 g3: 5 picks actualizados.
+2026-06-23 22:22:11,297 [INFO] patch_lpl_cs: [36/447] series=2881827 g1: 5 picks actualizados.
+2026-06-23 22:22:13,055 [INFO] patch_lpl_cs: [37/447] series=2881827 g2: 5 picks actualizados.
+2026-06-23 22:22:15,975 [INFO] patch_lpl_cs: [38/447] series=2881828 g1: 6 picks actualizados.
+2026-06-23 22:22:16,175 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:22:21,223 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:22:28,772 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 11.25s... (3/5)
+2026-06-23 22:22:40,070 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 16.88s... (4/5)
+2026-06-23 22:22:56,995 [WARNING] patch_lpl_cs: [39/447] 2881828 g2: error descargando Tencent: Rate Limit HTTP 429 persistente tras 5 intentos.
+2026-06-23 22:22:57,244 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:23:03,458 [INFO] patch_lpl_cs: [40/447] series=2881829 g1: 5 picks actualizados.
+2026-06-23 22:23:03,976 [INFO] patch_lpl_cs: [41/447] series=2881829 g2: 4 picks actualizados.
+2026-06-23 22:23:04,404 [INFO] patch_lpl_cs: [42/447] series=2881829 g3: 5 picks actualizados.
+2026-06-23 22:23:05,388 [INFO] patch_lpl_cs: [43/447] series=2881830 g1: 6 picks actualizados.
+2026-06-23 22:23:05,797 [INFO] patch_lpl_cs: [44/447] series=2881830 g2: 7 picks actualizados.
+2026-06-23 22:23:06,176 [INFO] patch_lpl_cs: [45/447] series=2881830 g3: 5 picks actualizados.
+2026-06-23 22:23:07,223 [INFO] patch_lpl_cs: [46/447] series=2881831 g1: 6 picks actualizados.
+2026-06-23 22:23:07,620 [INFO] patch_lpl_cs: [47/447] series=2881831 g2: 5 picks actualizados.
+2026-06-23 22:23:08,571 [INFO] patch_lpl_cs: [48/447] series=2881832 g1: 3 picks actualizados.
+2026-06-23 22:23:08,773 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:23:13,820 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:23:21,381 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 11.25s... (3/5)
+2026-06-23 22:23:32,682 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 16.88s... (4/5)
+2026-06-23 22:23:49,608 [WARNING] patch_lpl_cs: [49/447] 2881832 g2: error descargando Tencent: Rate Limit HTTP 429 persistente tras 5 intentos.
+2026-06-23 22:23:49,859 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:23:54,909 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:24:03,742 [INFO] patch_lpl_cs: [50/447] series=2881833 g1: 8 picks actualizados.
+2026-06-23 22:24:04,193 [INFO] patch_lpl_cs: [51/447] series=2881833 g2: 6 picks actualizados.
+2026-06-23 22:24:04,612 [INFO] patch_lpl_cs: [52/447] series=2881833 g3: 6 picks actualizados.
+2026-06-23 22:24:05,932 [INFO] patch_lpl_cs: [53/447] series=2881834 g1: 6 picks actualizados.
+2026-06-23 22:24:06,756 [INFO] patch_lpl_cs: [54/447] series=2881834 g2: 5 picks actualizados.
+2026-06-23 22:24:07,193 [INFO] patch_lpl_cs: [55/447] series=2881834 g3: 6 picks actualizados.
+2026-06-23 22:24:08,593 [INFO] patch_lpl_cs: [56/447] series=2881835 g1: 8 picks actualizados.
+2026-06-23 22:24:09,206 [INFO] patch_lpl_cs: [57/447] series=2881835 g2: 7 picks actualizados.
+2026-06-23 22:24:09,606 [INFO] patch_lpl_cs: [58/447] series=2881835 g3: 5 picks actualizados.
+2026-06-23 22:24:11,173 [INFO] patch_lpl_cs: [59/447] series=2881836 g1: 8 picks actualizados.
+2026-06-23 22:24:11,372 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:24:16,421 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:24:23,970 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 11.25s... (3/5)
+2026-06-23 22:24:35,267 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 16.88s... (4/5)
+2026-06-23 22:24:52,194 [WARNING] patch_lpl_cs: [60/447] 2881836 g2: error descargando Tencent: Rate Limit HTTP 429 persistente tras 5 intentos.
+2026-06-23 22:24:52,443 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:24:57,492 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:25:05,726 [INFO] patch_lpl_cs: [61/447] series=2881838 g1: 5 picks actualizados.
+2026-06-23 22:25:06,244 [INFO] patch_lpl_cs: [62/447] series=2881838 g2: 5 picks actualizados.
+2026-06-23 22:25:06,622 [INFO] patch_lpl_cs: [63/447] series=2881838 g3: 7 picks actualizados.
+2026-06-23 22:25:07,354 [INFO] patch_lpl_cs: [64/447] series=2881839 g1: 6 picks actualizados.
+2026-06-23 22:25:07,774 [INFO] patch_lpl_cs: [65/447] series=2881839 g2: 5 picks actualizados.
+2026-06-23 22:25:08,457 [INFO] patch_lpl_cs: [66/447] series=2881840 g1: 7 picks actualizados.
+2026-06-23 22:25:08,861 [INFO] patch_lpl_cs: [67/447] series=2881840 g2: 6 picks actualizados.
+2026-06-23 22:25:09,276 [INFO] patch_lpl_cs: [68/447] series=2881840 g3: 7 picks actualizados.
+2026-06-23 22:25:10,359 [INFO] patch_lpl_cs: [69/447] series=2881841 g1: 5 picks actualizados.
+2026-06-23 22:25:10,850 [INFO] patch_lpl_cs: [70/447] series=2881841 g2: 3 picks actualizados.
+2026-06-23 22:25:11,667 [INFO] patch_lpl_cs: [71/447] series=2881842 g1: 4 picks actualizados.
+2026-06-23 22:25:12,110 [INFO] patch_lpl_cs: [72/447] series=2881842 g2: 7 picks actualizados.
+2026-06-23 22:25:12,310 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:25:17,357 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:25:24,906 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 11.25s... (3/5)
+2026-06-23 22:25:36,204 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 16.88s... (4/5)
+2026-06-23 22:25:53,127 [WARNING] patch_lpl_cs: [73/447] 2881843 g1: error descargando Tencent: Rate Limit HTTP 429 persistente tras 5 intentos.
+2026-06-23 22:25:53,377 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:25:58,425 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:26:07,584 [INFO] patch_lpl_cs: [74/447] series=2881843 g2: 6 picks actualizados.
+2026-06-23 22:26:07,993 [INFO] patch_lpl_cs: [75/447] series=2881843 g3: 5 picks actualizados.
+2026-06-23 22:26:09,508 [INFO] patch_lpl_cs: [76/447] series=2881844 g1: 4 picks actualizados.
+2026-06-23 22:26:09,974 [INFO] patch_lpl_cs: [77/447] series=2881844 g2: 4 picks actualizados.
+2026-06-23 22:26:11,766 [INFO] patch_lpl_cs: [78/447] series=2881845 g1: 7 picks actualizados.
+2026-06-23 22:26:12,286 [INFO] patch_lpl_cs: [79/447] series=2881845 g2: 3 picks actualizados.
+2026-06-23 22:26:12,904 [INFO] patch_lpl_cs: [80/447] series=2881845 g3: 5 picks actualizados.
+2026-06-23 22:26:14,090 [INFO] patch_lpl_cs: [81/447] series=2881846 g1: 8 picks actualizados.
+2026-06-23 22:26:14,544 [INFO] patch_lpl_cs: [82/447] series=2881846 g2: 3 picks actualizados.
+2026-06-23 22:26:14,742 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:26:19,793 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:26:27,340 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 11.25s... (3/5)
+2026-06-23 22:26:38,646 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 16.88s... (4/5)
+2026-06-23 22:26:55,571 [WARNING] patch_lpl_cs: [83/447] 2881846 g3: error descargando Tencent: Rate Limit HTTP 429 persistente tras 5 intentos.
+2026-06-23 22:26:55,820 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:27:01,637 [INFO] patch_lpl_cs: [84/447] series=2881847 g1: 3 picks actualizados.
+2026-06-23 22:27:02,260 [INFO] patch_lpl_cs: [85/447] series=2881847 g2: 7 picks actualizados.
+2026-06-23 22:27:02,728 [INFO] patch_lpl_cs: [86/447] series=2881847 g3: 6 picks actualizados.
+2026-06-23 22:27:03,592 [INFO] patch_lpl_cs: [87/447] series=2881848 g1: 6 picks actualizados.
+2026-06-23 22:27:03,981 [INFO] patch_lpl_cs: [88/447] series=2881848 g2: 5 picks actualizados.
+2026-06-23 22:27:04,820 [INFO] patch_lpl_cs: [89/447] series=2881849 g1: 4 picks actualizados.
+2026-06-23 22:27:05,264 [INFO] patch_lpl_cs: [90/447] series=2881849 g2: 3 picks actualizados.
+2026-06-23 22:27:05,670 [INFO] patch_lpl_cs: [91/447] series=2881849 g3: 7 picks actualizados.
+2026-06-23 22:27:06,517 [INFO] patch_lpl_cs: [92/447] series=2881850 g1: 6 picks actualizados.
+2026-06-23 22:27:06,983 [INFO] patch_lpl_cs: [93/447] series=2881850 g2: 5 picks actualizados.
+2026-06-23 22:27:08,015 [INFO] patch_lpl_cs: [94/447] series=2881851 g1: 5 picks actualizados.
+2026-06-23 22:27:08,214 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:27:13,264 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:27:20,813 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 11.25s... (3/5)
+2026-06-23 22:27:32,118 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 16.88s... (4/5)
+2026-06-23 22:27:49,043 [WARNING] patch_lpl_cs: [95/447] 2881851 g2: error descargando Tencent: Rate Limit HTTP 429 persistente tras 5 intentos.
+2026-06-23 22:27:49,293 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:27:54,341 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:28:02,102 [INFO] patch_lpl_cs: [96/447] series=2881851 g3: 6 picks actualizados.
+2026-06-23 22:28:03,283 [INFO] patch_lpl_cs: [97/447] series=2881852 g1: 4 picks actualizados.
+2026-06-23 22:28:03,730 [INFO] patch_lpl_cs: [98/447] series=2881852 g2: 7 picks actualizados.
+2026-06-23 22:28:04,523 [INFO] patch_lpl_cs: [99/447] series=2881853 g1: 7 picks actualizados.
+2026-06-23 22:28:04,926 [INFO] patch_lpl_cs: [100/447] series=2881853 g2: 6 picks actualizados.
+2026-06-23 22:28:05,439 [INFO] patch_lpl_cs: [101/447] series=2881853 g3: 4 picks actualizados.
+2026-06-23 22:28:06,153 [INFO] patch_lpl_cs: [102/447] series=2881854 g1: 6 picks actualizados.
+2026-06-23 22:28:06,558 [INFO] patch_lpl_cs: [103/447] series=2881854 g2: 8 picks actualizados.
+2026-06-23 22:28:07,085 [INFO] patch_lpl_cs: [104/447] series=2881854 g3: 6 picks actualizados.
+2026-06-23 22:28:07,944 [INFO] patch_lpl_cs: [105/447] series=2881855 g1: 6 picks actualizados.
+2026-06-23 22:28:08,144 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:28:13,207 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:28:20,756 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 11.25s... (3/5)
+2026-06-23 22:28:32,057 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 16.88s... (4/5)
+2026-06-23 22:28:48,980 [WARNING] patch_lpl_cs: [106/447] 2881855 g2: error descargando Tencent: Rate Limit HTTP 429 persistente tras 5 intentos.
+2026-06-23 22:28:49,230 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:28:54,281 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:29:02,616 [INFO] patch_lpl_cs: [107/447] series=2881856 g1: 5 picks actualizados.
+2026-06-23 22:29:03,011 [INFO] patch_lpl_cs: [108/447] series=2881856 g2: 5 picks actualizados.
+2026-06-23 22:29:03,480 [INFO] patch_lpl_cs: [109/447] series=2881856 g3: 6 picks actualizados.
+2026-06-23 22:29:04,534 [INFO] patch_lpl_cs: [110/447] series=2881857 g1: 6 picks actualizados.
+2026-06-23 22:29:04,950 [INFO] patch_lpl_cs: [111/447] series=2881857 g2: 4 picks actualizados.
+2026-06-23 22:29:05,821 [INFO] patch_lpl_cs: [112/447] series=2881858 g1: 6 picks actualizados.
+2026-06-23 22:29:06,362 [INFO] patch_lpl_cs: [113/447] series=2881858 g2: 6 picks actualizados.
+2026-06-23 22:29:06,747 [INFO] patch_lpl_cs: [114/447] series=2881858 g3: 7 picks actualizados.
+2026-06-23 22:29:07,469 [INFO] patch_lpl_cs: [115/447] series=2881859 g1: 4 picks actualizados.
+2026-06-23 22:29:07,861 [INFO] patch_lpl_cs: [116/447] series=2881859 g2: 7 picks actualizados.
+2026-06-23 22:29:08,583 [INFO] patch_lpl_cs: [117/447] series=2881817 g1: 5 picks actualizados.
+2026-06-23 22:29:08,784 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:29:13,833 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:29:21,381 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 11.25s... (3/5)
+2026-06-23 22:29:32,681 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 16.88s... (4/5)
+2026-06-23 22:29:49,617 [WARNING] patch_lpl_cs: [118/447] 2881817 g2: error descargando Tencent: Rate Limit HTTP 429 persistente tras 5 intentos.
+2026-06-23 22:29:49,866 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:29:54,915 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:30:03,175 [INFO] patch_lpl_cs: [119/447] series=2881861 g1: 3 picks actualizados.
+2026-06-23 22:30:03,566 [INFO] patch_lpl_cs: [120/447] series=2881861 g2: 6 picks actualizados.
+2026-06-23 22:30:04,036 [INFO] patch_lpl_cs: [121/447] series=2881861 g3: 6 picks actualizados.
+2026-06-23 22:30:04,783 [INFO] patch_lpl_cs: [122/447] series=2881862 g1: 7 picks actualizados.
+2026-06-23 22:30:05,176 [INFO] patch_lpl_cs: [123/447] series=2881862 g2: 7 picks actualizados.
+2026-06-23 22:30:06,374 [INFO] patch_lpl_cs: [125/447] series=2881863 g2: 4 picks actualizados.
+2026-06-23 22:30:06,833 [INFO] patch_lpl_cs: [126/447] series=2881863 g3: 4 picks actualizados.
+2026-06-23 22:30:08,234 [INFO] patch_lpl_cs: [127/447] series=2881864 g1: 8 picks actualizados.
+2026-06-23 22:30:08,451 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:30:13,499 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:30:21,047 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 11.25s... (3/5)
+2026-06-23 22:30:32,346 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 16.88s... (4/5)
+2026-06-23 22:30:49,269 [WARNING] patch_lpl_cs: [128/447] 2881864 g2: error descargando Tencent: Rate Limit HTTP 429 persistente tras 5 intentos.
+2026-06-23 22:30:49,522 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:30:54,572 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:31:02,848 [INFO] patch_lpl_cs: [129/447] series=2881865 g1: 6 picks actualizados.
+2026-06-23 22:31:03,344 [INFO] patch_lpl_cs: [130/447] series=2881865 g2: 4 picks actualizados.
+2026-06-23 22:31:04,241 [INFO] patch_lpl_cs: [131/447] series=2881866 g1: 7 picks actualizados.
+2026-06-23 22:31:04,668 [INFO] patch_lpl_cs: [132/447] series=2881866 g2: 9 picks actualizados.
+2026-06-23 22:31:05,536 [INFO] patch_lpl_cs: [133/447] series=2899725 g1: 8 picks actualizados.
+2026-06-23 22:31:06,007 [INFO] patch_lpl_cs: [134/447] series=2899725 g2: 6 picks actualizados.
+2026-06-23 22:31:06,585 [INFO] patch_lpl_cs: [135/447] series=2899725 g3: 6 picks actualizados.
+2026-06-23 22:31:07,509 [INFO] patch_lpl_cs: [136/447] series=2900295 g1: 6 picks actualizados.
+2026-06-23 22:31:08,001 [INFO] patch_lpl_cs: [137/447] series=2900295 g2: 3 picks actualizados.
+2026-06-23 22:31:08,203 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:31:13,279 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:31:20,828 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 11.25s... (3/5)
+2026-06-23 22:31:32,127 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 16.88s... (4/5)
+2026-06-23 22:31:49,070 [WARNING] patch_lpl_cs: [138/447] 2881871 g1: error descargando Tencent: Rate Limit HTTP 429 persistente tras 5 intentos.
+2026-06-23 22:31:49,317 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:31:54,367 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:32:02,563 [INFO] patch_lpl_cs: [139/447] series=2881871 g2: 6 picks actualizados.
+2026-06-23 22:32:03,017 [INFO] patch_lpl_cs: [140/447] series=2881871 g3: 6 picks actualizados.
+2026-06-23 22:32:03,751 [INFO] patch_lpl_cs: [141/447] series=2881868 g1: 8 picks actualizados.
+2026-06-23 22:32:04,304 [INFO] patch_lpl_cs: [142/447] series=2881868 g2: 5 picks actualizados.
+2026-06-23 22:32:04,703 [INFO] patch_lpl_cs: [143/447] series=2881868 g3: 4 picks actualizados.
+2026-06-23 22:32:05,172 [INFO] patch_lpl_cs: [144/447] series=2881868 g4: 5 picks actualizados.
+2026-06-23 22:32:05,567 [INFO] patch_lpl_cs: [145/447] series=2881868 g5: 6 picks actualizados.
+2026-06-23 22:32:06,389 [INFO] patch_lpl_cs: [146/447] series=2881872 g1: 7 picks actualizados.
+2026-06-23 22:32:06,933 [INFO] patch_lpl_cs: [147/447] series=2881872 g2: 5 picks actualizados.
+2026-06-23 22:32:07,131 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:32:12,182 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:32:19,731 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 11.25s... (3/5)
+2026-06-23 22:32:31,028 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 16.88s... (4/5)
+2026-06-23 22:32:47,966 [WARNING] patch_lpl_cs: [148/447] 2881872 g3: error descargando Tencent: Rate Limit HTTP 429 persistente tras 5 intentos.
+2026-06-23 22:32:48,215 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:32:53,266 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:33:01,910 [INFO] patch_lpl_cs: [149/447] series=2881869 g1: 8 picks actualizados.
+2026-06-23 22:33:02,354 [INFO] patch_lpl_cs: [150/447] series=2881869 g2: 5 picks actualizados.
+2026-06-23 22:33:02,761 [INFO] patch_lpl_cs: [151/447] series=2881869 g3: 6 picks actualizados.
+2026-06-23 22:33:03,335 [INFO] patch_lpl_cs: [152/447] series=2881869 g4: 6 picks actualizados.
+2026-06-23 22:33:04,075 [INFO] patch_lpl_cs: [153/447] series=2881870 g1: 6 picks actualizados.
+2026-06-23 22:33:04,762 [INFO] patch_lpl_cs: [154/447] series=2881870 g2: 6 picks actualizados.
+2026-06-23 22:33:05,146 [INFO] patch_lpl_cs: [155/447] series=2881870 g3: 3 picks actualizados.
+2026-06-23 22:33:05,538 [INFO] patch_lpl_cs: [156/447] series=2881870 g4: 8 picks actualizados.
+2026-06-23 22:33:06,291 [INFO] patch_lpl_cs: [157/447] series=2881873 g1: 7 picks actualizados.
+2026-06-23 22:33:06,767 [INFO] patch_lpl_cs: [158/447] series=2881873 g2: 7 picks actualizados.
+2026-06-23 22:33:06,965 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:33:12,014 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:33:19,565 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 11.25s... (3/5)
+2026-06-23 22:33:30,867 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 16.88s... (4/5)
+2026-06-23 22:33:47,791 [WARNING] patch_lpl_cs: [159/447] 2881873 g3: error descargando Tencent: Rate Limit HTTP 429 persistente tras 5 intentos.
+2026-06-23 22:33:48,043 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:33:53,097 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:34:00,888 [INFO] patch_lpl_cs: [160/447] series=2881873 g4: 7 picks actualizados.
+2026-06-23 22:34:01,702 [INFO] patch_lpl_cs: [161/447] series=2881874 g1: 8 picks actualizados.
+2026-06-23 22:34:02,098 [INFO] patch_lpl_cs: [162/447] series=2881874 g2: 6 picks actualizados.
+2026-06-23 22:34:02,577 [INFO] patch_lpl_cs: [163/447] series=2881874 g3: 8 picks actualizados.
+2026-06-23 22:34:02,967 [INFO] patch_lpl_cs: [164/447] series=2881874 g4: 5 picks actualizados.
+2026-06-23 22:34:03,364 [INFO] patch_lpl_cs: [165/447] series=2881874 g5: 6 picks actualizados.
+2026-06-23 22:34:04,301 [INFO] patch_lpl_cs: [166/447] series=2881875 g1: 6 picks actualizados.
+2026-06-23 22:34:05,059 [INFO] patch_lpl_cs: [167/447] series=2881875 g2: 5 picks actualizados.
+2026-06-23 22:34:05,447 [INFO] patch_lpl_cs: [168/447] series=2881875 g3: 5 picks actualizados.
+2026-06-23 22:34:06,170 [INFO] patch_lpl_cs: [169/447] series=2881877 g1: 5 picks actualizados.
+2026-06-23 22:34:06,370 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:34:11,418 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:34:18,971 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 11.25s... (3/5)
+2026-06-23 22:34:30,270 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 16.88s... (4/5)
+2026-06-23 22:34:47,194 [WARNING] patch_lpl_cs: [170/447] 2881878 g1: error descargando Tencent: Rate Limit HTTP 429 persistente tras 5 intentos.
+2026-06-23 22:34:47,442 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:34:52,490 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:35:00,734 [INFO] patch_lpl_cs: [171/447] series=2881878 g2: 7 picks actualizados.
+2026-06-23 22:35:01,162 [INFO] patch_lpl_cs: [172/447] series=2881878 g3: 6 picks actualizados.
+2026-06-23 22:35:01,603 [INFO] patch_lpl_cs: [173/447] series=2881878 g4: 3 picks actualizados.
+2026-06-23 22:35:02,001 [INFO] patch_lpl_cs: [174/447] series=2881878 g5: 8 picks actualizados.
+2026-06-23 22:35:02,725 [INFO] patch_lpl_cs: [175/447] series=2881879 g1: 7 picks actualizados.
+2026-06-23 22:35:03,338 [INFO] patch_lpl_cs: [176/447] series=2881879 g2: 3 picks actualizados.
+2026-06-23 22:35:03,953 [INFO] patch_lpl_cs: [177/447] series=2881879 g3: 5 picks actualizados.
+2026-06-23 22:35:04,785 [INFO] patch_lpl_cs: [178/447] series=2881880 g1: 7 picks actualizados.
+2026-06-23 22:35:05,294 [INFO] patch_lpl_cs: [179/447] series=2881880 g2: 4 picks actualizados.
+2026-06-23 22:35:05,795 [INFO] patch_lpl_cs: [180/447] series=2881880 g3: 6 picks actualizados.
+2026-06-23 22:35:06,632 [INFO] patch_lpl_cs: [181/447] series=2881881 g1: 8 picks actualizados.
+2026-06-23 22:35:07,045 [INFO] patch_lpl_cs: [182/447] series=2881881 g2: 8 picks actualizados.
+2026-06-23 22:35:07,651 [INFO] patch_lpl_cs: [183/447] series=2881881 g3: 3 picks actualizados.
+2026-06-23 22:35:08,256 [INFO] patch_lpl_cs: [184/447] series=2881881 g4: 7 picks actualizados.
+2026-06-23 22:35:09,092 [INFO] patch_lpl_cs: [185/447] series=2881882 g1: 8 picks actualizados.
+2026-06-23 22:35:09,492 [INFO] patch_lpl_cs: [186/447] series=2881882 g2: 7 picks actualizados.
+2026-06-23 22:35:09,889 [INFO] patch_lpl_cs: [187/447] series=2881882 g3: 5 picks actualizados.
+2026-06-23 22:35:10,315 [INFO] patch_lpl_cs: [188/447] series=2881882 g4: 5 picks actualizados.
+2026-06-23 22:35:10,725 [INFO] patch_lpl_cs: [189/447] series=2881882 g5: 7 picks actualizados.
+2026-06-23 22:35:11,323 [INFO] patch_lpl_cs: [190/447] series=2881883 g1: 5 picks actualizados.
+2026-06-23 22:35:11,523 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:35:16,572 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:35:24,127 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 11.25s... (3/5)
+2026-06-23 22:35:35,429 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 16.88s... (4/5)
+2026-06-23 22:35:52,355 [WARNING] patch_lpl_cs: [191/447] 2881883 g2: error descargando Tencent: Rate Limit HTTP 429 persistente tras 5 intentos.
+2026-06-23 22:35:52,604 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:35:57,653 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:36:05,458 [INFO] patch_lpl_cs: [192/447] series=2881883 g3: 3 picks actualizados.
+2026-06-23 22:36:06,007 [INFO] patch_lpl_cs: [193/447] series=2881883 g4: 6 picks actualizados.
+2026-06-23 22:36:07,045 [INFO] patch_lpl_cs: [194/447] series=2881884 g1: 7 picks actualizados.
+2026-06-23 22:36:07,652 [INFO] patch_lpl_cs: [195/447] series=2881884 g2: 7 picks actualizados.
+2026-06-23 22:36:08,173 [INFO] patch_lpl_cs: [196/447] series=2881884 g3: 6 picks actualizados.
+2026-06-23 22:36:08,555 [INFO] patch_lpl_cs: [197/447] series=2881884 g4: 7 picks actualizados.
+2026-06-23 22:36:08,939 [INFO] patch_lpl_cs: [198/447] series=2881884 g5: 5 picks actualizados.
+2026-06-23 22:36:09,902 [INFO] patch_lpl_cs: [199/447] series=2881885 g1: 5 picks actualizados.
+2026-06-23 22:36:10,302 [INFO] patch_lpl_cs: [200/447] series=2881885 g2: 6 picks actualizados.
+2026-06-23 22:36:10,764 [INFO] patch_lpl_cs: [201/447] series=2881885 g3: 6 picks actualizados.
+2026-06-23 22:36:11,148 [INFO] patch_lpl_cs: [202/447] series=2881885 g4: 6 picks actualizados.
+2026-06-23 22:36:11,948 [INFO] patch_lpl_cs: [203/447] series=2881886 g1: 4 picks actualizados.
+2026-06-23 22:36:12,363 [INFO] patch_lpl_cs: [204/447] series=2881886 g2: 7 picks actualizados.
+2026-06-23 22:36:12,739 [INFO] patch_lpl_cs: [205/447] series=2881886 g3: 7 picks actualizados.
+2026-06-23 22:36:12,935 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:36:17,988 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:36:25,538 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 11.25s... (3/5)
+2026-06-23 22:36:36,834 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 16.88s... (4/5)
+2026-06-23 22:36:53,757 [WARNING] patch_lpl_cs: [206/447] 2910938 g1: error descargando Tencent: Rate Limit HTTP 429 persistente tras 5 intentos.
+2026-06-23 22:36:54,005 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:36:59,053 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:37:07,242 [INFO] patch_lpl_cs: [207/447] series=2910938 g2: 6 picks actualizados.
+2026-06-23 22:37:07,645 [INFO] patch_lpl_cs: [208/447] series=2910938 g3: 4 picks actualizados.
+2026-06-23 22:37:08,051 [INFO] patch_lpl_cs: [209/447] series=2910938 g4: 7 picks actualizados.
+2026-06-23 22:37:08,898 [INFO] patch_lpl_cs: [210/447] series=2923541 g1: 6 picks actualizados.
+2026-06-23 22:37:09,329 [INFO] patch_lpl_cs: [211/447] series=2923541 g2: 3 picks actualizados.
+2026-06-23 22:37:10,115 [INFO] patch_lpl_cs: [212/447] series=2923542 g1: 5 picks actualizados.
+2026-06-23 22:37:10,576 [INFO] patch_lpl_cs: [213/447] series=2923542 g2: 4 picks actualizados.
+2026-06-23 22:37:11,217 [INFO] patch_lpl_cs: [214/447] series=2923543 g1: 5 picks actualizados.
+2026-06-23 22:37:11,605 [INFO] patch_lpl_cs: [215/447] series=2923543 g2: 3 picks actualizados.
+2026-06-23 22:37:12,194 [INFO] patch_lpl_cs: [216/447] series=2923544 g1: 6 picks actualizados.
+2026-06-23 22:37:12,620 [INFO] patch_lpl_cs: [217/447] series=2923544 g2: 5 picks actualizados.
+2026-06-23 22:37:12,820 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:37:17,870 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:37:25,419 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 11.25s... (3/5)
+2026-06-23 22:37:36,722 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 16.88s... (4/5)
+2026-06-23 22:37:53,647 [WARNING] patch_lpl_cs: [218/447] 2923544 g3: error descargando Tencent: Rate Limit HTTP 429 persistente tras 5 intentos.
+2026-06-23 22:37:53,896 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:37:58,946 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:38:07,103 [INFO] patch_lpl_cs: [219/447] series=2923545 g1: 8 picks actualizados.
+2026-06-23 22:38:07,563 [INFO] patch_lpl_cs: [220/447] series=2923545 g2: 4 picks actualizados.
+2026-06-23 22:38:08,901 [INFO] patch_lpl_cs: [222/447] series=2923547 g2: 5 picks actualizados.
+2026-06-23 22:38:09,298 [INFO] patch_lpl_cs: [223/447] series=2923547 g3: 5 picks actualizados.
+2026-06-23 22:38:09,984 [INFO] patch_lpl_cs: [224/447] series=2923548 g1: 6 picks actualizados.
+2026-06-23 22:38:10,500 [INFO] patch_lpl_cs: [225/447] series=2923548 g2: 3 picks actualizados.
+2026-06-23 22:38:11,333 [INFO] patch_lpl_cs: [226/447] series=2923550 g1: 4 picks actualizados.
+2026-06-23 22:38:11,805 [INFO] patch_lpl_cs: [227/447] series=2923550 g2: 8 picks actualizados.
+2026-06-23 22:38:12,211 [INFO] patch_lpl_cs: [228/447] series=2923550 g3: 7 picks actualizados.
+2026-06-23 22:38:12,987 [INFO] patch_lpl_cs: [229/447] series=2923551 g1: 6 picks actualizados.
+2026-06-23 22:38:13,187 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:38:18,236 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:38:25,786 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 11.25s... (3/5)
+2026-06-23 22:38:37,143 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 16.88s... (4/5)
+2026-06-23 22:38:54,068 [WARNING] patch_lpl_cs: [230/447] 2923551 g2: error descargando Tencent: Rate Limit HTTP 429 persistente tras 5 intentos.
+2026-06-23 22:38:54,316 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:38:59,369 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:39:07,267 [INFO] patch_lpl_cs: [231/447] series=2923552 g1: 6 picks actualizados.
+2026-06-23 22:39:07,665 [INFO] patch_lpl_cs: [232/447] series=2923552 g2: 5 picks actualizados.
+2026-06-23 22:39:08,303 [INFO] patch_lpl_cs: [233/447] series=2923552 g3: 7 picks actualizados.
+2026-06-23 22:39:08,981 [INFO] patch_lpl_cs: [234/447] series=2923553 g1: 6 picks actualizados.
+2026-06-23 22:39:09,464 [INFO] patch_lpl_cs: [235/447] series=2923553 g2: 6 picks actualizados.
+2026-06-23 22:39:10,157 [INFO] patch_lpl_cs: [236/447] series=2923554 g1: 7 picks actualizados.
+2026-06-23 22:39:10,610 [INFO] patch_lpl_cs: [237/447] series=2923554 g2: 5 picks actualizados.
+2026-06-23 22:39:11,575 [INFO] patch_lpl_cs: [238/447] series=2923555 g1: 7 picks actualizados.
+2026-06-23 22:39:12,039 [INFO] patch_lpl_cs: [239/447] series=2923555 g2: 4 picks actualizados.
+2026-06-23 22:39:12,237 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:39:17,287 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:39:24,838 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 11.25s... (3/5)
+2026-06-23 22:39:36,139 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 16.88s... (4/5)
+2026-06-23 22:39:53,062 [WARNING] patch_lpl_cs: [240/447] 2923556 g1: error descargando Tencent: Rate Limit HTTP 429 persistente tras 5 intentos.
+2026-06-23 22:39:53,314 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:39:58,363 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:40:06,649 [INFO] patch_lpl_cs: [241/447] series=2923556 g2: 4 picks actualizados.
+2026-06-23 22:40:07,180 [INFO] patch_lpl_cs: [242/447] series=2923556 g3: 6 picks actualizados.
+2026-06-23 22:40:07,890 [INFO] patch_lpl_cs: [243/447] series=2923557 g1: 8 picks actualizados.
+2026-06-23 22:40:08,353 [INFO] patch_lpl_cs: [244/447] series=2923557 g2: 6 picks actualizados.
+2026-06-23 22:40:09,118 [INFO] patch_lpl_cs: [245/447] series=2923559 g1: 8 picks actualizados.
+2026-06-23 22:40:09,615 [INFO] patch_lpl_cs: [246/447] series=2923559 g2: 5 picks actualizados.
+2026-06-23 22:40:10,348 [INFO] patch_lpl_cs: [247/447] series=2923560 g1: 5 picks actualizados.
+2026-06-23 22:40:10,734 [INFO] patch_lpl_cs: [248/447] series=2923560 g2: 7 picks actualizados.
+2026-06-23 22:40:11,138 [INFO] patch_lpl_cs: [249/447] series=2923560 g3: 7 picks actualizados.
+2026-06-23 22:40:11,340 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:40:16,390 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:40:23,937 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 11.25s... (3/5)
+2026-06-23 22:40:35,255 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 16.88s... (4/5)
+2026-06-23 22:40:52,180 [WARNING] patch_lpl_cs: [250/447] 2923561 g1: error descargando Tencent: Rate Limit HTTP 429 persistente tras 5 intentos.
+2026-06-23 22:40:52,429 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:40:57,484 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:41:05,673 [INFO] patch_lpl_cs: [251/447] series=2923561 g2: 7 picks actualizados.
+2026-06-23 22:41:06,939 [INFO] patch_lpl_cs: [252/447] series=2923562 g1: 7 picks actualizados.
+2026-06-23 22:41:07,347 [INFO] patch_lpl_cs: [253/447] series=2923562 g2: 5 picks actualizados.
+2026-06-23 22:41:08,033 [INFO] patch_lpl_cs: [254/447] series=2923563 g1: 6 picks actualizados.
+2026-06-23 22:41:08,458 [INFO] patch_lpl_cs: [255/447] series=2923563 g2: 4 picks actualizados.
+2026-06-23 22:41:08,887 [INFO] patch_lpl_cs: [256/447] series=2923563 g3: 5 picks actualizados.
+2026-06-23 22:41:09,581 [INFO] patch_lpl_cs: [257/447] series=2923564 g1: 5 picks actualizados.
+2026-06-23 22:41:10,013 [INFO] patch_lpl_cs: [258/447] series=2923564 g2: 7 picks actualizados.
+2026-06-23 22:41:10,767 [INFO] patch_lpl_cs: [259/447] series=2923565 g1: 6 picks actualizados.
+2026-06-23 22:41:10,964 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:41:16,015 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:41:23,564 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 11.25s... (3/5)
+2026-06-23 22:41:34,863 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 16.88s... (4/5)
+2026-06-23 22:41:51,852 [WARNING] patch_lpl_cs: [260/447] 2923565 g2: error descargando Tencent: Rate Limit HTTP 429 persistente tras 5 intentos.
+2026-06-23 22:41:52,101 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:41:57,151 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:42:05,183 [INFO] patch_lpl_cs: [261/447] series=2923565 g3: 6 picks actualizados.
+2026-06-23 22:42:06,083 [INFO] patch_lpl_cs: [262/447] series=2923566 g1: 7 picks actualizados.
+2026-06-23 22:42:06,511 [INFO] patch_lpl_cs: [263/447] series=2923566 g2: 6 picks actualizados.
+2026-06-23 22:42:06,889 [INFO] patch_lpl_cs: [264/447] series=2923566 g3: 5 picks actualizados.
+2026-06-23 22:42:07,862 [INFO] patch_lpl_cs: [265/447] series=2923567 g1: 6 picks actualizados.
+2026-06-23 22:42:08,307 [INFO] patch_lpl_cs: [266/447] series=2923567 g2: 7 picks actualizados.
+2026-06-23 22:42:09,379 [INFO] patch_lpl_cs: [267/447] series=2923568 g1: 7 picks actualizados.
+2026-06-23 22:42:09,849 [INFO] patch_lpl_cs: [268/447] series=2923568 g2: 8 picks actualizados.
+2026-06-23 22:42:10,049 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:42:15,099 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:42:22,648 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 11.25s... (3/5)
+2026-06-23 22:42:33,949 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 16.88s... (4/5)
+2026-06-23 22:42:50,874 [WARNING] patch_lpl_cs: [269/447] 2923570 g1: error descargando Tencent: Rate Limit HTTP 429 persistente tras 5 intentos.
+2026-06-23 22:42:51,127 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:42:56,178 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:43:04,358 [INFO] patch_lpl_cs: [270/447] series=2923570 g2: 5 picks actualizados.
+2026-06-23 22:43:04,942 [INFO] patch_lpl_cs: [271/447] series=2923571 g1: 6 picks actualizados.
+2026-06-23 22:43:05,458 [INFO] patch_lpl_cs: [272/447] series=2923571 g2: 4 picks actualizados.
+2026-06-23 22:43:06,308 [INFO] patch_lpl_cs: [273/447] series=2923572 g1: 5 picks actualizados.
+2026-06-23 22:43:06,883 [INFO] patch_lpl_cs: [274/447] series=2923572 g2: 8 picks actualizados.
+2026-06-23 22:43:07,918 [INFO] patch_lpl_cs: [275/447] series=2923573 g1: 6 picks actualizados.
+2026-06-23 22:43:08,492 [INFO] patch_lpl_cs: [276/447] series=2923573 g2: 7 picks actualizados.
+2026-06-23 22:43:09,402 [INFO] patch_lpl_cs: [277/447] series=2923574 g1: 7 picks actualizados.
+2026-06-23 22:43:09,870 [INFO] patch_lpl_cs: [278/447] series=2923574 g2: 4 picks actualizados.
+2026-06-23 22:43:10,068 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:43:15,119 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:43:22,666 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 11.25s... (3/5)
+2026-06-23 22:43:33,969 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 16.88s... (4/5)
+2026-06-23 22:43:50,894 [WARNING] patch_lpl_cs: [279/447] 2923575 g1: error descargando Tencent: Rate Limit HTTP 429 persistente tras 5 intentos.
+2026-06-23 22:43:51,145 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:43:56,193 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:44:04,073 [INFO] patch_lpl_cs: [280/447] series=2923575 g2: 6 picks actualizados.
+2026-06-23 22:44:04,541 [INFO] patch_lpl_cs: [281/447] series=2923576 g1: 6 picks actualizados.
+2026-06-23 22:44:05,031 [INFO] patch_lpl_cs: [282/447] series=2923576 g2: 7 picks actualizados.
+2026-06-23 22:44:05,455 [INFO] patch_lpl_cs: [283/447] series=2923577 g1: 7 picks actualizados.
+2026-06-23 22:44:05,829 [INFO] patch_lpl_cs: [284/447] series=2923577 g2: 5 picks actualizados.
+2026-06-23 22:44:06,240 [INFO] patch_lpl_cs: [285/447] series=2923578 g1: 7 picks actualizados.
+2026-06-23 22:44:06,647 [INFO] patch_lpl_cs: [286/447] series=2923578 g2: 6 picks actualizados.
+2026-06-23 22:44:07,044 [INFO] patch_lpl_cs: [287/447] series=2923578 g3: 5 picks actualizados.
+2026-06-23 22:44:07,457 [INFO] patch_lpl_cs: [288/447] series=2923579 g1: 8 picks actualizados.
+2026-06-23 22:44:07,860 [INFO] patch_lpl_cs: [289/447] series=2923579 g2: 8 picks actualizados.
+2026-06-23 22:44:08,277 [INFO] patch_lpl_cs: [290/447] series=2923580 g1: 6 picks actualizados.
+2026-06-23 22:44:08,479 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:44:13,530 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:44:21,079 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 11.25s... (3/5)
+2026-06-23 22:44:32,379 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 16.88s... (4/5)
+2026-06-23 22:44:49,352 [WARNING] patch_lpl_cs: [291/447] 2923580 g2: error descargando Tencent: Rate Limit HTTP 429 persistente tras 5 intentos.
+2026-06-23 22:44:49,611 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:44:54,661 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:45:02,502 [INFO] patch_lpl_cs: [292/447] series=2923582 g1: 5 picks actualizados.
+2026-06-23 22:45:02,964 [INFO] patch_lpl_cs: [293/447] series=2923582 g2: 9 picks actualizados.
+2026-06-23 22:45:03,678 [INFO] patch_lpl_cs: [294/447] series=2923583 g1: 6 picks actualizados.
+2026-06-23 22:45:04,237 [INFO] patch_lpl_cs: [295/447] series=2923583 g2: 8 picks actualizados.
+2026-06-23 22:45:04,843 [INFO] patch_lpl_cs: [296/447] series=2923584 g1: 6 picks actualizados.
+2026-06-23 22:45:05,241 [INFO] patch_lpl_cs: [297/447] series=2923584 g2: 7 picks actualizados.
+2026-06-23 22:45:05,901 [INFO] patch_lpl_cs: [298/447] series=2923585 g1: 5 picks actualizados.
+2026-06-23 22:45:06,374 [INFO] patch_lpl_cs: [299/447] series=2923585 g2: 7 picks actualizados.
+2026-06-23 22:45:07,110 [INFO] patch_lpl_cs: [300/447] series=2923586 g1: 5 picks actualizados.
+2026-06-23 22:45:07,310 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:45:12,359 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:45:19,909 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 11.25s... (3/5)
+2026-06-23 22:45:31,221 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 16.88s... (4/5)
+2026-06-23 22:45:48,146 [WARNING] patch_lpl_cs: [301/447] 2923586 g2: error descargando Tencent: Rate Limit HTTP 429 persistente tras 5 intentos.
+2026-06-23 22:45:48,397 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:45:53,449 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:46:01,393 [INFO] patch_lpl_cs: [302/447] series=2923586 g3: 7 picks actualizados.
+2026-06-23 22:46:02,210 [INFO] patch_lpl_cs: [303/447] series=2923587 g1: 5 picks actualizados.
+2026-06-23 22:46:02,681 [INFO] patch_lpl_cs: [304/447] series=2923587 g2: 7 picks actualizados.
+2026-06-23 22:46:03,118 [INFO] patch_lpl_cs: [305/447] series=2923587 g3: 6 picks actualizados.
+2026-06-23 22:46:04,101 [INFO] patch_lpl_cs: [306/447] series=2923588 g1: 6 picks actualizados.
+2026-06-23 22:46:04,559 [INFO] patch_lpl_cs: [307/447] series=2923588 g2: 7 picks actualizados.
+2026-06-23 22:46:05,486 [INFO] patch_lpl_cs: [308/447] series=2923589 g1: 7 picks actualizados.
+2026-06-23 22:46:05,877 [INFO] patch_lpl_cs: [309/447] series=2923589 g2: 7 picks actualizados.
+2026-06-23 22:46:06,291 [INFO] patch_lpl_cs: [310/447] series=2923589 g3: 3 picks actualizados.
+2026-06-23 22:46:07,136 [INFO] patch_lpl_cs: [311/447] series=2923590 g1: 6 picks actualizados.
+2026-06-23 22:46:07,337 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:46:12,387 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:46:19,937 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 11.25s... (3/5)
+2026-06-23 22:46:31,235 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 16.88s... (4/5)
+2026-06-23 22:46:48,162 [WARNING] patch_lpl_cs: [312/447] 2923590 g2: error descargando Tencent: Rate Limit HTTP 429 persistente tras 5 intentos.
+2026-06-23 22:46:48,411 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:46:53,459 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:47:01,248 [INFO] patch_lpl_cs: [313/447] series=2923590 g3: 3 picks actualizados.
+2026-06-23 22:47:01,790 [INFO] patch_lpl_cs: [314/447] series=2923591 g1: 4 picks actualizados.
+2026-06-23 22:47:02,266 [INFO] patch_lpl_cs: [315/447] series=2923591 g2: 6 picks actualizados.
+2026-06-23 22:47:02,756 [INFO] patch_lpl_cs: [316/447] series=2923592 g1: 5 picks actualizados.
+2026-06-23 22:47:03,192 [INFO] patch_lpl_cs: [317/447] series=2923592 g2: 5 picks actualizados.
+2026-06-23 22:47:03,734 [WARNING] grid_minion.rest_client: 404 No encontrado: /file-download/end-state/tencent/series/2923593/games/1
+2026-06-23 22:47:03,734 [WARNING] patch_lpl_cs: [318/447] series=2923593 g1: sin Tencent Details, skip.
+2026-06-23 22:47:04,676 [INFO] patch_lpl_cs: [320/447] series=2923594 g1: 8 picks actualizados.
+2026-06-23 22:47:05,690 [INFO] patch_lpl_cs: [321/447] series=2923594 g2: 7 picks actualizados.
+2026-06-23 22:47:06,301 [INFO] patch_lpl_cs: [322/447] series=2923594 g3: 4 picks actualizados.
+2026-06-23 22:47:06,700 [INFO] patch_lpl_cs: [323/447] series=2923595 g1: 6 picks actualizados.
+2026-06-23 22:47:06,898 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:47:11,945 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:47:19,493 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 11.25s... (3/5)
+2026-06-23 22:47:30,792 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 16.88s... (4/5)
+2026-06-23 22:47:47,773 [WARNING] patch_lpl_cs: [324/447] 2923595 g2: error descargando Tencent: Rate Limit HTTP 429 persistente tras 5 intentos.
+2026-06-23 22:47:48,022 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:47:53,071 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:48:01,326 [INFO] patch_lpl_cs: [325/447] series=2923595 g3: 6 picks actualizados.
+2026-06-23 22:48:02,320 [INFO] patch_lpl_cs: [326/447] series=2923596 g1: 6 picks actualizados.
+2026-06-23 22:48:02,747 [INFO] patch_lpl_cs: [327/447] series=2923596 g2: 6 picks actualizados.
+2026-06-23 22:48:03,229 [INFO] patch_lpl_cs: [328/447] series=2923596 g3: 4 picks actualizados.
+2026-06-23 22:48:03,656 [INFO] patch_lpl_cs: [329/447] series=2923597 g1: 6 picks actualizados.
+2026-06-23 22:48:04,584 [INFO] patch_lpl_cs: [330/447] series=2923597 g2: 4 picks actualizados.
+2026-06-23 22:48:04,969 [INFO] patch_lpl_cs: [331/447] series=2923597 g3: 8 picks actualizados.
+2026-06-23 22:48:06,057 [INFO] patch_lpl_cs: [332/447] series=2923598 g1: 4 picks actualizados.
+2026-06-23 22:48:06,510 [INFO] patch_lpl_cs: [333/447] series=2923598 g2: 4 picks actualizados.
+2026-06-23 22:48:07,442 [INFO] patch_lpl_cs: [334/447] series=2923600 g1: 8 picks actualizados.
+2026-06-23 22:48:07,640 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:48:12,690 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:48:20,240 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 11.25s... (3/5)
+2026-06-23 22:48:31,541 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 16.88s... (4/5)
+2026-06-23 22:48:48,473 [WARNING] patch_lpl_cs: [335/447] 2923600 g2: error descargando Tencent: Rate Limit HTTP 429 persistente tras 5 intentos.
+2026-06-23 22:48:48,723 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:48:53,772 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:49:02,351 [INFO] patch_lpl_cs: [336/447] series=2948318 g1: 4 picks actualizados.
+2026-06-23 22:49:02,931 [INFO] patch_lpl_cs: [337/447] series=2948318 g2: 7 picks actualizados.
+2026-06-23 22:49:03,385 [INFO] patch_lpl_cs: [338/447] series=2948318 g3: 5 picks actualizados.
+2026-06-23 22:49:04,342 [INFO] patch_lpl_cs: [339/447] series=2923601 g1: 4 picks actualizados.
+2026-06-23 22:49:04,829 [INFO] patch_lpl_cs: [340/447] series=2923601 g2: 4 picks actualizados.
+2026-06-23 22:49:05,954 [INFO] patch_lpl_cs: [341/447] series=2923602 g1: 8 picks actualizados.
+2026-06-23 22:49:06,355 [INFO] patch_lpl_cs: [342/447] series=2923602 g2: 5 picks actualizados.
+2026-06-23 22:49:06,555 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:49:11,605 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:49:19,155 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 11.25s... (3/5)
+2026-06-23 22:49:30,455 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 16.88s... (4/5)
+2026-06-23 22:49:47,380 [WARNING] patch_lpl_cs: [343/447] 2923603 g1: error descargando Tencent: Rate Limit HTTP 429 persistente tras 5 intentos.
+2026-06-23 22:49:47,632 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:49:52,681 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:50:01,168 [INFO] patch_lpl_cs: [344/447] series=2923603 g2: 5 picks actualizados.
+2026-06-23 22:50:01,818 [INFO] patch_lpl_cs: [345/447] series=2923604 g1: 5 picks actualizados.
+2026-06-23 22:50:02,395 [INFO] patch_lpl_cs: [346/447] series=2923604 g2: 7 picks actualizados.
+2026-06-23 22:50:02,786 [INFO] patch_lpl_cs: [347/447] series=2923604 g3: 6 picks actualizados.
+2026-06-23 22:50:03,210 [INFO] patch_lpl_cs: [348/447] series=2923605 g1: 5 picks actualizados.
+2026-06-23 22:50:03,694 [INFO] patch_lpl_cs: [349/447] series=2923605 g2: 3 picks actualizados.
+2026-06-23 22:50:04,090 [INFO] patch_lpl_cs: [350/447] series=2923605 g3: 4 picks actualizados.
+2026-06-23 22:50:04,490 [INFO] patch_lpl_cs: [351/447] series=2923606 g1: 7 picks actualizados.
+2026-06-23 22:50:05,095 [INFO] patch_lpl_cs: [352/447] series=2923606 g2: 5 picks actualizados.
+2026-06-23 22:50:05,292 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:50:10,342 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:50:17,891 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 11.25s... (3/5)
+2026-06-23 22:50:29,192 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 16.88s... (4/5)
+2026-06-23 22:50:46,127 [WARNING] patch_lpl_cs: [353/447] 2923606 g3: error descargando Tencent: Rate Limit HTTP 429 persistente tras 5 intentos.
+2026-06-23 22:50:46,377 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:50:51,428 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:50:58,975 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 11.25s... (3/5)
+2026-06-23 22:51:11,191 [INFO] patch_lpl_cs: [354/447] series=2923607 g1: 5 picks actualizados.
+2026-06-23 22:51:11,608 [INFO] patch_lpl_cs: [355/447] series=2923607 g2: 8 picks actualizados.
+2026-06-23 22:51:12,283 [INFO] patch_lpl_cs: [356/447] series=2923607 g3: 7 picks actualizados.
+2026-06-23 22:51:13,344 [INFO] patch_lpl_cs: [357/447] series=2923608 g1: 3 picks actualizados.
+2026-06-23 22:51:13,788 [INFO] patch_lpl_cs: [358/447] series=2923608 g2: 5 picks actualizados.
+2026-06-23 22:51:14,755 [INFO] patch_lpl_cs: [359/447] series=2923608 g3: 8 picks actualizados.
+2026-06-23 22:51:16,994 [INFO] patch_lpl_cs: [360/447] series=2923609 g1: 8 picks actualizados.
+2026-06-23 22:51:18,218 [INFO] patch_lpl_cs: [361/447] series=2923609 g2: 6 picks actualizados.
+2026-06-23 22:51:20,062 [INFO] patch_lpl_cs: [362/447] series=2923610 g1: 8 picks actualizados.
+2026-06-23 22:51:20,677 [INFO] patch_lpl_cs: [363/447] series=2923610 g2: 6 picks actualizados.
+2026-06-23 22:51:21,299 [INFO] patch_lpl_cs: [364/447] series=2923610 g3: 8 picks actualizados.
+2026-06-23 22:51:22,601 [INFO] patch_lpl_cs: [365/447] series=2923611 g1: 6 picks actualizados.
+2026-06-23 22:51:23,024 [INFO] patch_lpl_cs: [366/447] series=2923611 g2: 6 picks actualizados.
+2026-06-23 22:51:23,221 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:51:28,272 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:51:35,821 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 11.25s... (3/5)
+2026-06-23 22:51:47,121 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 16.88s... (4/5)
+2026-06-23 22:52:05,115 [INFO] patch_lpl_cs: [367/447] series=2923612 g1: 6 picks actualizados.
+2026-06-23 22:52:05,723 [INFO] patch_lpl_cs: [368/447] series=2923612 g2: 9 picks actualizados.
+2026-06-23 22:52:06,347 [INFO] patch_lpl_cs: [369/447] series=2923613 g1: 6 picks actualizados.
+2026-06-23 22:52:06,765 [INFO] patch_lpl_cs: [370/447] series=2923613 g2: 8 picks actualizados.
+2026-06-23 22:52:07,159 [INFO] patch_lpl_cs: [371/447] series=2923613 g3: 7 picks actualizados.
+2026-06-23 22:52:08,216 [INFO] patch_lpl_cs: [372/447] series=2923614 g1: 8 picks actualizados.
+2026-06-23 22:52:08,613 [INFO] patch_lpl_cs: [373/447] series=2923614 g2: 5 picks actualizados.
+2026-06-23 22:52:09,207 [INFO] patch_lpl_cs: [374/447] series=2923614 g3: 4 picks actualizados.
+2026-06-23 22:52:10,242 [INFO] patch_lpl_cs: [375/447] series=2923616 g1: 7 picks actualizados.
+2026-06-23 22:52:10,851 [INFO] patch_lpl_cs: [376/447] series=2923616 g2: 6 picks actualizados.
+2026-06-23 22:52:11,869 [INFO] patch_lpl_cs: [377/447] series=2923615 g1: 7 picks actualizados.
+2026-06-23 22:52:12,275 [INFO] patch_lpl_cs: [378/447] series=2923615 g2: 4 picks actualizados.
+2026-06-23 22:52:12,889 [INFO] patch_lpl_cs: [379/447] series=2923615 g3: 7 picks actualizados.
+2026-06-23 22:52:14,743 [INFO] patch_lpl_cs: [380/447] series=2923617 g1: 4 picks actualizados.
+2026-06-23 22:52:15,349 [INFO] patch_lpl_cs: [381/447] series=2923617 g2: 6 picks actualizados.
+2026-06-23 22:52:16,585 [INFO] patch_lpl_cs: [382/447] series=2923617 g3: 4 picks actualizados.
+2026-06-23 22:52:17,048 [INFO] patch_lpl_cs: [383/447] series=2923617 g4: 4 picks actualizados.
+2026-06-23 22:52:17,448 [INFO] patch_lpl_cs: [384/447] series=2923617 g5: 8 picks actualizados.
+2026-06-23 22:52:23,820 [INFO] patch_lpl_cs: [385/447] series=2923618 g1: 6 picks actualizados.
+2026-06-23 22:52:24,240 [INFO] patch_lpl_cs: [386/447] series=2923618 g2: 6 picks actualizados.
+2026-06-23 22:52:24,441 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:52:29,492 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:52:37,046 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 11.25s... (3/5)
+2026-06-23 22:52:48,347 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 16.88s... (4/5)
+2026-06-23 22:53:05,739 [INFO] patch_lpl_cs: [387/447] series=2923618 g3: 6 picks actualizados.
+2026-06-23 22:53:06,240 [INFO] patch_lpl_cs: [388/447] series=2923619 g1: 5 picks actualizados.
+2026-06-23 22:53:06,769 [INFO] patch_lpl_cs: [389/447] series=2923619 g2: 8 picks actualizados.
+2026-06-23 22:53:07,219 [INFO] patch_lpl_cs: [390/447] series=2923619 g3: 6 picks actualizados.
+2026-06-23 22:53:07,688 [INFO] patch_lpl_cs: [391/447] series=2923619 g4: 7 picks actualizados.
+2026-06-23 22:53:08,198 [INFO] patch_lpl_cs: [392/447] series=2923619 g5: 7 picks actualizados.
+2026-06-23 22:53:08,876 [INFO] patch_lpl_cs: [393/447] series=2923620 g1: 5 picks actualizados.
+2026-06-23 22:53:09,419 [INFO] patch_lpl_cs: [394/447] series=2923620 g2: 4 picks actualizados.
+2026-06-23 22:53:10,029 [INFO] patch_lpl_cs: [395/447] series=2923620 g3: 6 picks actualizados.
+2026-06-23 22:53:10,668 [INFO] patch_lpl_cs: [396/447] series=2923620 g4: 5 picks actualizados.
+2026-06-23 22:53:11,227 [INFO] patch_lpl_cs: [397/447] series=2923620 g5: 7 picks actualizados.
+2026-06-23 22:53:13,334 [INFO] patch_lpl_cs: [398/447] series=2923621 g1: 6 picks actualizados.
+2026-06-23 22:53:13,921 [INFO] patch_lpl_cs: [399/447] series=2923621 g2: 8 picks actualizados.
+2026-06-23 22:53:14,326 [INFO] patch_lpl_cs: [400/447] series=2923621 g3: 6 picks actualizados.
+2026-06-23 22:53:14,953 [INFO] patch_lpl_cs: [401/447] series=2923621 g4: 4 picks actualizados.
+2026-06-23 22:53:17,432 [INFO] patch_lpl_cs: [402/447] series=2923622 g1: 5 picks actualizados.
+2026-06-23 22:53:17,940 [INFO] patch_lpl_cs: [403/447] series=2923622 g2: 7 picks actualizados.
+2026-06-23 22:53:18,429 [INFO] patch_lpl_cs: [404/447] series=2923622 g3: 6 picks actualizados.
+2026-06-23 22:53:19,950 [INFO] patch_lpl_cs: [405/447] series=2923623 g1: 9 picks actualizados.
+2026-06-23 22:53:20,434 [INFO] patch_lpl_cs: [406/447] series=2923623 g2: 6 picks actualizados.
+2026-06-23 22:53:20,632 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:53:25,682 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:53:33,231 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 11.25s... (3/5)
+2026-06-23 22:53:44,545 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 16.88s... (4/5)
+2026-06-23 22:54:01,728 [INFO] patch_lpl_cs: [407/447] series=2923623 g3: 7 picks actualizados.
+2026-06-23 22:54:02,238 [INFO] patch_lpl_cs: [408/447] series=2923624 g1: 6 picks actualizados.
+2026-06-23 22:54:02,637 [INFO] patch_lpl_cs: [409/447] series=2923624 g2: 9 picks actualizados.
+2026-06-23 22:54:03,057 [INFO] patch_lpl_cs: [410/447] series=2923624 g3: 6 picks actualizados.
+2026-06-23 22:54:03,488 [INFO] patch_lpl_cs: [411/447] series=2923624 g4: 7 picks actualizados.
+2026-06-23 22:54:03,992 [INFO] patch_lpl_cs: [412/447] series=2923625 g1: 3 picks actualizados.
+2026-06-23 22:54:04,510 [INFO] patch_lpl_cs: [413/447] series=2923625 g2: 4 picks actualizados.
+2026-06-23 22:54:05,133 [INFO] patch_lpl_cs: [414/447] series=2923625 g3: 6 picks actualizados.
+2026-06-23 22:54:05,542 [INFO] patch_lpl_cs: [415/447] series=2923625 g4: 5 picks actualizados.
+2026-06-23 22:54:06,146 [INFO] patch_lpl_cs: [416/447] series=2923626 g1: 6 picks actualizados.
+2026-06-23 22:54:06,761 [INFO] patch_lpl_cs: [417/447] series=2923626 g2: 4 picks actualizados.
+2026-06-23 22:54:07,141 [INFO] patch_lpl_cs: [418/447] series=2923626 g3: 5 picks actualizados.
+2026-06-23 22:54:07,570 [INFO] patch_lpl_cs: [419/447] series=2923627 g1: 3 picks actualizados.
+2026-06-23 22:54:07,995 [INFO] patch_lpl_cs: [420/447] series=2923627 g2: 3 picks actualizados.
+2026-06-23 22:54:08,606 [INFO] patch_lpl_cs: [421/447] series=2923627 g3: 5 picks actualizados.
+2026-06-23 22:54:08,997 [INFO] patch_lpl_cs: [422/447] series=2923627 g4: 6 picks actualizados.
+2026-06-23 22:54:09,628 [INFO] patch_lpl_cs: [423/447] series=2923627 g5: 4 picks actualizados.
+2026-06-23 22:54:10,462 [INFO] patch_lpl_cs: [424/447] series=2923628 g1: 6 picks actualizados.
+2026-06-23 22:54:10,969 [INFO] patch_lpl_cs: [425/447] series=2923628 g2: 7 picks actualizados.
+2026-06-23 22:54:11,384 [INFO] patch_lpl_cs: [426/447] series=2923628 g3: 6 picks actualizados.
+2026-06-23 22:54:11,581 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:54:16,630 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:54:24,181 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 11.25s... (3/5)
+2026-06-23 22:54:35,480 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 16.88s... (4/5)
+2026-06-23 22:54:52,411 [WARNING] patch_lpl_cs: [427/447] 2923629 g1: error descargando Tencent: Rate Limit HTTP 429 persistente tras 5 intentos.
+2026-06-23 22:54:52,662 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 5.00s... (1/5)
+2026-06-23 22:54:57,710 [WARNING] grid_minion.rest_client: HTTP 429. Esperando 7.50s... (2/5)
+2026-06-23 22:55:05,756 [INFO] patch_lpl_cs: [428/447] series=2923629 g2: 6 picks actualizados.
+2026-06-23 22:55:06,269 [INFO] patch_lpl_cs: [429/447] series=2923629 g3: 6 picks actualizados.
+2026-06-23 22:55:06,771 [INFO] patch_lpl_cs: [430/447] series=2923630 g1: 6 picks actualizados.
+2026-06-23 22:55:07,227 [INFO] patch_lpl_cs: [431/447] series=2923630 g2: 5 picks actualizados.
+2026-06-23 22:55:07,804 [INFO] patch_lpl_cs: [432/447] series=2923630 g3: 7 picks actualizados.
+2026-06-23 22:55:08,237 [INFO] patch_lpl_cs: [433/447] series=2923630 g4: 7 picks actualizados.
+2026-06-23 22:55:08,716 [INFO] patch_lpl_cs: [434/447] series=2923631 g1: 7 picks actualizados.
+2026-06-23 22:55:09,134 [INFO] patch_lpl_cs: [435/447] series=2923631 g2: 5 picks actualizados.
+2026-06-23 22:55:09,550 [INFO] patch_lpl_cs: [436/447] series=2923631 g3: 4 picks actualizados.
+2026-06-23 22:55:10,060 [INFO] patch_lpl_cs: [437/447] series=2923632 g1: 8 picks actualizados.
+2026-06-23 22:55:10,466 [INFO] patch_lpl_cs: [438/447] series=2923632 g2: 5 picks actualizados.
+2026-06-23 22:55:11,074 [INFO] patch_lpl_cs: [439/447] series=2923632 g3: 7 picks actualizados.
+2026-06-23 22:55:12,111 [INFO] patch_lpl_cs: [440/447] series=2923633 g1: 4 picks actualizados.
+2026-06-23 22:55:12,558 [INFO] patch_lpl_cs: [441/447] series=2923633 g2: 7 picks actualizados.
+2026-06-23 22:55:12,993 [INFO] patch_lpl_cs: [442/447] series=2923633 g3: 8 picks actualizados.
+2026-06-23 22:55:13,464 [INFO] patch_lpl_cs: [443/447] series=2923633 g4: 6 picks actualizados.
+2026-06-23 22:55:14,147 [INFO] patch_lpl_cs: [444/447] series=2923633 g5: 6 picks actualizados.
+2026-06-23 22:55:14,638 [INFO] patch_lpl_cs: [445/447] series=2923634 g1: 4 picks actualizados.
+2026-06-23 22:55:15,033 [INFO] patch_lpl_cs: [446/447] series=2923634 g2: 5 picks actualizados.
+2026-06-23 22:55:15,484 [INFO] patch_lpl_cs: [447/447] series=2923634 g3: 5 picks actualizados.
+2026-06-23 22:55:15,634 [INFO] patch_lpl_cs: Hecho. 413 partidas actualizadas, 2410 picks actualizadas, 31 fallos.

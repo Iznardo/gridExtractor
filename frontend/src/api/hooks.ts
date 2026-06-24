@@ -195,6 +195,30 @@ export function useTeamMatchups(filters: StatsFilters, enabled = true) {
   });
 }
 
+// "vs otros equipos" de UN matchup, on-demand (al inspeccionar el matchup). Se
+// calcula por par para no penalizar la carga (ver comentario en el endpoint).
+export type LaneMatchupOthers = { games: number; wins: number; win_rate: number | null };
+
+// Solo los filtros de contexto (Pick<> chocaría con el tipo Pick de LoL importado).
+export type LaneMatchupCtx = { game_types?: string; patch?: string; tournament?: string };
+
+export function useLaneMatchupOthers(
+  args: { team_id?: number; role: string; our: number; opp: number },
+  filters: LaneMatchupCtx,
+  enabled: boolean,
+) {
+  return useQuery({
+    queryKey: ["lane-matchup", args, filters],
+    queryFn: () =>
+      getJSON<LaneMatchupOthers>(
+        "/draft-stats/lane-matchup" +
+          buildQuery({ ...args, ...filters } as QueryParams),
+      ),
+    enabled: enabled && args.team_id != null,
+    staleTime: 5 * 60_000, // el sample ajeno cambia poco; cachear 5 min
+  });
+}
+
 export function useScouting(
   teamId: number | null,
   opts: { dateFrom?: string; patch?: string } = {},
