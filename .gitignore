@@ -1,16 +1,16 @@
-# Credenciales — nunca versionar
+# Credentials — never commit
 .env
 
-# Entorno virtual
+# Virtualenv
 .venv/
 
-# Datos persistentes de Postgres (montaje del contenedor)
+# Postgres persistent data (container mount)
 postgres_data/
 
-# Logs de ejecución (locales, no van al repo)
+# Execution logs (local, not committed)
 logs/
 
-# Cache de respuestas crudas de la Riot API (fase 1 de soloq)
+# Cache of raw Riot API responses (soloq phase 1)
 data/
 
 # Python
@@ -19,7 +19,7 @@ __pycache__/
 *.egg-info/
 .pytest_cache/
 
-# Editores
+# Editors
 .vscode/
 .idea/
 *.swp
@@ -27,22 +27,22 @@ __pycache__/
 # OS
 .DS_Store
 
-# Documentacion interna y archivos de trabajo (no van al repo publico)
+# Internal documentation and working files (not in the public repo)
 *.md
 !README.md
 
-# Utilidades de desarrollo / introspección
+# Development / introspection utilities
 introspect_grid.py
 grid_central_schema.json
 grid_central_schema.txt
 
-# Archivos de diagnóstico y análisis local
+# Local diagnostics and analysis files
 docs/
 *.jsonl
 diag_*.py
 
 # Claude
 .claude/
-# Reglas de agentes IA (Cursor) — no versionar
+# AI agent rules (Cursor) — not committed
 .cursor/
 .impeccable/
