@@ -23,6 +23,8 @@ LoL match data — drafts, picks, results, objectives, wards, post-game stats
 - [Setup](#setup)
 - [Usage](#usage)
 - [Querying the data](#querying-the-data)
+- [The query API (FastAPI)](#the-query-api-fastapi)
+- [The web front-end (React + Vite + TypeScript)](#the-web-front-end-react--vite--typescript)
 - [Automating extractions (cron)](#automating-extractions-cron)
 - [Idempotency and reprocessing](#idempotency-and-reprocessing)
 - [Known limitations](#known-limitations)
@@ -46,8 +48,9 @@ LoL match data — drafts, picks, results, objectives, wards, post-game stats
 
 The pipeline has been validated against real data from the LCK, LEC and LES.
 All four data sources (discovery, officials, scrims, SoloQ) are in place, a
-read-only API over the same database is up (see §6), and a web front-end consumes
-it (see §7).
+read-only API over the same database is up (see
+[The query API](#the-query-api-fastapi)), and a web front-end consumes it (see
+[The web front-end](#the-web-front-end-react--vite--typescript)).
 
 There is one known data shape that the scrim extractor cannot currently
 recover (matches played but with no draft events emitted by GRID). See
@@ -202,7 +205,7 @@ docker compose up -d
 # The first run also builds the API image. The DB's first boot reads
 # db/schema.sql automatically (via the /docker-entrypoint-initdb.d mount);
 # after that, the volume in ./postgres_data/ persists the data. The API is
-# then reachable at http://localhost:${API_PORT:-8000} (see §6).
+# then reachable at http://localhost:${API_PORT:-8000} (see the query API section).
 
 # 5. Configure the tournaments to track (officials only)
 $EDITOR config/tournaments.yaml
@@ -240,7 +243,7 @@ For every tournament listed in `config/tournaments.yaml`, this:
 1. Resolves the tournament ID via GRID GraphQL.
 2. Paginates `allSeries` (filtered to `SeriesType = ESPORTS`) to collect
    participating teams.
-3. For each unique team, fetches its full roster (titulares + suplentes)
+3. For each unique team, fetches its full roster (starters + substitutes)
    via the `players(filter: { teamIdFilter })` query.
 4. Inserts new rows into `teams` and `players` only — never updates
    existing rows.
@@ -446,16 +449,18 @@ It expects the API at `http://localhost:8000` by default; override with
 `VITE_API_BASE` (copy `.env.example` to `.env.local`). Champion/team names are
 resolved to ids client-side (the API is id-based) using the catalog endpoints.
 
-Three windows:
+Five windows:
 
 | Window | What it shows |
 |---|---|
-| **Drafts** | Draft boards (officials/scrims), first-pick team left / second-pick right, side (BLUE/RED) and win marked separately (decoupled since 2026). Filters: team, rival, type, pick phase, champion, patch. |
+| **Drafts** | Draft boards (officials/scrims), first-pick team left / second-pick right, side (BLUE/RED) and win marked separately (decoupled since 2026). Filters: team, rival, type, pick phase, champion, patch. Plus a Draft Stats view (pick-order slots, role distribution). |
 | **Games** | Searchable table (champion, matchup with "opposite sides", patch, dates) with side compositions. Each row **expands** into a post-game view: scoreboard, runes, and build/skill order (tabs). Columns adapt to the source (SoloQ exposes spells/level/vision; GRID exposes damage). |
-| **Scouting** | Per-player champion pool for a team, split into three medium sections (official/scrim/soloq) plus an all-mediums per-player aggregate table (derived client-side). |
+| **Scouting** | Per-team scouting: a dashboard (recent picks, last official series, bans faced in phase 1, counterpick rate per role, gold/damage radar), the per-player champion pool split by medium (official/scrim/soloq), role matchups, and a blind/counter breakdown. |
+| **Scrims** | Scrim-tracking dashboard for a team (remembered across sessions): latest-patch and last-7-days pools, expandable blocks, champion matchups, duos/trios, and vs-teams / vs-picks tables. |
+| **Picks** | Champion-vs-champion matchup explorer — 1v1 and 2v2 — with per-pick builds, lane diffs and blind/counter relation. |
 
 Build a static bundle with `npm run build` (output in `frontend/dist/`); the
-`tsc -b` step also type-checks. Stack: React 18, `@tanstack/react-query`
+`tsc -b` step also type-checks. Stack: React 19, `@tanstack/react-query`
 (fetching/cache), `@tanstack/react-table` (Games rows), `react-router-dom`.
 Champion/item/spell/rune icons come from Riot's Data Dragon CDN.
 
@@ -573,16 +578,18 @@ Notes:
     │   ├── scrims_run.py      entry point: python -m src.extraction.scrims_run
     │   └── soloq_run.py       entry point: python -m src.extraction.soloq_run
     ├── riot/                  Riot API layer (client, endpoints, extract)
-    └── api/                   read-only FastAPI app (§6)
+    └── api/                   read-only FastAPI app
         ├── main.py            app factory + lifespan (caches champ map)
         ├── deps.py            shared deps (DB conn, champ map)
-        └── routers/           catalog, drafts, scouting, games, picks
+        └── routers/           catalog, drafts, scouting, games, picks,
+                               matchups, scrims, draft_stats
 
-frontend/                      web SPA (React + Vite + TS), consumes the API (§7)
+frontend/                      web SPA (React + Vite + TS), consumes the API
 ├── src/api/                   typed client + react-query hooks + response types
 ├── src/ddragon/              Data Dragon assets (icons, runes, spells)
 ├── src/components/           icons, filters, tabs, champion picker
-└── src/pages/                Drafts, Games (+ GameDetail), Scouting
+└── src/pages/                Drafts, Games (+ GameDetail), Scouting,
+                               Scrims, Picks (matchups)
 ```
 
 ## Troubleshooting
