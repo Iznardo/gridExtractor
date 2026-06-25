@@ -1,0 +1,46 @@
+.radar {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+.radar-svg { display: block; overflow: visible; }
+
+/* rejilla y radios: hairline, sin relleno */
+.radar-grid {
+  fill: none;
+  stroke: var(--border);
+  stroke-width: 1;
+}
+.radar-spoke {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+
+/* área de cada serie: relleno translúcido + trazo del color de la serie */
+.radar-area {
+  fill-opacity: 0.16;
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+.radar-axis-label {
+  fill: var(--muted);
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+.radar-legend {
+  display: flex;
+  gap: 0.9rem;
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+.radar-legend-item { display: inline-flex; align-items: center; gap: 5px; }
+.radar-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  display: inline-block;
+}

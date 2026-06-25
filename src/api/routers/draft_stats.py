@@ -103,7 +103,9 @@ picks_raw AS (
   WHERE v.champ_id IS NOT NULL
 ),
 bans_raw AS (
-  SELECT v.champ_id,
+  -- phase: ban1..5 = bans del first-pick (cronológico), ban6..10 = second-pick.
+  -- 1ª fase = los 3 primeros de cada equipo (slots 1,2,3 y 6,7,8); 2ª = 4,5,9,10.
+  SELECT v.champ_id, v.phase,
     CASE
       WHEN %(team_id)s::int IS NULL                                              THEN NULL
       WHEN     v.is_fp AND g.first_pick_team_id =  %(team_id)s::int             THEN 'by'
@@ -112,9 +114,9 @@ bans_raw AS (
     END AS ban_side
   FROM base g
   CROSS JOIN LATERAL (VALUES
-    (g.ban1,  true),(g.ban2,  true),(g.ban3,  true),(g.ban4,  true),(g.ban5,  true),
-    (g.ban6, false),(g.ban7, false),(g.ban8, false),(g.ban9, false),(g.ban10, false)
-  ) AS v(champ_id, is_fp)
+    (g.ban1,  true, 1),(g.ban2,  true, 1),(g.ban3,  true, 1),(g.ban4,  true, 2),(g.ban5,  true, 2),
+    (g.ban6, false, 1),(g.ban7, false, 1),(g.ban8, false, 1),(g.ban9, false, 2),(g.ban10, false, 2)
+  ) AS v(champ_id, is_fp, phase)
   WHERE v.champ_id IS NOT NULL
 ),
 pagg AS (
@@ -151,9 +153,11 @@ pagg AS (
 ),
 bagg AS (
   SELECT champ_id,
-    COUNT(*)                                   AS bans,
-    COUNT(*) FILTER (WHERE ban_side = 'by')    AS banned_by,
-    COUNT(*) FILTER (WHERE ban_side = 'vs')    AS banned_vs
+    COUNT(*)                                                  AS bans,
+    COUNT(*) FILTER (WHERE ban_side = 'by')                   AS banned_by,
+    COUNT(*) FILTER (WHERE ban_side = 'vs')                   AS banned_vs,
+    COUNT(*) FILTER (WHERE ban_side = 'by' AND phase = 1)     AS banned_by_p1,
+    COUNT(*) FILTER (WHERE ban_side = 'vs' AND phase = 1)     AS banned_vs_p1
   FROM bans_raw GROUP BY champ_id
 )
 SELECT
@@ -169,6 +173,8 @@ SELECT
   COALESCE(b.bans, 0)                                                             AS bans,
   COALESCE(b.banned_by, 0)                                                       AS banned_by,
   COALESCE(b.banned_vs, 0)                                                       AS banned_vs,
+  COALESCE(b.banned_by_p1, 0)                                                    AS banned_by_p1,
+  COALESCE(b.banned_vs_p1, 0)                                                    AS banned_vs_p1,
   t.n                                                                             AS total_games,
   ROUND(100.0*(COALESCE(p.picks,0)+COALESCE(b.bans,0))/NULLIF(t.n,0), 1)       AS presence_pct,
   ROUND(100.0*COALESCE(p.picks,0)/NULLIF(t.n,0), 1)                             AS picked_pct,
@@ -345,6 +351,8 @@ def champion_presence(
             "bans": r["bans"],
             "banned_by": r["banned_by"],
             "banned_vs": r["banned_vs"],
+            "banned_by_p1": r["banned_by_p1"],
+            "banned_vs_p1": r["banned_vs_p1"],
             "total_games": r["total_games"],
             "presence_pct": float(r["presence_pct"] or 0),
             "picked_pct": float(r["picked_pct"] or 0),

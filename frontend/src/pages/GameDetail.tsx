@@ -206,6 +206,36 @@ function BuildView({ players }: { players: Pick[] }) {
   );
 }
 
+// ------------------------------ skeleton ------------------------------
+
+function GameDetailSkeleton() {
+  return (
+    <div className="game-detail">
+      <span className="sr-only" role="status">Cargando partida…</span>
+      <div className="scoreboard" aria-hidden="true">
+        {["BLUE", "RED"].map((side) => (
+          <div key={side} className="sb-block">
+            <div className="sb-side">
+              <span className="sk-line" style={{ width: 46, height: 16 }} />
+              <span className="sk-line" style={{ width: 84, height: 11 }} />
+            </div>
+            <div className="gd-sk-table">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="gd-sk-row">
+                  <span className="sk-chip" />
+                  <span className="sk-line gd-sk-name" />
+                  <span className="sk-line" style={{ width: 34, height: 8 }} />
+                  <span className="sk-line" style={{ width: 26, height: 8 }} />
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ------------------------------ root ------------------------------
 
 export function GameDetail({
@@ -219,7 +249,7 @@ export function GameDetail({
 }) {
   const { data: picks, isLoading, error } = useGamePicks(gameId);
 
-  if (isLoading) return <div className="gd-msg muted">Cargando partida…</div>;
+  if (isLoading) return <GameDetailSkeleton />;
   if (error) return <div className="gd-msg error">{(error as Error).message}</div>;
   if (!picks?.length) return <div className="gd-msg muted">Sin picks para esta partida.</div>;
 

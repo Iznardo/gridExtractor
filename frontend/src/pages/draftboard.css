@@ -87,12 +87,12 @@
 .pick-row { /* fondo gestionado por celda */ }
 
 /* FP (izquierda): 2 azules alternos — B1=a  B2-3=b  B4-5=a */
-.cell.ph-fp-a { background: #1f3558; }
-.cell.ph-fp-b { background: #132240; }
+.cell.ph-fp-a { background: var(--draft-fp-a); }
+.cell.ph-fp-b { background: var(--draft-fp-b); }
 
 /* SP (derecha): 2 rojos alternos — R1-2=a  R3=b  R4=a  R5=b */
-.cell.ph-sp-a { background: #4d1c1c; }
-.cell.ph-sp-b { background: #341010; }
+.cell.ph-sp-a { background: var(--draft-sp-a); }
+.cell.ph-sp-b { background: var(--draft-sp-b); }
 
 .cell {
   display: flex;
@@ -111,22 +111,4 @@
 .cell .cn { font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cell.ban .cn { font-weight: 500; }
 
-/* ---- skeleton ---- */
-@keyframes sk-shimmer {
-  from { background-position: -200% 0; }
-  to   { background-position:  200% 0; }
-}
-
-.sk-line, .sk-chip {
-  display: inline-block;
-  border-radius: 4px;
-  background: linear-gradient(90deg, var(--panel2) 25%, var(--border) 50%, var(--panel2) 75%);
-  background-size: 200% 100%;
-  animation: sk-shimmer 1.4s ease infinite;
-}
-.sk-line { height: 10px; border-radius: 4px; }
-.sk-chip { width: 28px; height: 28px; border-radius: 4px; flex-shrink: 0; }
-
-@media (prefers-reduced-motion: reduce) {
-  .sk-line, .sk-chip { animation: none; background: var(--panel2); }
-}
+/* ---- skeleton: .sk-line / .sk-chip son utilidades globales (index.css) ---- */

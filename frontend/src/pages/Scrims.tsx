@@ -17,11 +17,13 @@ import {
   WR_MIN_GAMES,
 } from "../components/ChampionPool";
 import { Field, FilterBar } from "../components/Field";
+import { Select } from "../components/Select";
 import { ChampIcon } from "../components/icons";
 import { Tabs } from "../components/Tabs";
 import { TeamPicker } from "../components/TeamPicker";
 import { TeamMatchups } from "./TeamMatchups";
 import { useChampMaps } from "../lib/champs";
+import { daysAgoISO } from "../lib/date";
 import {
   blocks,
   combosByRoles,
@@ -332,14 +334,6 @@ function VsPicksView({ rows, byId }: { rows: ScrimGame[]; byId: ById }) {
   );
 }
 
-// ---- helpers de fecha ----
-
-function daysAgoISO(n: number): string {
-  const d = new Date();
-  d.setDate(d.getDate() - n);
-  return d.toISOString().slice(0, 10);
-}
-
 // ---- Scrims ----
 
 export function Scrims() {
@@ -464,12 +458,12 @@ export function Scrims() {
           <TeamPicker value={teamId} onChange={setTeamId} teams={teams ?? []} />
         </Field>
         <Field label="Parche">
-          <select value={patch} onChange={(e) => setPatch(e.target.value)}>
-            <option value="">(todos)</option>
-            {(patches ?? []).map((p) => (
-              <option key={p} value={p}>{p}</option>
-            ))}
-          </select>
+          <Select
+            value={patch}
+            onChange={setPatch}
+            ariaLabel="Parche"
+            options={[{ value: "", label: "(todos)" }, ...(patches ?? []).map((p) => ({ value: p, label: p }))]}
+          />
         </Field>
         <Field label="Desde fecha">
           <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />

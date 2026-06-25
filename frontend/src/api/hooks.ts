@@ -10,6 +10,7 @@ import type {
   Matchup,
   Pick,
   PickOrderData,
+  PlayerShare,
   RolePickData,
   ScoutingPool,
   ScrimGame,
@@ -103,7 +104,10 @@ export function usePatches() {
 export type MatchupFilters = {
   champ_id?: number;
   champ_id2?: number;
+  champ_id_b?: number; // 2v2: segundo aliado
+  champ_id2_b?: number; // 2v2: segundo rival
   role?: string;
+  role_b?: string; // 2v2: rol del Aliado 2
   tournament?: string;
   patch?: string;
   pick_relation?: "blind" | "counter";
@@ -230,6 +234,22 @@ export function useScouting(
       getJSON<ScoutingPool>(
         "/scouting/champion-pool" +
           buildQuery({ team_id: teamId, date_from: dateFrom, patch }),
+      ),
+    enabled: teamId != null,
+  });
+}
+
+export function usePlayerShares(
+  teamId: number | null,
+  opts: { gameTypes?: string; patch?: string; dateFrom?: string } = {},
+) {
+  const { gameTypes, patch, dateFrom } = opts;
+  return useQuery({
+    queryKey: ["player-shares", teamId, gameTypes, patch, dateFrom],
+    queryFn: () =>
+      getJSON<PlayerShare[]>(
+        "/scouting/player-shares" +
+          buildQuery({ team_id: teamId, game_types: gameTypes, patch, date_from: dateFrom }),
       ),
     enabled: teamId != null,
   });

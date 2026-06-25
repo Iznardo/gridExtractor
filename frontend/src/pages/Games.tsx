@@ -17,6 +17,7 @@ import { Field, FilterBar } from "../components/Field";
 import { ChampIcon } from "../components/icons";
 import { TeamPicker } from "../components/TeamPicker";
 import { useChampMaps } from "../lib/champs";
+import { useScoutingContextSync } from "../lib/scoutingContext";
 import { teamLabel } from "../lib/format";
 import { GameDetail } from "./GameDetail";
 import { ReplayButton } from "../components/ReplayButton";
@@ -112,6 +113,9 @@ export function Games() {
   const { data: teams } = useTeams();
   const { byName, list: champList } = useChampMaps();
   const [params, setParams] = useSearchParams();
+
+  // Contexto de scouting compartido: arrastra el equipo+parche aplicados.
+  useScoutingContextSync(params.get("team") ?? "", params.get("patch") ?? "");
 
   // Formulario inicializado desde la URL — un link compartido pre-rellena filtros.
   const [teamId, setTeamId] = useState(() => params.get("team") ?? "");

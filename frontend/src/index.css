@@ -20,6 +20,24 @@
   --skill-e: #a855f7;
   --skill-r: #ef4444;
 
+  /* Diff de carril (gold/cs en GameDetail): positivo verde; negativo usa --red. */
+  --gd-pos: #4caf78;
+
+  /* Tintes de fase del draft (draftboard) — azules/rojos alternos por slot. */
+  --draft-fp-a: #1f3558;
+  --draft-fp-b: #132240;
+  --draft-sp-a: #4d1c1c;
+  --draft-sp-b: #341010;
+
+  /* Badges de relación de pick (matchups): blind neutro, counter púrpura.
+     Contraste AA verificado: blind 5.6:1, counter 8.1:1. */
+  --badge-blind-bg: #1f2937;
+  --badge-blind-fg: #d1d5db;
+  --badge-blind-border: #374151;
+  --badge-counter-bg: #2e1065;
+  --badge-counter-fg: #c4b5fd;
+  --badge-counter-border: #4c1d95;
+
   /* Escala z-index semántica (dropdown → sticky → modal → toast → tooltip) */
   --z-dropdown: 100;
   --z-sticky: 200;
@@ -196,4 +214,22 @@ table { border-collapse: collapse; }
   color: var(--muted);
   margin-top: 2px;
   line-height: 1.35;
+}
+
+/* ---- Skeleton: primitivas compartidas (draftboard, gamedetail, …) ---- */
+@keyframes sk-shimmer {
+  from { background-position: -200% 0; }
+  to   { background-position:  200% 0; }
+}
+.sk-line, .sk-chip {
+  display: inline-block;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--panel2) 25%, var(--border) 50%, var(--panel2) 75%);
+  background-size: 200% 100%;
+  animation: sk-shimmer 1.4s ease infinite;
+}
+.sk-line { height: 10px; border-radius: 4px; }
+.sk-chip { width: 28px; height: 28px; border-radius: 4px; flex-shrink: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .sk-line, .sk-chip { animation: none; background: var(--panel2); }
 }

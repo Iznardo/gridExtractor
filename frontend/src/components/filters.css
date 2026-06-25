@@ -79,3 +79,58 @@
 @media (prefers-reduced-motion: reduce) {
   .champ-list { animation: none; }
 }
+
+/* ---- Select (listbox propio que reemplaza a <select> nativo) ----
+   El trigger imita la caja del input/select global (index.css) para alinearse
+   con el resto de la barra; la lista reutiliza .champ-list / .champ-opt. */
+.select-combo { position: relative; }
+
+.select-trigger {
+  /* Reset del chrome nativo del <button>: en Chrome/Windows un botón arrastra
+     fondo/borde/foco del SO que en Linux no se ve. Sin esto el trigger se ve
+     distinto entre plataformas. */
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  font: inherit;
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 6px 8px;
+  min-height: 32px;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 120ms ease-out;
+}
+.select-trigger:hover { border-color: var(--muted); }
+.select-trigger.is-placeholder .select-value { color: var(--muted); }
+
+.select-value {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.select-caret {
+  flex: none;
+  color: var(--muted);
+  transition: transform 120ms ease-out;
+}
+.select-trigger[aria-expanded="true"] .select-caret { transform: rotate(180deg); }
+@media (prefers-reduced-motion: reduce) {
+  .select-caret { transition: none; }
+}
+
+/* La opción que coincide con el valor actual (distinta del hover .active). */
+.champ-opt.selected .cn { color: var(--text); font-weight: 600; }
+.champ-opt.selected::after {
+  content: "✓";
+  margin-left: auto;
+  padding-left: 8px;
+  color: var(--blue);
+  font-size: 0.85em;
+}

@@ -1,13 +1,35 @@
 import { useMemo, useState } from "react";
+import type { ReactNode } from "react";
 import { AlertTriangle, SearchX } from "lucide-react";
 
 import { useChampionPresence, type StatsFilters } from "../api/hooks";
 import type { ChampionPresenceRow } from "../api/types";
 import { ChampIcon } from "../components/icons";
+import { useTooltip } from "../components/Tooltip";
 import { RolePickSection } from "./RolePickSection";
 import "./champion-presence.css";
 
 const SKELETON_COUNT = 15;
+
+// Celda <td> con tooltip propio (sustituye al `title` nativo). A nivel de módulo
+// para no recrear el componente en cada render (regla react-hooks).
+function TipTd({
+  content,
+  className,
+  children,
+}: {
+  content: ReactNode;
+  className?: string;
+  children: ReactNode;
+}) {
+  const { anchorProps, tip } = useTooltip(content);
+  return (
+    <td className={className} {...anchorProps}>
+      {children}
+      {tip}
+    </td>
+  );
+}
 
 type SortCol =
   | "presence_pct"
@@ -17,6 +39,8 @@ type SortCol =
   | "wins"
   | "win_rate"
   | "bans"
+  | "banned_by"
+  | "banned_vs"
   | "phase1"
   | "phase2";
 
@@ -82,10 +106,6 @@ function wrTooltip(
   const wrBy = pickedBy > 0 ? `${((winsBy / pickedBy) * 100).toFixed(1)}%` : "—";
   const wrVs = pickedVs > 0 ? `${((winsVs / pickedVs) * 100).toFixed(1)}%` : "—";
   return `WR by: ${wrBy} (${winsBy}W / ${pickedBy - winsBy}L)\nWR vs: ${wrVs} (${winsVs}W / ${pickedVs - winsVs}L)`;
-}
-
-function bansTooltip(bannedBy: number, bannedVs: number): string {
-  return `Banned by: ${bannedBy} · Banned vs: ${bannedVs}`;
 }
 
 function Skeleton({ cols }: { cols: number }) {
@@ -166,6 +186,7 @@ export function ChampionPresence({
     title?: string;
   }) {
     const active = sort.col === col;
+    const { anchorProps, tip } = useTooltip(title);
     return (
       <th
         className={active ? "cp-sorted" : undefined}
@@ -173,12 +194,13 @@ export function ChampionPresence({
         onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleSort(col); } }}
         tabIndex={0}
         aria-sort={active ? (sort.dir === "desc" ? "descending" : "ascending") : "none"}
-        title={title}
+        {...anchorProps}
       >
         {label}
         <span className="cp-sort-arrow" aria-hidden="true">
           {active ? (sort.dir === "desc" ? "▼" : "▲") : "⇅"}
         </span>
+        {tip}
       </th>
     );
   }
@@ -194,8 +216,8 @@ export function ChampionPresence({
     );
   }
 
-  // Columnas fijas + dinámica (By/Vs o Picked) + game number cols.
-  const fixedCols = hasTeam ? 10 : 9;
+  // Columnas fijas + dinámicas (By/Vs picks y bans con equipo) + game number cols.
+  const fixedCols = hasTeam ? 11 : 9;
   const colCount = fixedCols + gnCols.length;
 
   if (error) {
@@ -259,7 +281,14 @@ export function ChampionPresence({
               )}
               <ColHead col="wins" label="Wins" />
               <ColHead col="win_rate" label="WR%" />
-              <ColHead col="bans" label="Banned" />
+              {hasTeam ? (
+                <>
+                  <ColHead col="banned_by" label="Ban By" title="Baneado por el equipo" />
+                  <ColHead col="banned_vs" label="Ban Vs" title="Baneado por el rival (contra el equipo)" />
+                </>
+              ) : (
+                <ColHead col="bans" label="Banned" />
+              )}
               <ColHead col="phase1" label="1ª Fase" title="Picks en la 1ª fase (B1-B3, R1-R2)" />
               <ColHead col="phase2" label="2ª Fase" title="Picks en la 2ª fase (B4-B5, R3-R5)" />
               {gnCols.map((n) => <GnHead key={n} n={n} />)}
@@ -289,9 +318,9 @@ export function ChampionPresence({
                     <td>{numCell(row.picks)}</td>
                   )}
                   <td>{numCell(row.wins)}</td>
-                  <td
+                  <TipTd
                     className={wrClass(row.win_rate)}
-                    title={hasTeam ? wrTooltip(row.win_rate, row.picked_by, row.wins_by, row.picked_vs, row.wins_vs) : undefined}
+                    content={hasTeam ? wrTooltip(row.win_rate, row.picked_by, row.wins_by, row.picked_vs, row.wins_vs) : null}
                   >
                     {row.win_rate != null ? (
                       <>
@@ -305,10 +334,15 @@ export function ChampionPresence({
                     ) : (
                       "—"
                     )}
-                  </td>
-                  <td title={hasTeam ? bansTooltip(row.banned_by, row.banned_vs) : undefined}>
-                    {numCell(row.bans)}
-                  </td>
+                  </TipTd>
+                  {hasTeam ? (
+                    <>
+                      <td>{numCell(row.banned_by)}</td>
+                      <td>{numCell(row.banned_vs)}</td>
+                    </>
+                  ) : (
+                    <td>{numCell(row.bans)}</td>
+                  )}
                   <td>{numCell(row.phase1)}</td>
                   <td>{numCell(row.phase2)}</td>
                   {gnCols.map((n) => {
@@ -318,13 +352,13 @@ export function ChampionPresence({
                     const by    = hasTeam ? row[`picks_g${n}_by` as keyof ChampionPresenceRow] as number : undefined;
                     const vs    = hasTeam ? row[`picks_g${n}_vs` as keyof ChampionPresenceRow] as number : undefined;
                     return (
-                      <td
+                      <TipTd
                         key={n}
                         className="cp-gn-cell"
-                        title={gnTooltip(picks, wins, total, n, by, vs)}
+                        content={gnTooltip(picks, wins, total, n, by, vs)}
                       >
                         {gnPct(picks, total)}
-                      </td>
+                      </TipTd>
                     );
                   })}
                 </tr>

@@ -10,6 +10,24 @@
 .gd-msg { padding: 1rem; }
 .gd-msg.error { color: var(--red); }
 
+/* Skeleton del scoreboard (carga) — imita table.grid: cabecera + 5 filas.
+   Reutiliza .sk-line / .sk-chip (shimmer global). */
+.gd-sk-table {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.gd-sk-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 9px;
+  border-bottom: 1px solid var(--border);
+}
+.gd-sk-row:last-child { border-bottom: none; }
+.gd-sk-name { flex: 1; max-width: 45%; }
+
 /* tablas genéricas reutilizadas (scoreboard) */
 table.grid {
   width: 100%;
@@ -50,7 +68,7 @@ table.grid th.num { text-align: right; font-variant-numeric: tabular-nums; }
 .sb-team { font-weight: 600; font-size: 0.88rem; }
 
 /* lane gold diff colors */
-.gd-pos { color: #4caf78; font-weight: 600; }
+.gd-pos { color: var(--gd-pos); font-weight: 600; }
 .gd-neg { color: var(--red); font-weight: 600; }
 
 /* runas */
@@ -116,6 +134,8 @@ table.grid th.num { text-align: right; font-variant-numeric: tabular-nums; }
   flex-direction: column;
   gap: 0.7rem;
 }
+
+.build-spells { display: flex; gap: 6px; }
 
 .build-order { display: flex; flex-wrap: wrap; gap: 8px; }
 .bo-item { display: flex; flex-direction: column; align-items: center; gap: 2px; }

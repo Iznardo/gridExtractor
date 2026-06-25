@@ -439,11 +439,11 @@ def insert_picks(
             p_stats = players_stats.get(p.riot_id) or {}
             b_stats = builds_data.get(p.riot_id) or {}
             m_stats = midgame_data.get(p.riot_id) or {}
-            # Contrato alineado con SoloQ (CLAUDE.md §10). runes/final_items
-            # salen del PostGameObserver (Riot summary); skill_order/build_path
-            # del BuildObserver (Riot livestats); midgame del MidGameStatsObserver.
-            # Quedan fuera de alcance en GRID: team_position, champ_level,
-            # vision_score, summoner_spells.
+            # Contrato alineado con SoloQ (CLAUDE.md §10). runes/final_items/
+            # summoner_spells salen del PostGameObserver (Riot summary o Tencent);
+            # skill_order/build_path del BuildObserver (Riot livestats); midgame
+            # del MidGameStatsObserver. Quedan fuera de alcance en GRID:
+            # team_position, champ_level, vision_score.
             stats_json = {
                 "kills":        p_stats.get("kills"),
                 "deaths":       p_stats.get("deaths"),
@@ -454,6 +454,7 @@ def insert_picks(
                 "kda_str":      p_stats.get("kda_str"),
                 "runes":        p_stats.get("runes"),
                 "final_items":  p_stats.get("final_items"),
+                "summoner_spells": p_stats.get("summoner_spells"),
                 "skill_order":  b_stats.get("skill_order") or None,
                 "build_path":   b_stats.get("build_path") or None,
                 "midgame":      m_stats.get("marks") or None,

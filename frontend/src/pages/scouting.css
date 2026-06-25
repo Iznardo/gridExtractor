@@ -258,3 +258,72 @@
 @media (prefers-reduced-motion: reduce) {
   .sk-bar, .sk-icon { animation: none; }
 }
+
+/* ---- Dashboard de equipo ---- */
+.scout-dash-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+.scout-dash-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+/* ---- Dashboard Fase 2: bans, counter%, radar ---- */
+.scout-dash-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+@media (max-width: 760px) { .scout-dash-grid { grid-template-columns: 1fr; } }
+
+/* bans 1ª fase */
+.scout-ban-list { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+.scout-ban { position: relative; line-height: 0; }
+.scout-ban-count {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  min-width: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 0.66rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  line-height: 15px;
+}
+
+/* counter% por rol */
+.scout-counter { display: flex; flex-direction: column; gap: 7px; }
+.scout-counter-row { display: grid; grid-template-columns: 64px 1fr auto; align-items: center; gap: 8px; }
+.scout-counter-role {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.scout-counter-track {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.scout-counter-fill { height: 100%; background: var(--blue); }
+.scout-counter-val { font-size: 0.78rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* radar + tabla */
+.scout-radar-wrap { display: flex; flex-wrap: wrap; gap: 1.4rem; align-items: center; }
+.scout-radar-table { min-width: 280px; flex: 1; }
+
+.scout-series-head { display: flex; align-items: baseline; gap: 0.6rem; }
+.scout-series-rec { font-size: 0.82rem; font-variant-numeric: tabular-nums; white-space: nowrap; }

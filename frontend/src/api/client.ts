@@ -1,8 +1,10 @@
 // Cliente HTTP tipado contra la API read-only. Base URL configurable por
-// VITE_API_BASE (default localhost:8000, donde corre uvicorn / el contenedor).
+// VITE_API_BASE. Default `/api`: el dev server de Vite proxifica /api → la API
+// real (ver vite.config.ts). Así el front usa su mismo origen y funciona igual
+// en local que desde otro dispositivo de la LAN, sin CORS ni IP hardcodeada.
 
 export const API_BASE: string =
-  import.meta.env.VITE_API_BASE ?? "http://localhost:8000";
+  import.meta.env.VITE_API_BASE ?? "/api";
 
 export type QueryParams = Record<
   string,

@@ -1,5 +1,37 @@
 .matchups-page { display: flex; flex-direction: column; min-height: 0; }
 
+/* ---- control segmentado de modo 1v1 / 2v2 (primer campo de la FilterBar) ----
+   Activo = raised-slate + hairline + bright-ink, mismo lenguaje que la nav
+   activa. Sin color de marca: el modo no es "acción", es estado de consulta. */
+.mu-mode-seg {
+  display: inline-flex;
+  height: 32px; /* alinea con inputs/selects de la barra */
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--panel);
+}
+.mu-mode-btn {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  padding: 0 0.85rem;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  transition: background 120ms ease-out, color 120ms ease-out;
+}
+.mu-mode-btn + .mu-mode-btn { border-left: 1px solid var(--border); }
+.mu-mode-btn:hover:not(.active) { color: var(--text); }
+.mu-mode-btn.active { background: var(--panel2); color: var(--text); }
+.mu-mode-btn:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px; }
+@media (prefers-reduced-motion: reduce) { .mu-mode-btn { transition: none; } }
+
 /* ---- lista de resultados ---- */
 .mu-list {
   display: flex;
@@ -76,6 +108,15 @@
 .mu-items { display: flex; gap: 2px; flex-wrap: nowrap; }
 .mu-items-empty { width: 22px; opacity: 0; } /* placeholder para alinear sin items */
 
+/* dúo apilado (2v2): dos picks en columna por lado */
+.mu-duo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.mu-duo.opponent { align-items: stretch; }
+
 /* centro — VS + badges */
 .mu-center {
   display: flex;
@@ -99,10 +140,10 @@
   padding: 1px 5px;
   border-radius: 3px;
 }
-/* blind: #d1d5db sobre #1f2937 ≈ 5.6:1 (AA) */
-.mu-badge.blind   { background: #1f2937; color: #d1d5db; border: 1px solid #374151; }
-/* counter: #c4b5fd sobre #2e1065 ≈ 8.1:1 */
-.mu-badge.counter { background: #2e1065; color: #c4b5fd; border: 1px solid #4c1d95; }
+/* blind: --badge-blind-fg sobre --badge-blind-bg ≈ 5.6:1 (AA) */
+.mu-badge.blind   { background: var(--badge-blind-bg); color: var(--badge-blind-fg); border: 1px solid var(--badge-blind-border); }
+/* counter: --badge-counter-fg sobre --badge-counter-bg ≈ 8.1:1 */
+.mu-badge.counter { background: var(--badge-counter-bg); color: var(--badge-counter-fg); border: 1px solid var(--badge-counter-border); }
 
 /* fila de metadatos */
 .mu-meta {
@@ -181,6 +222,9 @@
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
 }
+/* 2v2: hasta 4 builds (2 aliados + 2 rivales) */
+.mu-builds.quad { grid-template-columns: repeat(4, 1fr); }
+@media (max-width: 1100px) { .mu-builds.quad { grid-template-columns: 1fr 1fr; } }
 .mu-build-col { display: flex; flex-direction: column; gap: 0.4rem; }
 .mu-build-header {
   display: flex;

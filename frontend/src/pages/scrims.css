@@ -93,7 +93,7 @@
 
 /* ---- WR (glifo no-cromático, coherente con TeamMatchups) ---- */
 .scr-wr-pos { color: var(--win); font-weight: 600; }
-.scr-wr-neg { color: var(--red-text, #f87171); font-weight: 600; }
+.scr-wr-neg { color: var(--red-text); font-weight: 600; }
 .scr-wr-neutral { color: var(--text); }
 .scr-wr-arrow { font-size: 0.7em; margin-right: 2px; }
 

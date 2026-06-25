@@ -1,6 +1,8 @@
 import { NavLink, Navigate, Route, Routes } from "react-router-dom";
 
 import { API_BASE } from "./api/client";
+import { ScoutingContextProvider } from "./lib/ScoutingContextProvider";
+import { useScoutingContext, withScoutCtx } from "./lib/scoutingContext";
 import { Drafts } from "./pages/Drafts";
 import { Games } from "./pages/Games";
 import { Matchups } from "./pages/Matchups";
@@ -8,7 +10,11 @@ import { Scouting } from "./pages/Scouting";
 import { Scrims } from "./pages/Scrims";
 import "./App.css";
 
-function App() {
+function AppShell() {
+  // Contexto de scouting (equipo + parche). Solo lo arrastran las tres ventanas
+  // de scouting de equipo; Scrims y Picks usan rutas planas a propósito.
+  const { ctx } = useScoutingContext();
+
   return (
     <div className="app">
       <header className="app-header">
@@ -16,9 +22,9 @@ function App() {
           gridExtractor <span className="muted">· scouting</span>
         </h1>
         <nav className="app-nav">
-          <NavLink to="/drafts">Drafts</NavLink>
-          <NavLink to="/games">Games</NavLink>
-          <NavLink to="/scouting">Scouting</NavLink>
+          <NavLink to={withScoutCtx("/drafts", ctx)}>Drafts</NavLink>
+          <NavLink to={withScoutCtx("/games", ctx)}>Games</NavLink>
+          <NavLink to={withScoutCtx("/scouting", ctx)}>Scouting</NavLink>
           <NavLink to="/scrims">Scrims</NavLink>
           <NavLink to="/picks">Picks</NavLink>
         </nav>
@@ -29,16 +35,24 @@ function App() {
 
       <main className="app-main">
         <Routes>
-          <Route path="/" element={<Navigate to="/drafts" replace />} />
+          <Route path="/" element={<Navigate to={withScoutCtx("/drafts", ctx)} replace />} />
           <Route path="/drafts" element={<Drafts />} />
           <Route path="/games" element={<Games />} />
           <Route path="/scouting" element={<Scouting />} />
           <Route path="/scrims" element={<Scrims />} />
           <Route path="/picks" element={<Matchups />} />
-          <Route path="*" element={<Navigate to="/drafts" replace />} />
+          <Route path="*" element={<Navigate to={withScoutCtx("/drafts", ctx)} replace />} />
         </Routes>
       </main>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <ScoutingContextProvider>
+      <AppShell />
+    </ScoutingContextProvider>
   );
 }
 

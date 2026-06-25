@@ -2,14 +2,17 @@ import { useMemo, useState, type ReactNode } from "react";
 import { useSearchParams } from "react-router-dom";
 
 import { useScouting, useTeams, type StatsFilters } from "../api/hooks";
-import type { Medium, ScoutPlayer, ScoutingPool } from "../api/types";
+import type { Medium, ScoutingPool } from "../api/types";
 import { MediumBox, ScoutingSkeleton } from "../components/ChampionPool";
 import { Field, FilterBar } from "../components/Field";
 import { SourceChips } from "../components/SourceChips";
 import { Tabs } from "../components/Tabs";
 import { TeamPicker } from "../components/TeamPicker";
+import { useScoutingContextSync } from "../lib/scoutingContext";
 import { RolePickSection } from "./RolePickSection";
+import { ScoutDashboard } from "./ScoutDashboard";
 import { TeamMatchups } from "./TeamMatchups";
+import { aggAsScoutPlayers, buildAggregate } from "./scouting/aggregate";
 import "./scouting.css";
 
 // ---- constantes ----
@@ -25,59 +28,11 @@ const MEDIUM_LABELS: Record<Medium, string> = {
 const TAB_IDS = ["oficial", "scrim", "soloq", "agregado"] as const;
 type TabId = (typeof TAB_IDS)[number];
 
-// Ventanas de primer nivel de Scouting (?view=).
-const VIEW_IDS = ["pool", "matchups", "blindcounter"] as const;
+// Ventanas de primer nivel de Scouting (?view=). "dashboard" es la inicial.
+const VIEW_IDS = ["dashboard", "pool", "matchups", "blindcounter"] as const;
 
-// ---- agregado ----
-
-type AggCount = { games: number; wins: number };
-type AggChamp = {
-  champion: { id: number; name: string };
-  total: AggCount;
-};
-type AggPlayer = { player: ScoutPlayer["player"]; champions: AggChamp[] };
-
-function buildAggregate(pool: ScoutingPool, sources: Medium[] = ALL_MEDIUMS): AggPlayer[] {
-  const players = new Map<
-    number,
-    { player: ScoutPlayer["player"]; champs: Map<number, AggChamp> }
-  >();
-  for (const medium of sources) {
-    for (const p of pool.by_medium[medium]) {
-      const entry = players.get(p.player.id) ?? {
-        player: p.player,
-        champs: new Map<number, AggChamp>(),
-      };
-      for (const ch of p.champions) {
-        const c = entry.champs.get(ch.champion.id) ?? {
-          champion: ch.champion,
-          total: { games: 0, wins: 0 },
-        };
-        c.total.games += ch.games;
-        c.total.wins += ch.wins;
-        entry.champs.set(ch.champion.id, c);
-      }
-      players.set(p.player.id, entry);
-    }
-  }
-  return Array.from(players.values()).map((e) => ({
-    player: e.player,
-    champions: Array.from(e.champs.values()).sort(
-      (a, b) => b.total.games - a.total.games || a.champion.name.localeCompare(b.champion.name),
-    ),
-  }));
-}
-
-function aggAsScoutPlayers(agg: AggPlayer[]): ScoutPlayer[] {
-  return agg.map((ap) => ({
-    player: ap.player,
-    champions: ap.champions.map((ch) => ({
-      champion: ch.champion,
-      games: ch.total.games,
-      wins: ch.total.wins,
-    })),
-  }));
-}
+// Agregación de pools (buildAggregate/aggAsScoutPlayers) vive en
+// ./scouting/aggregate — compartida con el Dashboard.
 
 // ---- AggregadoBox (fuentes + MediumBox) ----
 
@@ -143,6 +98,10 @@ export function Scouting() {
   const { data: teams } = useTeams();
   const [params, setParams] = useSearchParams();
 
+  // Contexto de scouting: Scouting solo controla el equipo (sin parche);
+  // `undefined` conserva el parche del contexto fijado en Drafts/Games.
+  useScoutingContextSync(params.get("team") ?? "", undefined);
+
   const [teamId, setTeamId] = useState(() => params.get("team") ?? "");
   const [dateFrom, setDateFrom] = useState(() => params.get("dateFrom") ?? "");
   const [submitError, setSubmitError] = useState("");
@@ -151,7 +110,7 @@ export function Scouting() {
   const viewParam = params.get("view");
   const activeView = (VIEW_IDS as readonly string[]).includes(viewParam ?? "")
     ? (viewParam as (typeof VIEW_IDS)[number])
-    : "pool";
+    : "dashboard";
   const appliedTeamId = params.get("team") ? Number(params.get("team")) : null;
   const appliedDateFrom = params.get("dateFrom") || undefined;
 
@@ -191,7 +150,7 @@ export function Scouting() {
 
   function handleViewChange(id: string) {
     const next = new URLSearchParams(params);
-    if (id === "pool") next.delete("view"); // estado por defecto, no ensuciar URL
+    if (id === "dashboard") next.delete("view"); // estado por defecto, no ensuciar URL
     else next.set("view", id);
     setParams(next);
   }
@@ -260,6 +219,11 @@ export function Scouting() {
   // Ventanas de primer nivel. Matchups y Blind/Counter son independientes del
   // pool (su propia carga); solo OFFICIAL+SCRIM (sin soloq).
   const windowTabs = [
+    {
+      id: "dashboard",
+      label: "Dashboard",
+      content: appliedTeamId != null ? <ScoutDashboard teamId={appliedTeamId} /> : null,
+    },
     { id: "pool", label: "Pool de campeones", content: poolWindow },
     {
       id: "matchups",

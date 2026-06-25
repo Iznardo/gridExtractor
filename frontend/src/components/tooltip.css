@@ -1,0 +1,33 @@
+/* Tooltip propio (ver Tooltip.tsx). Renderizado en portal a <body>, posicionado
+   con position:fixed sobre coordenadas de getBoundingClientRect. */
+.tip {
+  position: fixed;
+  z-index: var(--z-tooltip);
+  /* Por defecto encima del ancla, centrado; 6px de holgura. */
+  transform: translate(-50%, calc(-100% - 6px));
+  max-width: 280px;
+  padding: 6px 9px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 0.78rem;
+  line-height: 1.45;
+  white-space: pre-line; /* respeta los \n de los tooltips multilínea */
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+  pointer-events: none; /* no debe interceptar el ratón sobre la celda */
+  animation: tip-fade 100ms ease-out;
+}
+
+/* Cuando el ancla está pegada al borde superior, se muestra debajo. */
+.tip-below {
+  transform: translate(-50%, 6px);
+}
+
+@keyframes tip-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tip { animation: none; }
+}

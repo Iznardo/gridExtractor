@@ -5,10 +5,12 @@ import { useSearchParams } from "react-router-dom";
 import { useDrafts, useTeams, useTournaments, type DraftFilters, type StatsFilters } from "../api/hooks";
 import { ChampionPicker } from "../components/ChampionPicker";
 import { Field, FilterBar } from "../components/Field";
+import { Select } from "../components/Select";
 import { Tabs } from "../components/Tabs";
 import { TeamPicker } from "../components/TeamPicker";
 import { TournamentPicker } from "../components/TournamentPicker";
 import { useChampMaps } from "../lib/champs";
+import { useScoutingContextSync } from "../lib/scoutingContext";
 import { ChampionPresence } from "./ChampionPresence";
 import { DraftBoard, DraftBoardSkeleton } from "./DraftBoard";
 import { PickOrderStats } from "./PickOrderStats";
@@ -29,6 +31,9 @@ export function Drafts() {
   const { byName, list: champList } = useChampMaps();
   const [params, setParams] = useSearchParams();
   const champRef = useRef<HTMLInputElement>(null);
+
+  // Contexto de scouting compartido: arrastra el equipo+parche aplicados.
+  useScoutingContextSync(params.get("team") ?? "", params.get("patch") ?? "");
 
   // El formulario se inicializa desde la URL: un link compartido pre-rellena
   // los filtros y lanza la misma búsqueda.
@@ -195,21 +200,31 @@ export function Drafts() {
           <TeamPicker value={rivalId} onChange={setRivalId} teams={teams ?? []} />
         </Field>
         <Field label="Tipo">
-          <select value={gameType} onChange={(e) => setGameType(e.target.value)}>
-            <option value="">(todos)</option>
-            <option value="OFFICIAL">Oficiales</option>
-            <option value="SCRIM">Scrims</option>
-          </select>
+          <Select
+            value={gameType}
+            onChange={setGameType}
+            ariaLabel="Tipo"
+            options={[
+              { value: "", label: "(todos)" },
+              { value: "OFFICIAL", label: "Oficiales" },
+              { value: "SCRIM", label: "Scrims" },
+            ]}
+          />
         </Field>
         <Field label="Torneo">
           <TournamentPicker value={tournament} onChange={setTournament} tournaments={tournaments ?? []} />
         </Field>
         <Field label="Fase de pick">
-          <select value={phase} onChange={(e) => setPhase(e.target.value)}>
-            <option value="">(cualquiera)</option>
-            <option value="first">First pick</option>
-            <option value="second">Second pick</option>
-          </select>
+          <Select
+            value={phase}
+            onChange={setPhase}
+            ariaLabel="Fase de pick"
+            options={[
+              { value: "", label: "(cualquiera)" },
+              { value: "first", label: "First pick" },
+              { value: "second", label: "Second pick" },
+            ]}
+          />
         </Field>
         <Field label="Campeón jugado">
           <ChampionPicker
@@ -224,12 +239,17 @@ export function Drafts() {
           <input value={patch} onChange={(e) => setPatch(e.target.value)} placeholder="14.23" size={8} />
         </Field>
         <Field label="Mostrar">
-          <select value={limit} onChange={(e) => setLimit(e.target.value)}>
-            <option value="20">20</option>
-            <option value="50">50</option>
-            <option value="100">100</option>
-            <option value="200">200</option>
-          </select>
+          <Select
+            value={limit}
+            onChange={setLimit}
+            ariaLabel="Mostrar"
+            options={[
+              { value: "20", label: "20" },
+              { value: "50", label: "50" },
+              { value: "100", label: "100" },
+              { value: "200", label: "200" },
+            ]}
+          />
         </Field>
         <button type="submit" className="btn-primary">Buscar</button>
         {hasFilters && (

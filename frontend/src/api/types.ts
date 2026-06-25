@@ -81,7 +81,7 @@ export type PickStats = {
   champ_level?: number; // SoloQ
   vision_score?: number; // SoloQ
   team_position?: string; // SoloQ
-  summoner_spells?: number[]; // SoloQ
+  summoner_spells?: number[]; // SoloQ + GRID (summary/tencent)
   runes?: Runes | null;
   final_items?: number[] | null;
   skill_order?: string | null;
@@ -129,6 +129,9 @@ export type Matchup = {
   team2: TeamRef;
   pick: MatchupSide;
   opponent: MatchupSide | null;
+  // 2v2: segundo aliado del mismo lado y su rival de carril. null en 1v1.
+  pick_ally: MatchupSide | null;
+  opponent_ally: MatchupSide | null;
 };
 
 // ---- /draft-stats/champion-presence ----
@@ -146,6 +149,8 @@ export type ChampionPresenceRow = {
   bans: number;
   banned_by: number;
   banned_vs: number;
+  banned_by_p1: number; // baneados por el equipo en 1ª fase de baneo
+  banned_vs_p1: number; // baneados contra el equipo en 1ª fase de baneo
   total_games: number;
   presence_pct: number;
   picked_pct: number;
@@ -175,6 +180,15 @@ export type RolePickEntry = {
 
 /** Keyed by role (TOP/JUNGLE/MID/ADC/SUPPORT). */
 export type RolePickData = Partial<Record<string, RolePickEntry[]>>;
+
+// ---- /scouting/player-shares ----
+export type PlayerShare = {
+  role: string;
+  player: string | null;
+  games: number;
+  gold_pct: number | null;
+  dmg_pct: number | null;
+};
 
 export type MatchupEntry = {
   champ_id: number;

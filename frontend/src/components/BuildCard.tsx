@@ -1,5 +1,5 @@
 import type { PickStats } from "../api/types";
-import { ItemIcon, RuneIcon, RuneStyleIcon } from "./icons";
+import { ItemIcon, RuneIcon, RuneStyleIcon, SpellIcon } from "./icons";
 import { mmss } from "../lib/format";
 
 const SKILLS = ["Q", "W", "E", "R"] as const;
@@ -30,8 +30,17 @@ export function BuildCard({ stats }: { stats: PickStats | null }) {
   if (!stats) return <span className="muted">sin datos</span>;
   const buys = (stats.build_path ?? []).filter((b) => b.action === "BUY");
   const r = stats.runes;
+  const spells = stats.summoner_spells ?? [];
   return (
     <div className="build-card">
+      {spells.length > 0 && (
+        <div className="build-spells">
+          {spells.map((id, i) => (
+            <SpellIcon key={i} id={id} size={26} />
+          ))}
+        </div>
+      )}
+
       {r ? (
         <div className="build-runes">
           <div className="rc-row primary">
