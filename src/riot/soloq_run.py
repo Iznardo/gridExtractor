@@ -1,17 +1,17 @@
-"""Runner de la fase 1 de SoloQ: extraccion + verificacion, sin BD.
+"""SoloQ verification runner: extract + inspect, without the DB.
 
-Lanzar:  python -m src.riot.soloq_run --since YYYY-MM-DD [--account "X#Y"] [--limit N]
+Run:  python -m src.riot.soloq_run --since YYYY-MM-DD [--account "X#Y"] [--limit N]
 
-Flujo:
-1. Lee las cuentas de config/soloq_accounts.yaml y resuelve sus PUUID
-   (cacheado en data/riot/accounts/).
-2. Lista los match ids de Ranked Solo/Duo (queue=420) desde --since.
-3. Deduplica la union de todas las cuentas: si dos cuentas trackeadas
-   comparten partida, se procesa una sola vez con el set completo de PUUIDs
-   (mismo modelo que usara la persistencia de fase 2).
-4. Por cada partida: detalle + timeline (cacheados en data/riot/matches/),
-   extract_match, volcado a data/riot/extracted/{matchId}.json y resumen
-   legible por pantalla para verificacion manual.
+Flow:
+1. Read the accounts in config/soloq_accounts.yaml and resolve their PUUIDs
+   (cached in data/riot/accounts/).
+2. List Ranked Solo/Duo match ids (queue=420) since --since.
+3. Deduplicate the union across accounts: if two tracked accounts share a match,
+   it is processed once with the full set of PUUIDs (same model the phase-2
+   persistence uses).
+4. Per match: detail + timeline (cached in data/riot/matches/), extract_match,
+   write to data/riot/extracted/{matchId}.json, and a readable summary on screen
+   for manual verification.
 """
 
 from __future__ import annotations
@@ -50,7 +50,7 @@ def resolve_account_cached(client: RiotClient, riot_id: str) -> dict | None:
 
 
 def match_sort_key(match_id: str) -> int:
-    """Numero del match id, para ordenar de mas reciente a mas antigua."""
+    """The match id's number, for sorting newest to oldest."""
     try:
         return int(match_id.split("_", 1)[1])
     except (IndexError, ValueError):
@@ -67,7 +67,7 @@ def summary_line(extract: dict, player: dict) -> str:
             f"{player.get('riot_id')}  {player.get('champion_name'):<12} "
             f"{player.get('team_position') or '?':<7} {result} {kda:<8} "
             f"cs {player.get('cs'):<3}  skill {player.get('skill_order') or '-'}  "
-            f"build {n_items} eventos")
+            f"build {n_items} events")
 
 
 def main() -> int:
@@ -78,14 +78,14 @@ def main() -> int:
     load_dotenv(dotenv_path=REPO_ROOT / ".env")
 
     parser = argparse.ArgumentParser(
-        description="Extrae partidas de SoloQ (queue 420) de las cuentas trackeadas."
+        description="Extract SoloQ matches (queue 420) for the tracked accounts."
     )
     parser.add_argument("--since", metavar="YYYY-MM-DD", required=True,
-                        help="Solo partidas desde esta fecha (UTC).")
+                        help="Only matches from this date (UTC).")
     parser.add_argument("--account", default=None,
-                        help="Procesar solo este Riot ID del YAML.")
+                        help="Process only this Riot ID from the YAML.")
     parser.add_argument("--limit", type=int, default=None,
-                        help="Tope de partidas a procesar (las mas recientes).")
+                        help="Cap on matches to process (the most recent ones).")
     args = parser.parse_args()
 
     start_time = int(
@@ -98,19 +98,19 @@ def main() -> int:
     if args.account:
         accounts = [a for a in accounts if a.get("riot_id") == args.account]
     if not accounts:
-        log.error("Sin cuentas que procesar (revisar %s / --account).", CONFIG_PATH)
+        log.error("No accounts to process (check %s / --account).", CONFIG_PATH)
         return 1
 
     client = RiotClient()
 
-    # 1-2. Resolver puuids y listar match ids por cuenta.
+    # 1-2. Resolve puuids and list match ids per account.
     tracked_puuids: set[str] = set()
     all_match_ids: set[str] = set()
     for entry in accounts:
         riot_id = entry.get("riot_id")
         account = resolve_account_cached(client, riot_id)
         if account is None:
-            log.warning("Cuenta no encontrada en Account-V1: %s — skip.", riot_id)
+            log.warning("Account not found in Account-V1: %s — skip.", riot_id)
             continue
         puuid = account["puuid"]
         tracked_puuids.add(puuid)
@@ -119,32 +119,32 @@ def main() -> int:
         if not region:
             found = probe_match_regions(client, puuid)
             if not found:
-                log.warning("%s: sin partidas en ninguna region — skip.", riot_id)
+                log.warning("%s: no matches in any region — skip.", riot_id)
                 continue
             region = max(found, key=lambda r: match_sort_key(found[r]))
-            log.warning("%s: region autodetectada '%s' — fijarla en %s.",
+            log.warning("%s: region autodetected '%s' — set it in %s.",
                         riot_id, region, CONFIG_PATH.name)
 
         ids = get_match_ids(client, region, puuid,
                             queue=RANKED_SOLO_QUEUE, start_time=start_time)
-        log.info("%s (%s): %d partidas de soloq desde %s.",
+        log.info("%s (%s): %d soloq matches since %s.",
                  riot_id, region, len(ids), args.since)
         all_match_ids.update(ids)
 
-    # 3. Union deduplicada, de mas reciente a mas antigua.
+    # 3. Deduplicated union, newest to oldest.
     match_ids = sorted(all_match_ids, key=match_sort_key, reverse=True)
     if args.limit is not None:
         match_ids = match_ids[: args.limit]
-    log.info("Total a procesar: %d partidas (union deduplicada).", len(match_ids))
+    log.info("Total to process: %d matches (deduplicated union).", len(match_ids))
 
-    # 4. Descargar, extraer y volcar.
+    # 4. Download, extract and dump.
     downloaded = cached = extracted = errors = 0
     for match_id in match_ids:
         try:
             match, m_cached = fetch_match_cached(client, match_id)
             timeline, t_cached = fetch_timeline_cached(client, match_id)
         except RiotError as e:
-            log.error("RiotError en %s: %s", match_id, e)
+            log.error("RiotError on %s: %s", match_id, e)
             errors += 1
             continue
         if m_cached and t_cached:
@@ -152,14 +152,14 @@ def main() -> int:
         else:
             downloaded += 1
         if match is None:
-            log.warning("%s: detalle no disponible (404) — skip.", match_id)
+            log.warning("%s: detail unavailable (404) — skip.", match_id)
             continue
         if timeline is None:
-            log.warning("%s: timeline no disponible (404) — sin build/skills.", match_id)
+            log.warning("%s: timeline unavailable (404) — no build/skills.", match_id)
 
         result = extract_match(match, timeline, tracked_puuids)
         if result is None:
-            log.warning("%s: ningun puuid trackeado en la partida — skip.", match_id)
+            log.warning("%s: no tracked puuid in the match — skip.", match_id)
             continue
         EXTRACTED_DIR.mkdir(parents=True, exist_ok=True)
         (EXTRACTED_DIR / f"{match_id}.json").write_text(
@@ -169,7 +169,7 @@ def main() -> int:
         for player in result["players"]:
             print(summary_line(result, player))
 
-    log.info("Hecho. listadas=%d descargadas=%d desde_cache=%d extraidas=%d errores=%d",
+    log.info("Done. listed=%d downloaded=%d from_cache=%d extracted=%d errors=%d",
              len(match_ids), downloaded, cached, extracted, errors)
     return 0
 

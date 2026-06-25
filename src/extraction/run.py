@@ -1,11 +1,11 @@
-"""Entry point del extractor de partidos oficiales.
+"""Entry point for the official-game extractor.
 
-Lanzar:  python -m src.extraction.run [--since YYYY-MM-DD]
+Run:  python -m src.extraction.run [--since YYYY-MM-DD]
 
-Opciones:
-    --since YYYY-MM-DD   Solo procesar series con startTimeScheduled >= esa fecha.
-                         Sin este flag se procesan todas las series del torneo
-                         (la idempotencia se encarga de saltar las ya en BD).
+Options:
+    --since YYYY-MM-DD   Only process series with startTimeScheduled >= that date.
+                         Without it, all of the tournament's series are processed
+                         (idempotency skips the ones already in the DB).
 """
 
 from __future__ import annotations
@@ -40,72 +40,71 @@ def main() -> int:
     load_dotenv(dotenv_path=REPO_ROOT / ".env")
 
     parser = argparse.ArgumentParser(
-        description="Extrae partidos oficiales de GRID y los vuelca a la BD."
+        description="Extract official games from GRID into the database."
     )
     parser.add_argument(
         "--since",
         metavar="YYYY-MM-DD",
         default=None,
-        help="Solo procesar series con startTimeScheduled >= esta fecha.",
+        help="Only process series with startTimeScheduled >= this date.",
     )
     args = parser.parse_args()
     since_iso = f"{args.since}T00:00:00Z" if args.since else None
 
     names = load_tournament_names()
     if not names:
-        log.info("config/tournaments.yaml no tiene torneos. Añade alguno y relanza.")
+        log.info("config/tournaments.yaml has no tournaments. Add some and rerun.")
         return 0
 
-    log.info("Torneos a procesar: %s", names)
+    log.info("Tournaments to process: %s", names)
 
     api_key = os.environ.get("GRID_API_KEY")
     if not api_key:
-        log.error("Falta GRID_API_KEY en el entorno (.env).")
+        log.error("GRID_API_KEY missing from the environment (.env).")
         return 1
 
     client_gql  = build_graphql_client()
     client_rest = GridRestClient(api_key=api_key)
 
-    # Resolver IDs de torneos
     tournament_ids: list[str] = []
     for name in names:
         try:
             tid = resolve_tournament_id(client_gql, name)
         except GridError as e:
-            log.error("Error resolviendo torneo %r: %s", name, e)
+            log.error("Error resolving tournament %r: %s", name, e)
             continue
         if tid:
             tournament_ids.append(tid)
 
     if not tournament_ids:
-        log.error("No se resolvio ningun torneo. Revisa los nombres en tournaments.yaml.")
+        log.error("No tournament resolved. Check the names in tournaments.yaml.")
         return 1
 
     totals = RunStats()
 
     with get_conn() as conn:
-        # audit #3: refrescar el catalogo de campeones en cada corrida (barato
-        # e idempotente) para no perder partidas donde se jugo un campeon nuevo.
-        # Si Data Dragon no responde, caer a lo que haya en BD.
+        # Refresh the champion catalog every run (cheap and idempotent) so games
+        # with a newly added champion are not lost. Fall back to whatever is in
+        # the DB if Data Dragon is unreachable.
         try:
             refresh_champions(conn)
         except Exception as e:
-            log.warning("No se pudo refrescar champions desde Data Dragon "
-                        "(%s); uso lo que haya en BD.", e)
+            log.warning("Could not refresh champions from Data Dragon "
+                        "(%s); using what is in the DB.", e)
             ensure_loaded(conn)
         champ_lookup = build_lookup(conn)
-        log.info("Champions cargados: %d en lookup.", len(champ_lookup) // 2)
+        log.info("Champions loaded: %d in lookup.", len(champ_lookup) // 2)
 
         role_cache = RoleCache(client_gql)
 
-        # §5.5: orden cronologico GLOBAL entre torneos (no solo dentro de cada
-        # uno) para que la reconciliacion posicional nunca aplique roster
-        # caducado. startTimeScheduled es ISO 8601 -> orden lexicografico valido.
+        # Global chronological order across tournaments (not just within each
+        # one) so positional reconciliation never applies a stale roster.
+        # startTimeScheduled is ISO 8601 -> lexicographic sort is valid.
         all_series = sorted(
             iter_official_series(client_gql, tournament_ids, since_iso),
             key=lambda s: s.get("startTimeScheduled") or "",
         )
-        log.info("Series a procesar (orden cronologico global): %d",
+        log.info("Series to process (global chronological order): %d",
                  len(all_series))
 
         for series_node in all_series:
@@ -117,10 +116,10 @@ def main() -> int:
                 totals.add(r)
                 conn.commit()
             except GridError as e:
-                log.error("GridError en serie %s: %s", series_node.get("id"), e)
+                log.error("GridError on series %s: %s", series_node.get("id"), e)
                 totals.errors += 1
 
-    log.info("Extraccion completada. %s", totals)
+    log.info("Extraction complete. %s", totals)
     return 0
 
 

@@ -1,12 +1,12 @@
-"""Extraccion de los datos que nos interesan de una partida de SoloQ.
+"""Extract the relevant fields from a SoloQ match.
 
-Entrada: detalle de Match-V5 + timeline (cruda) + set de PUUIDs trackeados.
-Salida: dict con los datos generales de la partida y una entrada por cada
-jugador trackeado presente (multi-jugador: si N cuentas de la BD coinciden
-en la partida, una sola pasada las extrae todas).
+Input: Match-V5 detail + raw timeline + set of tracked PUUIDs.
+Output: dict with the general game data and one entry per tracked player present
+(multi-player: if N DB accounts appear in the match, a single pass extracts them
+all).
 
-Parseo tolerante en todo el modulo: el esquema de Riot crece por parche,
-ningun campo se asume presente (.get() siempre).
+Tolerant parsing throughout: Riot's schema grows per patch, so no field is
+assumed present (always .get()).
 """
 
 from __future__ import annotations
@@ -21,7 +21,7 @@ _SKILL_LETTER = {1: "Q", 2: "W", 3: "E", 4: "R"}
 
 
 def normalize_version(game_version: str | None) -> str:
-    """'16.10.776.5552' -> '16.10' (formato de games.version)."""
+    """'16.10.776.5552' -> '16.10' (games.version format)."""
     if not game_version:
         return "Unknown"
     parts = game_version.split(".")
@@ -31,8 +31,8 @@ def normalize_version(game_version: str | None) -> str:
 
 
 def game_duration_s(info: dict) -> int | None:
-    """gameDuration esta en segundos si existe gameEndTimestamp; en partidas
-    antiguas sin el, esta en milisegundos (RIOT_API.md §6.3)."""
+    """gameDuration is in seconds when gameEndTimestamp exists; in old matches
+    without it, it is in milliseconds."""
     duration = info.get("gameDuration")
     if duration is None:
         return None
@@ -48,9 +48,8 @@ def _winner(info: dict) -> str:
     return "NONE"
 
 
-# Una partida abortada por AFK en los primeros minutos. No cuenta para stats
-# (mismo criterio que op.gg); el umbral de duracion cubre datos antiguos sin
-# el flag de early surrender.
+# A match aborted by AFK in the first minutes. It does not count for stats; the
+# duration threshold covers old data without the early-surrender flag.
 _REMAKE_MAX_DURATION_S = 300
 
 
@@ -64,16 +63,16 @@ def is_remake(match: dict) -> bool:
 
 
 def _bans(info: dict) -> dict:
-    """{'blue': [ids...], 'red': [ids...]} desde teams[].bans, en pickTurn.
-    En soloq los bans son simultaneos, asi que el orden es solo cosmetico."""
+    """{'blue': [ids...], 'red': [ids...]} from teams[].bans, ordered by
+    pickTurn. SoloQ bans are simultaneous, so the order is only cosmetic."""
     bans: dict[str, list] = {"blue": [], "red": []}
     for team in info.get("teams", []):
         side = _SIDE.get(team.get("teamId"))
         if side is None:
             continue
         entries = sorted(team.get("bans", []), key=lambda b: b.get("pickTurn", 0))
-        # Riot usa -1 cuando no se baneo en ese turno; lo normalizamos a None
-        # (coherente con la convencion NULL de drafts, CLAUDE.md §4.2).
+        # Riot uses -1 when nothing was banned that turn; normalized to None
+        # (consistent with the NULL convention in drafts).
         bans[side.lower()] = [
             None if b.get("championId") == -1 else b.get("championId")
             for b in entries
@@ -82,8 +81,8 @@ def _bans(info: dict) -> dict:
 
 
 def _composition(info: dict) -> list[dict]:
-    """Los 10 participantes (aliados y enemigos) con lo minimo para pintar la
-    partida completa: puuid, campeon, lado y posicion. Sin riot_ids."""
+    """The 10 participants (allies and enemies) with the minimum needed to draw
+    the full game: puuid, champion, side and position. No riot_ids."""
     return [
         {
             "puuid": p.get("puuid"),
@@ -126,10 +125,10 @@ def _timeline_pid(timeline: dict, puuid: str) -> int | None:
 
 
 def build_path(timeline: dict, participant_id: int) -> list[dict]:
-    """Compras (BUY) y ventas (SELL) en orden cronologico. ITEM_UNDO deshace
-    el ultimo evento que coincida: beforeId != 0 anula la ultima compra de ese
-    item; afterId != 0 anula la ultima venta (semantica observada en los
-    fixtures: vender y deshacer la venta emite UNDO con beforeId=0)."""
+    """Purchases (BUY) and sales (SELL) in chronological order. ITEM_UNDO
+    reverses the last matching event: beforeId != 0 cancels the last purchase of
+    that item; afterId != 0 cancels the last sale (semantics observed in the
+    fixtures: selling and undoing the sale emits UNDO with beforeId=0)."""
     path: list[dict] = []
 
     def _remove_last(action: str, item_id: int) -> None:
@@ -137,7 +136,7 @@ def build_path(timeline: dict, participant_id: int) -> list[dict]:
             if path[i]["action"] == action and path[i]["item_id"] == item_id:
                 del path[i]
                 return
-        log.debug("ITEM_UNDO sin evento que deshacer (%s %s)", action, item_id)
+        log.debug("ITEM_UNDO with no event to undo (%s %s)", action, item_id)
 
     for ev in _iter_events(timeline):
         if ev.get("participantId") != participant_id:
@@ -157,8 +156,8 @@ def build_path(timeline: dict, participant_id: int) -> list[dict]:
 
 
 def skill_order(timeline: dict, participant_id: int) -> str:
-    """'QEWEER...' a partir de los SKILL_LEVEL_UP. Los EVOLVE (Kha'Zix,
-    Viktor...) no consumen punto de habilidad y se excluyen."""
+    """'QEWEER...' from SKILL_LEVEL_UP events. EVOLVE events (Kha'Zix,
+    Viktor...) do not consume a skill point and are excluded."""
     letters = []
     for ev in _iter_events(timeline):
         if (ev.get("type") == "SKILL_LEVEL_UP"
@@ -178,12 +177,12 @@ def _extract_participant(
     tag_line = participant.get("riotIdTagline") or ""
     out: dict[str, Any] = {
         "puuid": puuid,
-        # Solo metadato de verificacion humana; NUNCA va a BD (cambia, el puuid no).
+        # Human-verification metadata only; never persisted (it changes, the puuid does not).
         "riot_id": f"{game_name}#{tag_line}" if game_name else None,
         "champion_id": participant.get("championId"),
         "champion_name": participant.get("championName"),
         "team_side": _SIDE.get(participant.get("teamId")),
-        # teamPosition es la verdad de la posicion jugada; lane/role mienten (§6.3).
+        # teamPosition is the truth of the position played; lane/role lie.
         "team_position": participant.get("teamPosition"),
         "win": participant.get("win"),
         "kills": participant.get("kills"),
@@ -196,8 +195,8 @@ def _extract_participant(
         "vision_score": participant.get("visionScore"),
         "summoner_spells": [participant.get("summoner1Id"),
                             participant.get("summoner2Id")],
-        # item0..item6; Riot rellena con 0 los slots vacios al acabar la
-        # partida. Filtramos esos huecos (un 0 en lista plana no aporta nada).
+        # item0..item6; Riot pads empty slots with 0 at game end. Those gaps are
+        # filtered out (a 0 in a flat list carries no meaning).
         "final_items": [it for i in range(7)
                         if (it := participant.get(f"item{i}"))],
         "runes": _runes(participant),
@@ -215,8 +214,8 @@ def _extract_participant(
 def extract_match(
     match: dict, timeline: dict | None, tracked_puuids: set[str]
 ) -> dict | None:
-    """Devuelve el extracto de la partida con una entrada en `players` por
-    cada puuid trackeado presente, o None si ninguno participa."""
+    """Return the match extract with one entry in `players` per tracked puuid
+    present, or None if none participate."""
     info = match.get("info", {})
     players = [
         _extract_participant(p, timeline)

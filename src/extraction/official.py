@@ -1,27 +1,27 @@
-"""Extraccion de partidos oficiales desde GRID.
+"""Extraction of official games from GRID.
 
-Flujo (CLAUDE.md §2, §5.2, §5.5):
+Flow:
 
-  config/tournaments.yaml  -> nombres
+  config/tournaments.yaml  -> names
        │
        ▼
-  allSeries (ESPORTS, orden ASC, con includeChildren) paginado
-       │  skip series ya completas en BD
+  allSeries (ESPORTS, ASC order, includeChildren) paginated
+       │  skip series already complete in DB
        ▼
-  get_grid_events(series_id)  -> eventos crudos
-  split_grid_series()          -> una lista por partida
+  get_grid_events(series_id)  -> raw events
+  split_grid_series()          -> one list per game
        │
-       ▼  por cada partida
+       ▼  per game
   GameEventProcessor + observers (teams, draft, stats, objs, wards)
        │
        ▼
   auto-discovery (ensure_team, ensure_player)
-  reconciliacion posicional (reconcile_player_roster §5.5)
-  INSERT drafts / games / picks  (idempotente)
+  positional reconciliation (reconcile_player_roster)
+  INSERT drafts / games / picks  (idempotent)
 
-El procesado por partida/serie es compartido con scrims y vive en
-`_persistence.py` (run_series + process_one_game). Aqui solo queda lo
-especifico de oficiales: descubrimiento de series y la config del flujo.
+The per-game/series processing is shared with scrims and lives in
+`_persistence.py` (run_series + process_one_game). This module holds only what
+is official-specific: series discovery and the flow config.
 """
 
 from __future__ import annotations
@@ -45,19 +45,15 @@ from .queries import OFFICIAL_SERIES_BY_TOURNAMENT
 log = logging.getLogger("extraction")
 
 
-# ---------------------------------------------------------------------------
-# Descubrimiento de series
-# ---------------------------------------------------------------------------
-
 def iter_official_series(
     client: GridGraphQLClient,
     tournament_ids: list[str],
     since_iso: str | None,
 ) -> Generator[dict, None, None]:
-    """Yield series nodes oficiales (orden ASC dentro de cada torneo).
+    """Yield official series nodes (ASC order within each tournament).
 
-    El orden cronologico GLOBAL entre torneos lo garantiza el caller
-    (run.py ordena por startTimeScheduled antes de procesar, §5.5).
+    Global chronological order across tournaments is the caller's job (run.py
+    sorts by startTimeScheduled before processing).
     """
     for tid in tournament_ids:
         yield from paginate(
@@ -69,22 +65,18 @@ def iter_official_series(
 
 
 def root_tournament_name(series_node: dict) -> str:
-    """Sube por Tournament.parent hasta el root y devuelve su name."""
+    """Walk up Tournament.parent to the root and return its name."""
     t = series_node.get("tournament") or {}
     while t.get("parent"):
         t = t["parent"]
     return t.get("name") or ""
 
 
-# ---------------------------------------------------------------------------
-# Config del flujo para oficiales
-# ---------------------------------------------------------------------------
-
 def _official_cfg(series_node: dict) -> GameProcessingConfig:
     return GameProcessingConfig(
         game_type="OFFICIAL",
         tournament=root_tournament_name(series_node),
-        label="Serie",
+        label="Series",
         reconcile=True,
         warn_on_new=False,
         require_participants=True,
@@ -101,10 +93,10 @@ def process_series(
     role_cache: RoleCache,
     champ_lookup: dict[str, int],
 ) -> SeriesResult:
-    """Descarga y procesa todas las partidas de una serie oficial."""
+    """Download and process every game of an official series."""
     return run_series(
         client_rest, client_graphql, conn, series_node,
         role_cache, champ_lookup,
-        label="Serie",
+        label="Series",
         cfg_for_game=_official_cfg,
     )

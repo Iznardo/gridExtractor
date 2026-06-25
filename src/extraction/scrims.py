@@ -1,29 +1,29 @@
-"""Extraccion de scrims desde GRID.
+"""Extraction of scrims from GRID.
 
-Flujo (CLAUDE.md §2, §5.2, §5.4 — sin reconciliacion §5.5):
+Flow:
 
-  allSeries (SCRIM, orden ASC, sin filtro de torneo) paginado
-       │  skip series ya completas en BD
+  allSeries (SCRIM, ASC order, no tournament filter) paginated
+       │  skip series already complete in DB
        ▼
-  get_grid_events(series_id)  -> eventos crudos
-  split_grid_series()          -> una lista por partida
+  get_grid_events(series_id)  -> raw events
+  split_grid_series()          -> one list per game
        │
-       ▼  por cada partida
+       ▼  per game
   GameEventProcessor + observers (teams, draft, stats, objs, wards)
        │
        ▼
-  auto-discovery (ensure_team, ensure_player) con WARNING si is_new
+  auto-discovery (ensure_team, ensure_player) with WARNING when is_new
   INSERT drafts / games / picks  (game_type='SCRIM', tournament='SCRIM')
 
-El procesado por partida/serie es compartido con oficiales y vive en
-`_persistence.py` (run_series + process_one_game). Las diferencias de
-scrims se expresan via GameProcessingConfig:
-- No filtra por torneo: descarga todas las scrims `PUBLISHED` de la cuenta.
-- warn_on_new=True: WARNING al crear team/player para auditoria manual.
-- reconcile=False: scrims no tocan team_id/role/starter/last_update (§5.5).
-- discover_teams_from_draft=True: rescata equipos del draft si no hay
-  participants jugados (remake no jugado).
-- game_type='SCRIM', tournament='SCRIM' fijo.
+The per-game/series processing is shared with official games and lives in
+`_persistence.py` (run_series + process_one_game). Scrim differences are
+expressed through GameProcessingConfig:
+- No tournament filter: downloads every PUBLISHED scrim on the account.
+- warn_on_new=True: WARNING on team/player creation for manual auditing.
+- reconcile=False: scrims never touch team_id/role/starter/last_update.
+- discover_teams_from_draft=True: recovers teams from the draft when there are
+  no played participants (unplayed remake).
+- game_type='SCRIM', tournament='SCRIM' fixed.
 """
 
 from __future__ import annotations
@@ -47,18 +47,14 @@ from .queries import SCRIM_SERIES
 log = logging.getLogger("extraction")
 
 
-# ---------------------------------------------------------------------------
-# Descubrimiento de series
-# ---------------------------------------------------------------------------
-
 def iter_scrim_series(
     client: GridGraphQLClient,
     since_iso: str | None,
 ) -> Generator[dict, None, None]:
-    """Yield series nodes de scrims en orden cronologico ASC.
+    """Yield scrim series nodes in ASC chronological order.
 
-    Sin filtro de torneo ni de equipo: descarga todas las scrims
-    `PUBLISHED` que GRID exponga a la cuenta.
+    No tournament or team filter: downloads every PUBLISHED scrim GRID exposes
+    to the account.
     """
     yield from paginate(
         client,
@@ -67,10 +63,6 @@ def iter_scrim_series(
         {"since": since_iso},
     )
 
-
-# ---------------------------------------------------------------------------
-# Config del flujo para scrims
-# ---------------------------------------------------------------------------
 
 def _scrim_cfg(series_node: dict) -> GameProcessingConfig:
     return GameProcessingConfig(
@@ -93,7 +85,7 @@ def process_scrim_series(
     role_cache: RoleCache,
     champ_lookup: dict[str, int],
 ) -> SeriesResult:
-    """Descarga y procesa todas las partidas de una serie de scrim."""
+    """Download and process every game of a scrim series."""
     return run_series(
         client_rest, client_graphql, conn, series_node,
         role_cache, champ_lookup,

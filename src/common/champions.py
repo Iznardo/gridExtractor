@@ -1,12 +1,12 @@
-"""Carga y mantenimiento de la tabla `champions` desde Riot Data Dragon.
+"""Load and maintain the `champions` table from Riot Data Dragon.
 
-Uso:
-    # Bootstrap inicial o actualizacion:
+Usage:
+    # Initial bootstrap or refresh:
     python -m src.common.champions
 
-    # Desde otro modulo:
+    # From another module:
     from src.common.champions import ensure_loaded, build_lookup
-    ensure_loaded(conn)          # no-op si ya hay filas
+    ensure_loaded(conn)          # no-op if rows already exist
     lookup = build_lookup(conn)  # dict {name: id, alias: id}
     champ_id = lookup["Lee Sin"]   # 64
     champ_id = lookup["LeeSin"]    # 64
@@ -33,11 +33,10 @@ def _latest_version() -> str:
 
 
 def refresh_champions(conn, version: str | None = None) -> int:
-    """Descarga campeones de Data Dragon y los upsertea en la tabla `champions`.
+    """Download champions from Data Dragon and upsert them into `champions`.
 
-    Si `version` es None, usa la version mas reciente.
-    Idempotente: INSERT ... ON CONFLICT (id) DO NOTHING.
-    Devuelve cuantos campeones nuevos se insertaron.
+    Uses the latest version when `version` is None. Idempotent
+    (INSERT ... ON CONFLICT (id) DO NOTHING). Returns the count of new rows.
     """
     if version is None:
         version = _latest_version()
@@ -67,25 +66,25 @@ def refresh_champions(conn, version: str | None = None) -> int:
                 inserted += 1
 
     conn.commit()
-    log.info("Champions: %d nuevos insertados (total: %d en Data Dragon).",
+    log.info("Champions: %d new inserted (%d total in Data Dragon).",
              inserted, len(data))
     return inserted
 
 
 def ensure_loaded(conn) -> None:
-    """Si la tabla esta vacia, lanza refresh_champions automaticamente."""
+    """Run refresh_champions if the table is empty."""
     with conn.cursor() as cur:
         cur.execute("SELECT count(*) FROM champions")
         count = cur.fetchone()[0]
     if count == 0:
-        log.info("Tabla champions vacia — cargando desde Data Dragon...")
+        log.info("champions table empty — loading from Data Dragon...")
         refresh_champions(conn)
 
 
 def build_lookup(conn) -> dict[str, int]:
-    """Devuelve un dict que mapea name y alias a champion id.
+    """Return a dict mapping both name and alias to champion id.
 
-    Ejemplo: {"Lee Sin": 64, "LeeSin": 64, "Aatrox": 266, ...}
+    Example: {"Lee Sin": 64, "LeeSin": 64, "Aatrox": 266, ...}
     """
     lookup: dict[str, int] = {}
     with conn.cursor() as cur:
@@ -95,10 +94,6 @@ def build_lookup(conn) -> dict[str, int]:
             lookup[alias] = champ_id
     return lookup
 
-
-# ---------------------------------------------------------------------------
-# Mini-CLI
-# ---------------------------------------------------------------------------
 
 def main() -> int:
     logging.basicConfig(

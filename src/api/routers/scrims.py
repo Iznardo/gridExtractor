@@ -1,15 +1,15 @@
-"""Ventana Scrims — endpoint enriquecido por partida.
+"""Scrims window — per-game enriched endpoint.
 
-`GET /scrims/games` devuelve UNA fila por scrim del equipo scouteado, con todo
-lo necesario para que el front calcule (con funciones puras) los bloques del
-dashboard: pools ya salen de /scouting; aquí van último bloque, duos, trios,
-vs-equipos y vs-picks.
+`GET /scrims/games` returns ONE row per scrim of the scouted team, with
+everything the frontend needs to compute (with pure functions) the dashboard
+blocks: pools come from /scouting; here go the latest block, duos, trios,
+vs-teams and vs-picks.
 
-Team-céntrico y solo `game_type='SCRIM'` con `result IN ('BLUE','RED')` (las
-NONE no cuentan, coherente con la regla de win-rate del resto de la API).
+Team-centric and only `game_type='SCRIM'` with `result IN ('BLUE','RED')` (NONE
+does not count, consistent with the win-rate rule of the rest of the API).
 
-Bloque = games contra un mismo rival en una fecha; `block_game_number` numera la
-secuencia dentro del bloque (game 1, 2, 3… vs ese rival ese día).
+A block = games against the same rival on one date; `block_game_number` numbers
+the sequence within the block (game 1, 2, 3... vs that rival that day).
 """
 
 from __future__ import annotations
@@ -24,8 +24,8 @@ from src.api.deps import db_conn
 router = APIRouter(tags=["scrims"], prefix="/scrims")
 
 
-# Pivot del lineup propio por rol + lista plana de picks rivales, por partida.
-# Patrón team-céntrico copiado de draft_stats.py (filtro (team1&BLUE)|(team2&RED)).
+# Pivot of our own lineup by role + flat list of rival picks, per game.
+# Team-centric pattern shared with draft_stats.py (filter (team1&BLUE)|(team2&RED)).
 _SQL = """
 WITH base AS (
   SELECT
@@ -62,9 +62,9 @@ our_lineup AS (
   GROUP BY n.id
 ),
 rival_picks AS (
-  -- Ordenados por ROL (TOP→SUPPORT) para que el draft rival se vea alineado con
-  -- el nuestro. No se pivota a columnas: así no perdemos picks si en scrims hay
-  -- roles duplicados/sucios; champ_id desempata roles desconocidos.
+  -- Ordered by ROLE (TOP->SUPPORT) so the rival draft lines up with ours. Not
+  -- pivoted to columns: that way we do not lose picks when scrims have
+  -- duplicated/dirty roles; champ_id breaks ties for unknown roles.
   SELECT n.id AS game_id,
     array_agg(p.champ_id ORDER BY
       CASE pl.role
@@ -121,9 +121,9 @@ def _shape(row: dict) -> dict:
 
 @router.get("/games")
 def scrim_games(
-    team_id: int = Query(..., description="Equipo a trackear (obligatorio)"),
-    date_from: date | None = Query(None, description="Solo scrims desde esta fecha"),
-    patch: str | None = Query(None, description="games.version, ej. 14.23"),
+    team_id: int = Query(..., description="Team to track (required)"),
+    date_from: date | None = Query(None, description="Only scrims from this date"),
+    patch: str | None = Query(None, description="games.version, e.g. 14.23"),
     conn: psycopg.Connection = Depends(db_conn),
 ):
     params = {"team_id": team_id, "date_from": date_from, "patch": patch}

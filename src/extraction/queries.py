@@ -1,9 +1,9 @@
-"""GraphQL strings para los extractores de oficiales y scrims."""
+"""GraphQL query strings for the official and scrim extractors."""
 
-# Series oficiales de un torneo incluyendo toda su jerarquia de hijos.
-# workflowStatuses es obligatorio en el schema (campo non-null).
-# since ($since: String) es opcional: cuando es null GRID ignora el filtro.
-# Se piden 2 niveles de parent para cubrir la mayoria de jerarquias de torneo.
+# Official series of a tournament including its whole child hierarchy.
+# workflowStatuses is required by the schema (non-null field). since
+# ($since: String) is optional: GRID ignores the filter when it is null.
+# Two parent levels are requested to cover most tournament hierarchies.
 OFFICIAL_SERIES_BY_TOURNAMENT = """
 query OfficialSeriesByTournament($tid: ID!, $since: String, $after: String) {
   allSeries(
@@ -42,9 +42,9 @@ query OfficialSeriesByTournament($tid: ID!, $since: String, $after: String) {
 }
 """
 
-# Series de tipo SCRIM (sin filtro de torneo: descargamos todas las
-# scrims que GRID exponga a nuestra cuenta). workflowStatuses sigue
-# siendo non-null. since opcional para corridas incrementales.
+# SCRIM-type series (no tournament filter: download every scrim GRID exposes to
+# our account). workflowStatuses is still non-null. since is optional for
+# incremental runs.
 SCRIM_SERIES = """
 query ScrimSeries($since: String, $after: String) {
   allSeries(
@@ -73,8 +73,8 @@ query ScrimSeries($since: String, $after: String) {
 }
 """
 
-# Rol de un jugador por su grid_id. Se usa en RoleCache para determinar
-# el rol observado en la reconciliacion posicional (CLAUDE.md §5.5).
+# A player's role by grid_id. Used by RoleCache to determine the observed role
+# in positional reconciliation.
 PLAYER_ROLES_BY_ID = """
 query PlayerRolesById($pid: ID!) {
   player(id: $pid) {

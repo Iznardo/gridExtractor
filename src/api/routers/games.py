@@ -1,15 +1,14 @@
-"""Ventana 3 — Games.
+"""Games window.
 
-Busca partidas por campeon, matchup (campeon vs campeon), parche, equipo y
-fechas. Devuelve, ademas de los metadatos, las composiciones de cada lado
-(que campeones se jugaron en BLUE vs RED). El detalle fino de la partida
-(stats por jugador, draft) se obtiene luego con `/picks` / `/drafts` por
-`game_id`.
+Searches games by champion, matchup (champion vs champion), patch, team and
+dates. Besides the metadata, it returns each side's composition (which champions
+were played on BLUE vs RED). Fine per-game detail (per-player stats, draft) is
+fetched afterwards with `/picks` / `/drafts` by `game_id`.
 
-`team1` = lado BLUE, `team2` = lado RED.
-Matchup: `champ_id` + `champ_id2` ambos presentes; `opposing=true` los exige en
-lados opuestos (el "vs" real). En soloq solo hay picks de jugadores trackeados,
-asi que la composicion puede venir incompleta ahi.
+`team1` = BLUE side, `team2` = RED side.
+Matchup: `champ_id` + `champ_id2` both present; `opposing=true` requires them on
+opposite sides (the real "vs"). In soloq only tracked players have picks, so the
+composition may be incomplete there.
 """
 
 from __future__ import annotations
@@ -53,10 +52,10 @@ ORDER BY g.date DESC, g.id DESC
 LIMIT %(limit)s OFFSET %(offset)s
 """
 
-# Composiciones de la pagina de partidas, en una sola query (evita N+1).
-# Orden por rol del jugador (players.role) para que cada lado salga de TOP a
-# SUPPORT — en oficiales/scrims `picks` no trae posicion, pero `players` si.
-# (Soloq no pasa por aqui: su composicion sale de stats.participants.)
+# Compositions for the games page in a single query (avoids N+1). Ordered by the
+# player's role (players.role) so each side comes out TOP to SUPPORT — in
+# official/scrims `picks` has no position, but `players` does.
+# (Soloq does not go through here: its composition comes from stats.participants.)
 _PICKS_SQL = """
 SELECT pk.game_id, pk.side, pk.champ_id
 FROM picks pk
@@ -76,9 +75,9 @@ def _team_obj(tid, name, tag):
 
 
 def _comp_from_stats(stats) -> dict | None:
-    """Composicion (10 campeones) desde games.stats.participants — el caso de
-    soloq, donde `picks` solo tiene a los jugadores trackeados. Devuelve None
-    si no hay participants (oficiales/scrims: se usa `picks`)."""
+    """Composition (10 champions) from games.stats.participants — the soloq
+    case, where `picks` only has the tracked players. Returns None if there are
+    no participants (official/scrims: `picks` is used)."""
     if not isinstance(stats, dict):
         return None
     parts = stats.get("participants")
@@ -120,11 +119,11 @@ def _shape(row: dict, comps: dict, champ_map: dict[int, str]) -> dict:
 @router.get("/games")
 def list_games(
     team_id: int | None = None,
-    patch: str | None = Query(None, description="games.version, ej. 14.23"),
+    patch: str | None = Query(None, description="games.version, e.g. 14.23"),
     game_type: str | None = Query(None, description="OFFICIAL | SCRIM | SOLOQ"),
-    champ_id: int | None = Query(None, description="Campeon presente en la partida"),
-    champ_id2: int | None = Query(None, description="Segundo campeon (matchup)"),
-    opposing: bool = Query(False, description="Exigir champ_id y champ_id2 en lados opuestos"),
+    champ_id: int | None = Query(None, description="Champion present in the game"),
+    champ_id2: int | None = Query(None, description="Second champion (matchup)"),
+    opposing: bool = Query(False, description="Require champ_id and champ_id2 on opposite sides"),
     date_from: date | None = None,
     date_to: date | None = None,
     page: Pagination = Depends(pagination),

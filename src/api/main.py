@@ -1,15 +1,15 @@
-"""API read-only de gridExtractor (FastAPI).
+"""gridExtractor read-only API (FastAPI).
 
-Expone la BD `loldata` como contrato para el front (memoria
-`frontend_api_decision`). Solo lectura: ningun endpoint escribe.
+Exposes the `loldata` DB as the contract for the frontend. Read-only: no
+endpoint writes.
 
-Modelo de despliegue: cada usuario corre su PROPIA API privada en local
-(no es un servicio publico). Ver `api_audit.md`.
+Deployment model: each user runs their OWN private API locally (not a public
+service).
 
-Arranque (dev):
+Start (dev):
     uvicorn src.api.main:app --reload
 
-Docs interactivas (Swagger) en /docs.
+Interactive docs (Swagger) at /docs.
 """
 
 from __future__ import annotations
@@ -33,31 +33,30 @@ log = logging.getLogger("api")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Pool de conexiones read-only: una conexion nueva por request agota
-    # max_connections bajo carga (audit A1). autocommit=True + dict_row dejan
-    # cada conexion lista para solo-lectura (audit M4), sin transacciones
-    # colgadas "idle in transaction".
+    # Read-only connection pool: a fresh connection per request would exhaust
+    # max_connections under load. autocommit=True + dict_row keep each
+    # connection ready for read-only use, with no "idle in transaction" hangs.
     pool = ConnectionPool(
         kwargs={**db_kwargs(), "autocommit": True, "row_factory": dict_row},
         min_size=1,
         max_size=10,
         open=False,
     )
-    # wait=False: no bloquear el arranque si la BD aun no esta lista (audit M1);
-    # el pool reintenta en background y ChampMap se auto-cura en el primer miss.
+    # wait=False: do not block startup if the DB is not ready yet; the pool
+    # retries in the background and ChampMap self-heals on the first miss.
     pool.open()
     app.state.pool = pool
 
-    # Catalogo de campeones (id -> name) cacheado: evita resolver nombres contra
-    # la BD en cada draft. ChampMap se auto-recarga si falta una clave.
+    # Cached champion catalog (id -> name): avoids resolving names against the
+    # DB on every draft. ChampMap reloads itself if a key is missing.
     app.state.champ_map = ChampMap(pool)
     try:
         n = app.state.champ_map.reload()
-        log.info("champ_map cargado: %d campeones", n)
+        log.info("champ_map loaded: %d champions", n)
     except Exception as e:
-        # BD caida al arrancar: no tumbar la API. ChampMap se rellenara solo
-        # en el primer acceso (audit M1).
-        log.warning("champ_map no cargado al arranque (%s); se cargara bajo demanda.", e)
+        # DB down at startup: do not bring the API down. ChampMap fills itself
+        # on first access.
+        log.warning("champ_map not loaded at startup (%s); will load on demand.", e)
 
     try:
         yield
@@ -69,24 +68,24 @@ def create_app() -> FastAPI:
     load_dotenv()
     app = FastAPI(title="gridExtractor API", version="0.1.0", lifespan=lifespan)
 
-    # CORS: el front JS corre aparte (dev en localhost). Abierto a cualquier
-    # puerto de localhost/127.0.0.1 — coherente con el modelo de API privada
-    # local. Si se sirve el front desde otro origen, ampliar aqui.
+    # CORS: the JS frontend runs separately (dev on localhost). Open to any
+    # localhost/127.0.0.1 port, consistent with the local private-API model.
+    # If the frontend is served from another origin, widen this.
     app.add_middleware(
         CORSMiddleware,
         allow_origin_regex=r"http://(localhost|127\.0\.0\.1)(:\d+)?",
         allow_methods=["GET"],
         allow_headers=["*"],
-        # El front (fetch) necesita leer el nombre de fichero de la replay.
+        # The frontend (fetch) needs to read the replay's file name.
         expose_headers=["Content-Disposition"],
     )
 
     @app.get("/health", tags=["health"])
     def health():
-        """Ping ligero: confirma que la API responde y la BD contesta.
+        """Lightweight ping: confirms the API responds and the DB answers.
 
-        200 si la BD responde; 503 si no (sirve para healthcheck de contenedor
-        y para que el front distinga 'API caida' de 'sin datos').
+        200 if the DB responds; 503 otherwise (used by the container healthcheck
+        and to let the frontend tell 'API down' from 'no data').
         """
         try:
             with app.state.pool.connection() as conn:
@@ -95,7 +94,7 @@ def create_app() -> FastAPI:
                     cur.fetchone()
             return {"status": "ok", "db": "ok"}
         except Exception as e:
-            log.warning("health: BD no disponible: %s", e)
+            log.warning("health: DB unavailable: %s", e)
             return JSONResponse(
                 status_code=503, content={"status": "degraded", "db": "down"}
             )

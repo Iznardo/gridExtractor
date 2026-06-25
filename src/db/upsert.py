@@ -1,14 +1,12 @@
-"""Helpers `ensure_*` reutilizables para mantener el catalogo (teams, players).
+"""Reusable ensure_* helpers for the catalog tables (teams, players).
 
-Regla del modelo hibrido (CLAUDE.md §5.2, DISCOVERY_PLAN.md §5):
-- Si el grid_id ya existe en BD: devolver el id local sin tocar la fila.
-- Si no existe: insertar con los metadatos recibidos y devolver el id nuevo.
-- NUNCA actualizar filas existentes desde aqui. La reconciliacion posicional
-  (team_id/role/starter/last_update) ocurre en el extractor de oficiales,
-  no aqui (CLAUDE.md §5.5).
+Hybrid-catalog rule:
+- If grid_id already exists, return the local id without touching the row.
+- If it does not, insert with the provided metadata and return the new id.
+- Never update existing rows here. Positional reconciliation
+  (team_id/role/starter/last_update) happens in the official extractor.
 
-Compartido por el discovery (poblado en bloque) y por el futuro
-auto-discovery por partida (creacion al vuelo desde el extractor).
+Shared by the bulk discovery and the per-game auto-discovery in the extractors.
 """
 
 from __future__ import annotations
@@ -22,7 +20,7 @@ def ensure_team(
     name: str,
     tag: str | None,
 ) -> tuple[int, bool]:
-    """Devuelve (teams.id local, is_new) para `grid_id`, creando la fila si no existe."""
+    """Return (local teams.id, is_new) for grid_id, creating the row if absent."""
     with conn.cursor() as cur:
         cur.execute(
             """
@@ -36,7 +34,7 @@ def ensure_team(
         row = cur.fetchone()
         if row is not None:
             return row[0], True
-        # Conflict silencioso: ya existia. Resolver el id por grid_id.
+        # Row already existed; resolve its id by grid_id.
         cur.execute("SELECT id FROM teams WHERE grid_id = %s", (grid_id,))
         return cur.fetchone()[0], False
 
@@ -48,12 +46,11 @@ def ensure_player(
     team_local_id: int | None,
     role: str | None = None,
 ) -> tuple[int, bool]:
-    """Devuelve (players.id local, is_new) para `grid_id`, creando la fila si no existe.
+    """Return (local players.id, is_new) for grid_id, creating the row if absent.
 
-    Al crear: starter=FALSE, last_update=NULL, role=lo que pase el caller
-    (ya normalizado) o NULL. La reconciliacion posicional completa
-    (team_id/starter/last_update) la hace el extractor de oficiales
-    (CLAUDE.md §5.5).
+    On creation: starter=FALSE, last_update=NULL, role as given (already
+    normalized) or NULL. Full positional reconciliation
+    (team_id/starter/last_update) is done by the official extractor.
     """
     with conn.cursor() as cur:
         cur.execute(

@@ -1,6 +1,6 @@
-"""Helpers de paginacion GraphQL reutilizables (patron Relay).
+"""Reusable GraphQL pagination helper (Relay pattern).
 
-Compartido por discovery y extraction.
+Shared by discovery and extraction.
 """
 
 from __future__ import annotations
@@ -16,11 +16,11 @@ def paginate(
     root_key: str,
     variables: dict[str, Any],
 ) -> Generator[dict, None, None]:
-    """Genera nodos de una conexion Relay paginando hasta agotar.
+    """Yield nodes from a Relay connection, following pages until exhausted.
 
-    Parametros:
-        root_key: clave del campo raiz en `data` (ej. "allSeries", "players").
-        variables: se fusionan con {"after": cursor} en cada pagina.
+    Args:
+        root_key: name of the root field under `data` (e.g. "allSeries", "players").
+        variables: merged with {"after": cursor} on each page.
     """
     cursor: str | None = None
     while True:

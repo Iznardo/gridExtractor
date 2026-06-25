@@ -1,16 +1,16 @@
-"""Extraccion de SoloQ: Riot API -> BD (games + picks).
+"""SoloQ extraction: Riot API -> DB (games + picks).
 
-A diferencia de oficiales/scrims no hay grid-minion: la capa de API vive en
-src/riot/ (cliente, endpoints, extract_match). Aqui va la persistencia:
+Unlike official/scrims there is no grid-minion: the API layer lives in
+src/riot/ (client, endpoints, extract_match). This module handles persistence:
 
-- Idempotencia por `games.riot_api_id` (matchId completo, "EUW1_..."): se
-  filtra contra BD ANTES de descargar nada (CLAUDE.md §5.1).
-- Una partida = una fila en games (draft_id NULL: la tabla drafts es
-  exclusiva de oficiales/scrims) + una fila en picks por cuenta trackeada
-  presente. Los 10 participantes, bans incluidos, quedan en games.stats.
-- Remakes: no se insertan (decision 2026-06-12, criterio op.gg).
-- Sin reconciliacion de roster (§5.5: solo oficiales) y sin auto-discovery:
-  las cuentas ya vinculan a players existentes via accounts_sync.
+- Idempotency by `games.riot_api_id` (full matchId, "EUW1_..."): filtered
+  against the DB BEFORE downloading anything.
+- One game = one games row (draft_id NULL: the drafts table is exclusive to
+  official/scrims) + one picks row per tracked account present. All 10
+  participants, bans included, are stored in games.stats.
+- Remakes are not inserted.
+- No roster reconciliation (official only) and no auto-discovery: accounts
+  already link to existing players via accounts_sync.
 """
 
 from __future__ import annotations
@@ -39,11 +39,11 @@ class TrackedAccount:
 
 
 # ---------------------------------------------------------------------------
-# Cuentas e idempotencia
+# Accounts and idempotency
 # ---------------------------------------------------------------------------
 
 def load_tracked_accounts(conn: psycopg.Connection) -> dict[str, TrackedAccount]:
-    """{puuid: TrackedAccount} con todas las cuentas de la BD."""
+    """{puuid: TrackedAccount} for every account in the DB."""
     with conn.cursor() as cur:
         cur.execute("SELECT id, player_id, puuid, region FROM accounts")
         return {
@@ -55,7 +55,7 @@ def load_tracked_accounts(conn: psycopg.Connection) -> dict[str, TrackedAccount]
 def filter_new_match_ids(
     conn: psycopg.Connection, match_ids: list[str]
 ) -> list[str]:
-    """Quita los match ids ya insertados, sin gastar requests (§5.1)."""
+    """Drop match ids already inserted, without spending requests."""
     if not match_ids:
         return []
     with conn.cursor() as cur:
@@ -68,12 +68,12 @@ def filter_new_match_ids(
 
 
 # ---------------------------------------------------------------------------
-# Mapeo extracto -> filas
+# Mapping: extract -> rows
 # ---------------------------------------------------------------------------
 
-# Contrato de claves de picks.stats. kills/deaths/assists/gold/cs coinciden
-# con los picks de GRID (_persistence.insert_picks); el resto son el contrato
-# que oficiales/scrims rellenaran en la futura fase de builds desde GRID.
+# picks.stats key contract. kills/deaths/assists/gold/cs match the GRID picks
+# (_persistence.insert_picks); the rest are the contract that official/scrims
+# will fill from GRID in the future builds phase.
 def pick_stats_from_player(player: dict) -> dict:
     return {
         "kills": player.get("kills"),
@@ -104,7 +104,7 @@ def game_stats_from_extract(extract: dict) -> dict:
 
 
 def insert_soloq_game(conn: psycopg.Connection, extract: dict) -> int | None:
-    """Inserta la fila de games. Devuelve games.id o None si ya existia."""
+    """Insert the games row. Return games.id, or None if it already existed."""
     creation_ms = extract.get("game_creation") or 0
     game_date = datetime.fromtimestamp(creation_ms / 1000, tz=timezone.utc).date()
     winner = extract.get("winner")
@@ -139,7 +139,7 @@ def insert_soloq_picks(
     tracked: dict[str, TrackedAccount],
     known_champ_ids: set[int],
 ) -> int:
-    """Una fila en picks por jugador trackeado presente. Devuelve insertados."""
+    """One picks row per tracked player present. Return rows inserted."""
     inserted = 0
     with conn.cursor() as cur:
         for player in extract.get("players", []):
@@ -148,7 +148,7 @@ def insert_soloq_picks(
                 continue
             champ_id = player.get("champion_id")
             if champ_id not in known_champ_ids:
-                log.warning("%s: champion_id %s no esta en champions — skip pick.",
+                log.warning("%s: champion_id %s not in champions — skip pick.",
                             extract.get("match_id"), champ_id)
                 continue
             cur.execute(
@@ -169,12 +169,12 @@ def insert_soloq_picks(
 
 
 # ---------------------------------------------------------------------------
-# Proceso de una partida
+# Single-match processing
 # ---------------------------------------------------------------------------
 
 class ChampionIds:
-    """Set de champion ids en BD, con un refresh de Data Dragon como mucho
-    por corrida si aparece un campeon nuevo (audit #3)."""
+    """Set of champion ids in the DB, with at most one Data Dragon refresh per
+    run if a new champion appears."""
 
     def __init__(self, conn: psycopg.Connection):
         self._conn = conn
@@ -189,7 +189,7 @@ class ChampionIds:
     def ensure(self, needed: set[int]) -> set[int]:
         missing = needed - self._ids
         if missing and not self._refreshed:
-            log.info("Champion ids desconocidos %s — refrescando Data Dragon.",
+            log.info("Unknown champion ids %s — refreshing Data Dragon.",
                      sorted(missing))
             refresh_champions(self._conn)
             self._refreshed = True
@@ -204,35 +204,35 @@ def process_match(
     tracked: dict[str, TrackedAccount],
     champions: ChampionIds,
 ) -> str:
-    """Descarga, extrae e inserta una partida. Devuelve el estado para stats:
+    """Download, extract and insert one match. Returns a status for stats:
     'inserted' | 'remake' | 'no_detail' | 'no_tracked' | 'dup'."""
     match = get_match(client, match_id)
     if match is None:
-        log.warning("%s: detalle no disponible (404) — skip.", match_id)
+        log.warning("%s: detail unavailable (404) — skip.", match_id)
         return "no_detail"
     if is_remake(match):
-        log.info("%s: remake — no se inserta.", match_id)
+        log.info("%s: remake — not inserted.", match_id)
         return "remake"
 
     timeline = get_match_timeline(client, match_id)
     if timeline is None:
-        log.warning("%s: timeline no disponible (404) — pick sin build/skills.",
+        log.warning("%s: timeline unavailable (404) — pick without build/skills.",
                     match_id)
 
     extract = extract_match(match, timeline, set(tracked))
     if extract is None:
-        log.warning("%s: ningun puuid trackeado en la partida — skip.", match_id)
+        log.warning("%s: no tracked puuid in the match — skip.", match_id)
         return "no_tracked"
 
-    # Resolver campeones ANTES de abrir los inserts: refresh_champions
-    # comitea internamente y no debe partir la transaccion de la partida.
+    # Resolve champions BEFORE opening the inserts: refresh_champions commits
+    # internally and must not split the match transaction.
     needed = {p.get("champion_id") for p in extract["players"]}
     known_champ_ids = champions.ensure(needed)
 
     game_id = insert_soloq_game(conn, extract)
     if game_id is None:
-        log.info("%s: ya estaba en BD (conflicto) — skip.", match_id)
+        log.info("%s: already in DB (conflict) — skip.", match_id)
         return "dup"
     n_picks = insert_soloq_picks(conn, game_id, extract, tracked, known_champ_ids)
-    log.info("%s: insertada (game_id=%d, %d picks).", match_id, game_id, n_picks)
+    log.info("%s: inserted (game_id=%d, %d picks).", match_id, game_id, n_picks)
     return "inserted"

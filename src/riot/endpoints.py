@@ -1,7 +1,7 @@
-"""Una funcion por endpoint de la Riot API (RIOT_API.md §6).
+"""One function per Riot API endpoint.
 
-Todas reciben el RiotClient y devuelven el JSON parseado (o None en 404).
-La region de match/timeline se deriva del prefijo del matchId.
+All take the RiotClient and return the parsed JSON (or None on 404). The region
+for match/timeline is derived from the matchId prefix.
 """
 
 from __future__ import annotations
@@ -14,7 +14,7 @@ from .routing import region_from_match_id
 
 RANKED_SOLO_QUEUE = 420
 
-# El matchlist devuelve como mucho 100 ids por pagina.
+# The matchlist returns at most 100 ids per page.
 _PAGE_SIZE = 100
 
 
@@ -40,8 +40,8 @@ def get_match_ids(
     end_time: int | None = None,
     page_size: int = _PAGE_SIZE,
 ) -> list[str]:
-    """Lista completa de match ids del puuid, paginando hasta agotar.
-    `start_time`/`end_time` en epoch SEGUNDOS (§6.2)."""
+    """Full list of the puuid's match ids, paginating until exhausted.
+    `start_time`/`end_time` in epoch SECONDS."""
     path = f"/lol/match/v5/matches/by-puuid/{puuid}/ids"
     ids: list[str] = []
     start = 0

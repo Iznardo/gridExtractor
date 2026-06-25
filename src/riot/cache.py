@@ -1,9 +1,9 @@
-"""Cache en disco de las respuestas crudas de Match-V5.
+"""On-disk cache of raw Match-V5 responses.
 
-Mientras no hay BD (fase 1), la idempotencia (CLAUDE.md §5) vive aqui: si el
-JSON ya esta en data/riot/, no se vuelve a pedir a la API. El crudo completo
-(10 participantes, timeline entera) se conserva por si en el futuro queremos
-extraer mas campos sin re-descargar.
+Used by the disk-based SoloQ verification runner (src/riot/soloq_run.py): if the
+JSON is already in data/riot/, it is not requested again. The full raw payload
+(10 participants, whole timeline) is kept so more fields can be extracted later
+without re-downloading.
 """
 
 from __future__ import annotations
@@ -21,11 +21,11 @@ MATCHES_DIR = DATA_DIR / "matches"
 EXTRACTED_DIR = DATA_DIR / "extracted"
 ACCOUNTS_DIR = DATA_DIR / "accounts"
 
-# Un 404 (partida no disponible) se cachea como `null` para no insistir.
+# A 404 (match unavailable) is cached as `null` to avoid retrying.
 
 
 def _cached(path: Path, fetch: Callable[[], dict | None]) -> tuple[dict | None, bool]:
-    """Devuelve (json, from_cache). Cachea tambien el None del 404."""
+    """Return (json, from_cache). Caches the 404's None too."""
     if path.exists():
         return json.loads(path.read_text()), True
     data = fetch()

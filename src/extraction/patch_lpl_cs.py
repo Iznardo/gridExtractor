@@ -1,13 +1,13 @@
-"""Parche de CS para partidas LPL: corrige picks.stats.cs sumando campamentos de jungla.
+"""CS backfill for LPL games: fix picks.stats.cs by adding jungle camps.
 
-El bug estaba en tencent.py (grid-minion < 0.4.1): cs = creepsKilled sin sumar
-totalNeutralMinKilled. Se corrige descargando el Tencent Details de cada partida
-LPL y actualizando picks.stats con el CS recalculado.
+Fixes games persisted before grid-minion 0.4.1, where cs = creepsKilled without
+totalNeutralMinKilled. Re-downloads each LPL game's Tencent Details and updates
+picks.stats with the recomputed CS.
 
-Match participant → pick: por (game_id, champ_id). El heroId de Tencent es el
-ID de campeón de Riot/Data Dragon, igual que picks.champ_id.
+Match participant -> pick by (game_id, champ_id). Tencent's heroId is the
+Riot/Data Dragon champion id, same as picks.champ_id.
 
-Lanzar:
+Run:
     python -m src.extraction.patch_lpl_cs [--dry-run]
 """
 
@@ -37,14 +37,14 @@ def main() -> int:
     )
     load_dotenv(dotenv_path=REPO_ROOT / ".env")
 
-    parser = argparse.ArgumentParser(description="Corrige CS de jungla en partidas LPL.")
+    parser = argparse.ArgumentParser(description="Fix jungle CS in LPL games.")
     parser.add_argument("--dry-run", action="store_true",
-                        help="Muestra qué se actualizaría sin tocar la BD.")
+                        help="Show what would be updated without touching the DB.")
     args = parser.parse_args()
 
     api_key = os.environ.get("GRID_API_KEY")
     if not api_key:
-        log.error("Falta GRID_API_KEY en .env.")
+        log.error("GRID_API_KEY missing from .env.")
         return 1
 
     client = GridRestClient(api_key=api_key)
@@ -62,7 +62,7 @@ def main() -> int:
             games = cur.fetchall()
 
     total = len(games)
-    log.info("%d partidas LPL a parchear.", total)
+    log.info("%d LPL games to patch.", total)
     if total == 0:
         return 0
 
@@ -76,14 +76,14 @@ def main() -> int:
             try:
                 tencent_raw = client.get_tencent_details(str(series_id), game_number)
             except GridError as e:
-                log.warning("[%d/%d] %s g%d: error descargando Tencent: %s",
+                log.warning("[%d/%d] %s g%d: error downloading Tencent: %s",
                             i, total, series_id, game_number, e)
                 failed += 1
                 time.sleep(0.2)
                 continue
 
             if not tencent_raw:
-                log.warning("[%d/%d] series=%d g%d: sin Tencent Details, skip.",
+                log.warning("[%d/%d] series=%d g%d: no Tencent Details, skip.",
                             i, total, series_id, game_number)
                 failed += 1
                 time.sleep(0.1)
@@ -92,7 +92,7 @@ def main() -> int:
             norm = normalize_tencent_details(tencent_raw)
             participants = norm.get("participants") or []
 
-            # champ_id (heroId) → cs corregido
+            # champ_id (heroId) -> corrected cs
             cs_by_champ: dict[int, int] = {}
             for p in participants:
                 champ_id = p.get("championId")
@@ -101,13 +101,12 @@ def main() -> int:
                     cs_by_champ[int(champ_id)] = int(cs)
 
             if not cs_by_champ:
-                log.warning("[%d/%d] series=%d g%d: sin participantes, skip.",
+                log.warning("[%d/%d] series=%d g%d: no participants, skip.",
                             i, total, series_id, game_number)
                 failed += 1
                 time.sleep(0.1)
                 continue
 
-            # Recuperar picks existentes para esta partida
             with conn.cursor() as cur:
                 cur.execute("""
                     SELECT pk.id, pk.champ_id, pk.stats
@@ -120,15 +119,15 @@ def main() -> int:
             for pick_id, champ_id, stats in picks:
                 new_cs = cs_by_champ.get(champ_id)
                 if new_cs is None:
-                    log.debug("  pick_id=%d champ_id=%d: sin match en Tencent, skip.",
+                    log.debug("  pick_id=%d champ_id=%d: no Tencent match, skip.",
                               pick_id, champ_id)
                     continue
 
                 old_cs = (stats or {}).get("cs")
                 if old_cs == new_cs:
-                    continue  # ya correcto
+                    continue  # already correct
 
-                log.debug("  pick_id=%d champ_id=%d: cs %s → %d",
+                log.debug("  pick_id=%d champ_id=%d: cs %s -> %d",
                           pick_id, champ_id, old_cs, new_cs)
 
                 if not args.dry_run:
@@ -145,16 +144,16 @@ def main() -> int:
                 if not args.dry_run:
                     conn.commit()
                 updated_games += 1
-                log.info("[%d/%d] series=%d g%d: %d picks actualizados.",
+                log.info("[%d/%d] series=%d g%d: %d picks updated.",
                          i, total, series_id, game_number, game_pick_updates)
             else:
-                log.debug("[%d/%d] series=%d g%d: sin cambios.",
+                log.debug("[%d/%d] series=%d g%d: no changes.",
                           i, total, series_id, game_number)
 
             time.sleep(0.15)
 
-    label = "actualizaría" if args.dry_run else "actualizadas"
-    log.info("Hecho. %d partidas %s, %d picks %s, %d fallos.",
+    label = "would be updated" if args.dry_run else "updated"
+    log.info("Done. %d games %s, %d picks %s, %d failures.",
              updated_games, label, updated_picks, label, failed)
     return 0
 

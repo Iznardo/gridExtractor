@@ -1,15 +1,15 @@
-"""Sincroniza las cuentas de config/soloq_accounts.yaml a la tabla `accounts`.
+"""Sync the accounts in config/soloq_accounts.yaml into the `accounts` table.
 
-Lanzar:  python -m src.riot.accounts_sync
+Run:  python -m src.riot.accounts_sync
 
-Por cada entrada del YAML (riot_id, player, region):
-- `player` debe ser el nombre exacto en la tabla `players` (los jugadores
-  vienen del discovery de GRID; aqui no se crean). Sin player o sin match
-  en BD -> WARNING y skip.
-- Resuelve el PUUID via Account-V1. El riot_id solo se usa para resolver:
-  en BD la unica identidad es el puuid (los Riot IDs cambian).
-- Region null -> autodetectar sondeando Match-V5 y avisar.
-- INSERT idempotente por puuid (ON CONFLICT DO NOTHING).
+For each YAML entry (riot_id, player, region):
+- `player` must be the exact name in the `players` table (players come from GRID
+  discovery; they are not created here). No player or no DB match -> WARNING and
+  skip.
+- Resolve the PUUID via Account-V1. The riot_id is used only to resolve: in the
+  DB the only identity is the puuid (Riot IDs change).
+- Region null -> autodetect by probing Match-V5, with a warning.
+- Idempotent INSERT by puuid (ON CONFLICT DO NOTHING).
 """
 
 from __future__ import annotations
@@ -34,12 +34,12 @@ log = logging.getLogger("riot")
 
 
 def player_id_by_name(conn, name: str) -> int | None:
-    """Busca jugador tolerando diferencias de casing y prefijos de equipo.
+    """Find a player tolerating casing differences and team-tag prefixes.
 
-    Prioridad:
-    1. Exacto case-insensitive: "Vladi" == "vladi".
-    2. El input es sufijo tras espacio: "Vladi" encuentra "BDS Vladi".
-    Si hay ambiguedad (varios candidatos) avisa y devuelve None.
+    Priority:
+    1. Case-insensitive exact: "Vladi" == "vladi".
+    2. Input is a suffix after a space: "Vladi" matches "BDS Vladi".
+    On ambiguity (multiple candidates) it warns and returns None.
     """
     with conn.cursor() as cur:
         cur.execute(
@@ -49,34 +49,34 @@ def player_id_by_name(conn, name: str) -> int | None:
         rows = cur.fetchall()
         if len(rows) == 1:
             if rows[0][1] != name:
-                log.info("Nombre %r resuelto como %r (casing).", name, rows[0][1])
+                log.info("Name %r resolved as %r (casing).", name, rows[0][1])
             return rows[0][0]
         if len(rows) > 1:
-            log.warning("Nombre %r ambiguo (%d coincidencias) — usa el nombre "
-                        "exacto en player:. Skip.", name, len(rows))
+            log.warning("Name %r ambiguous (%d matches) — use the exact name "
+                        "in player:. Skip.", name, len(rows))
             return None
 
-        # Fallback: el input es sufijo tras espacio ("T1 Faker" -> "Faker")
+        # Fallback: input is a suffix after a space ("T1 Faker" -> "Faker").
         cur.execute(
             "SELECT id, name FROM players WHERE LOWER(name) LIKE '% ' || LOWER(%s)",
             (name,),
         )
         rows = cur.fetchall()
         if len(rows) == 1:
-            log.info("Nombre %r resuelto como %r (sufijo con tag de equipo).",
+            log.info("Name %r resolved as %r (suffix with team tag).",
                      name, rows[0][1])
             return rows[0][0]
         if len(rows) > 1:
             candidates = [r[1] for r in rows]
-            log.warning("Nombre %r ambiguo con sufijo %s — usa el nombre "
-                        "exacto en player:. Skip.", name, candidates)
+            log.warning("Name %r ambiguous with suffix %s — use the exact name "
+                        "in player:. Skip.", name, candidates)
             return None
 
         return None
 
 
 def insert_account(conn, player_id: int, region: str, puuid: str) -> bool:
-    """True si la cuenta es nueva; False si el puuid ya estaba."""
+    """True if the account is new; False if the puuid already existed."""
     with conn.cursor() as cur:
         cur.execute(
             """
@@ -91,24 +91,24 @@ def insert_account(conn, player_id: int, region: str, puuid: str) -> bool:
 
 
 def sync_account(client: RiotClient, conn, entry: dict) -> str:
-    """Procesa una entrada del YAML. Devuelve 'new'/'existing'/'skipped'."""
+    """Process one YAML entry. Returns 'new'/'existing'/'skipped'."""
     riot_id = entry.get("riot_id")
     player_name = entry.get("player")
     if not player_name:
-        log.warning("%s: sin 'player' en el YAML — rellenarlo con el nombre "
-                    "exacto de la tabla players. Skip.", riot_id)
+        log.warning("%s: no 'player' in the YAML — fill it with the exact name "
+                    "from the players table. Skip.", riot_id)
         return "skipped"
 
     player_id = player_id_by_name(conn, player_name)
     if player_id is None:
-        log.warning("%s: player %r no encontrado en players "
-                    "(¿discovery pendiente, typo o ambiguo?). Skip.",
+        log.warning("%s: player %r not found in players "
+                    "(discovery pending, typo, or ambiguous?). Skip.",
                     riot_id, player_name)
         return "skipped"
 
     account = resolve_account(client, riot_id)
     if account is None:
-        log.warning("%s: Riot ID no encontrado en Account-V1. Skip.", riot_id)
+        log.warning("%s: Riot ID not found in Account-V1. Skip.", riot_id)
         return "skipped"
     puuid = account["puuid"]
 
@@ -116,17 +116,17 @@ def sync_account(client: RiotClient, conn, entry: dict) -> str:
     if not region:
         found = probe_match_regions(client, puuid)
         if not found:
-            log.warning("%s: sin partidas en ninguna region — no se puede "
-                        "autodetectar. Fijar 'region' en el YAML. Skip.", riot_id)
+            log.warning("%s: no matches in any region — cannot autodetect. "
+                        "Set 'region' in the YAML. Skip.", riot_id)
             return "skipped"
         region = max(found, key=lambda r: match_sort_key(found[r]))
-        log.warning("%s: region autodetectada '%s' — fijarla en %s.",
+        log.warning("%s: region autodetected '%s' — set it in %s.",
                     riot_id, region, CONFIG_PATH.name)
 
     is_new = insert_account(conn, player_id, region, puuid)
     log.info("%s -> player %r (id=%d), region=%s, puuid=%s... [%s]",
              riot_id, player_name, player_id, region, puuid[:12],
-             "NUEVA" if is_new else "ya existia")
+             "NEW" if is_new else "existing")
     return "new" if is_new else "existing"
 
 
@@ -140,7 +140,7 @@ def main() -> int:
     config = yaml.safe_load(CONFIG_PATH.read_text()) or {}
     accounts = config.get("accounts") or []
     if not accounts:
-        log.error("Sin cuentas en %s.", CONFIG_PATH)
+        log.error("No accounts in %s.", CONFIG_PATH)
         return 1
 
     client = RiotClient()
@@ -150,11 +150,11 @@ def main() -> int:
             try:
                 results[sync_account(client, conn, entry)] += 1
             except RiotError as e:
-                log.error("RiotError en %s: %s", entry.get("riot_id"), e)
+                log.error("RiotError on %s: %s", entry.get("riot_id"), e)
                 results["skipped"] += 1
         conn.commit()
 
-    log.info("Sync completado: %d nuevas, %d existentes, %d skip.",
+    log.info("Sync complete: %d new, %d existing, %d skipped.",
              results["new"], results["existing"], results["skipped"])
     return 0
 

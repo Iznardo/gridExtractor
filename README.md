@@ -587,24 +587,24 @@ frontend/                      web SPA (React + Vite + TS), consumes the API (§
 
 ## Troubleshooting
 
-- **`Falta GRID_API_KEY en el entorno`** — your `.env` is missing or
+- **`GRID_API_KEY missing from the environment`** — your `.env` is missing or
   hasn't been picked up. Make sure it lives at the project root and that
   you ran the command from the project root.
 - **`psycopg.OperationalError: connection refused`** — the Postgres
   container isn't running. `docker compose up -d` and retry.
-- **`Torneo 'X': sin coincidencia exacta`** — the name in
+- **`Tournament 'X': no exact match`** — the name in
   `tournaments.yaml` doesn't match any GRID tournament exactly. The log
   prints the candidates returned by the `contains` filter — copy the
   exact name from there.
 - **Discovery returns 0 teams** — verify your API key has access to that
   tournament. GRID accounts have scoped permissions; some tournaments
   require a higher tier.
-- **Scrim extractor logs `WARNING ... creado PLAYER nuevo`** — this is
+- **Scrim extractor logs `WARNING ... created new PLAYER in DB`** — this is
   expected when a scrim brings in someone not yet in the catalog. Review
   the warnings; if they're real players, leave them; if they're typos or
   one-off fills, delete the row and (optionally) re-run discovery to
   pull the canonical name from GRID.
-- **`draft vacio sin historial recuperable`** — Pattern A above. The
+- **`empty draft (no draft events), skip`** — Pattern A above. The
   series is skipped. There is nothing to do at the moment beyond
   recording the series ID for the future investigation.
 

@@ -1,13 +1,12 @@
-"""Helpers de persistencia compartidos entre extractores (oficiales y scrims).
+"""Persistence helpers shared by the extractors (official and scrims).
 
-Aqui viven:
-- Funciones de INSERT en drafts/games/picks (parametrizadas por game_type).
-- Helpers de mapeo (pick_order, champion, fecha, lado de equipo).
-- Comprobaciones de idempotencia (game_in_db, series_fully_in_db).
-- Clases compartidas: RoleCache (catalogo de roles GRID), SeriesResult,
-  RunStats (stats de la corrida).
+Contains:
+- INSERT functions for drafts/games/picks (parameterized by game_type).
+- Mapping helpers (pick_order, champion, date, team side).
+- Idempotency checks (game_in_db, series_fully_in_db).
+- Shared classes: RoleCache (GRID role catalog), SeriesResult, RunStats.
 
-Este modulo NO importa de official.py ni scrims.py para evitar ciclos.
+This module does not import from official.py or scrims.py, to avoid cycles.
 """
 
 from __future__ import annotations
@@ -49,7 +48,7 @@ log = logging.getLogger("extraction")
 
 
 # ---------------------------------------------------------------------------
-# Stats de resumen de la corrida
+# Run summary stats
 # ---------------------------------------------------------------------------
 
 @dataclass
@@ -83,24 +82,24 @@ class RunStats:
 
     def __str__(self) -> str:
         return (
-            f"series: {self.series_processed} procesadas, "
-            f"{self.series_skipped} skip (ya en BD), "
-            f"{self.series_no_events} sin datos | "
-            f"partidas: {self.games_new} nuevas, "
-            f"{self.games_skipped} skip, "
-            f"{self.errors} errores"
+            f"series: {self.series_processed} processed, "
+            f"{self.series_skipped} skipped (already in DB), "
+            f"{self.series_no_events} without data | "
+            f"games: {self.games_new} new, "
+            f"{self.games_skipped} skipped, "
+            f"{self.errors} errors"
         )
 
 
 # ---------------------------------------------------------------------------
-# Cache de roles del catalogo de GRID (una corrida = una instancia)
+# GRID role catalog cache (one instance per run)
 # ---------------------------------------------------------------------------
 
 class RoleCache:
-    """Cachea Player.roles[].name (normalizado) por grid_player_id.
+    """Caches Player.roles[].name (normalized) by grid_player_id.
 
-    Una query GraphQL por jugador UNICO en la corrida, no por partida.
-    Fallback a la convencion de orden de riot_id si GRID no aporta rol.
+    One GraphQL query per unique player in the run, not per game. Falls back to
+    the riot_id ordering convention when GRID has no role.
     """
 
     def __init__(self, client: GridGraphQLClient) -> None:
@@ -118,7 +117,7 @@ class RoleCache:
                 raw = roles[0]["name"] if roles else None
                 self._cache[grid_player_id] = normalize_role(raw)
             except GridError as e:
-                log.warning("RoleCache: error consultando jugador %d: %s",
+                log.warning("RoleCache: error querying player %d: %s",
                             grid_player_id, e)
                 self._cache[grid_player_id] = None
 
@@ -126,7 +125,7 @@ class RoleCache:
 
 
 # ---------------------------------------------------------------------------
-# Idempotencia: comprobar si una serie/partida ya esta en BD
+# Idempotency: is a series/game already in the DB?
 # ---------------------------------------------------------------------------
 
 def count_games_in_db(conn: psycopg.Connection, grid_series_id: int) -> int:
@@ -154,10 +153,10 @@ def series_fully_in_db(
     client_graphql: GridGraphQLClient,
     series_id: str,
 ) -> bool:
-    """True si las partidas finalizadas de la serie ya estan todas en BD.
+    """True if every finished game of the series is already in the DB.
 
-    Llama a get_series_state (ligero, GraphQL) y compara con el count de BD.
-    Si no se puede determinar (error), devuelve False para no saltarse nada.
+    Calls get_series_state (lightweight GraphQL) and compares with the DB count.
+    Returns False when undetermined (error), so nothing is skipped by mistake.
     """
     db_count = count_games_in_db(conn, grid_series_id)
     if db_count == 0:
@@ -169,30 +168,27 @@ def series_fully_in_db(
         finished = sum(1 for g in (state.get("games") or []) if g.get("finished"))
         return db_count >= finished > 0
     except GridError as e:
-        log.warning("series_fully_in_db: error en get_series_state %s: %s",
+        log.warning("series_fully_in_db: get_series_state %s failed: %s",
                     series_id, e)
         return False
 
 
 # ---------------------------------------------------------------------------
-# Helpers de mapeo
+# Mapping helpers
 # ---------------------------------------------------------------------------
 
-# Orden global de picks en el draft competitivo de LoL (formato estandar).
-# fp.picks[i] y sp.picks[i] son los picks en orden cronologico dentro de
-# cada equipo; el orden global (1-10) sigue el patron fijo del draft.
+# Global pick order in standard competitive LoL draft. fp.picks[i] and
+# sp.picks[i] are each team's picks in chronological order; the global order
+# (1-10) follows the fixed draft pattern.
 #
-# Fase 1 (6 picks, despues de 6 bans alternos):
+# Phase 1 (6 picks, after 6 alternating bans):
 #   FP1(1), SP1(2), SP2(3), FP2(4), FP3(5), SP3(6)
 #
-# Fase 2 (4 picks, despues de 4 bans alternos empezando por SP):
+# Phase 2 (4 picks, after 4 alternating bans starting with SP):
 #   SP4(7), FP4(8), FP5(9), SP5(10)
 #
-# SP double-pickea al cerrar fase 1 (SP3) y al abrir fase 2 (SP4),
-# luego FP double-pickea (FP4, FP5), y SP cierra con el ultimo pick (SP5).
-#
-# pick_order=1 es el primer pick del draft (blind pick del FP);
-# pick_order=10 es el ultimo (contrapick puro del SP).
+# pick_order=1 is the first pick of the draft (FP blind pick);
+# pick_order=10 is the last (pure SP counterpick).
 FP_PICK_ORDER = {0: 1, 1: 4, 2: 5, 3: 8, 4: 9}
 SP_PICK_ORDER = {0: 2, 1: 3, 2: 6, 3: 7, 4: 10}
 
@@ -201,12 +197,12 @@ def pick_order_for(champion_name: str | None,
                    draft_data: dict,
                    grid_team_id: int | None,
                    champ_lookup: dict[str, int]) -> int | None:
-    """Devuelve el pick_order global (1-10) del campeon en el draft.
+    """Return the champion's global pick_order (1-10) in the draft.
 
-    Compara por champion ID (no por string) para evitar mismatches de
-    formato entre GRID ("LeeSin") y Riot ("Lee Sin"). Desde grid-minion
-    v0.2.0 los picks del draft son dicts `{"name", "id"}` ya normalizados
-    contra Data Dragon, asi que el id sale directo del dict.
+    Compares by champion ID (not string) to avoid format mismatches between
+    GRID ("LeeSin") and Riot ("Lee Sin"). Draft picks are dicts
+    `{"name", "id"}` already normalized against Data Dragon, so the id comes
+    straight from the dict.
     """
     if not champion_name or grid_team_id is None:
         return None
@@ -233,7 +229,7 @@ def pick_order_for(champion_name: str | None,
 
 
 def parse_date(iso: str) -> date:
-    """Extrae la parte DATE de un string ISO 8601."""
+    """Return the DATE part of an ISO 8601 string."""
     return datetime.fromisoformat(iso.replace("Z", "+00:00")).date()
 
 
@@ -243,12 +239,12 @@ def resolve_champ(champ_name: str | None,
         return None
     cid = champ_lookup.get(champ_name)
     if cid is None:
-        log.warning("Campeon desconocido: %r — champ_id NULL.", champ_name)
+        log.warning("Unknown champion: %r — champ_id NULL.", champ_name)
     return cid
 
 
 # ---------------------------------------------------------------------------
-# Persistencia: draft, game, picks
+# Persistence: draft, game, picks
 # ---------------------------------------------------------------------------
 
 def insert_draft(
@@ -257,14 +253,14 @@ def insert_draft(
     grid_team_id_to_local: dict[int, int],
     champ_lookup: dict[str, int],
 ) -> int:
-    """Inserta una fila en drafts y devuelve su id."""
+    """Insert a drafts row and return its id."""
     fp = draft_data["fp"]
     sp = draft_data["sp"]
 
     def champ(entry):
-        # v0.2.0: cada pick/ban es {"name", "id"} ya normalizado (o None en
-        # un ban saltado). Usamos el id directo; si la libreria no lo resolvio
-        # (id None) caemos al champ_lookup por nombre como ultimo recurso.
+        # Each pick/ban is {"name", "id"} already normalized (or None for a
+        # skipped ban). Use the id directly; fall back to name lookup if the
+        # library could not resolve it (id None).
         if not entry:
             return None
         if entry.get("id") is not None:
@@ -281,7 +277,7 @@ def insert_draft(
     fp_bans  = fp.get("bans")  or []
     sp_bans  = sp.get("bans")  or []
 
-    # Rellenar hasta 5 elementos (puede venir incompleto en remakes)
+    # Pad to 5 elements (may arrive incomplete in remakes).
     def pad(lst, n=5):
         return (list(lst) + [None] * n)[:n]
 
@@ -341,11 +337,10 @@ def insert_game(
     tournament: str | None,
     duration_s: float | None = None,
 ) -> int | None:
-    """Inserta una fila en games. Devuelve games.id o None si ya existia.
+    """Insert a games row. Return games.id, or None if it already existed.
 
-    `game_type` debe ser 'OFFICIAL' o 'SCRIM'.
-    `tournament` es el nombre del torneo (root para oficiales) o un
-    placeholder ('SCRIM') para scrims.
+    `game_type` must be 'OFFICIAL' or 'SCRIM'. `tournament` is the tournament
+    name (root, for official games) or a placeholder ('SCRIM') for scrims.
     """
     game_date = parse_date(series_node["startTimeScheduled"])
     result    = winner if winner in ("BLUE", "RED") else "NONE"
@@ -403,11 +398,11 @@ def insert_picks(
     builds_data: dict[int, dict] | None = None,
     midgame_data: dict[int, dict] | None = None,
 ) -> None:
-    """Inserta 10 filas en picks (una por participante).
+    """Insert 10 picks rows (one per participant).
 
-    `builds_data`: salida de `BuildObserver.get_builds()` — `{pid: {build_path, skill_order}}`.
-    `midgame_data`: salida de `MidGameStatsObserver.get_mid_game_stats()` — `{pid: {marks: {7: {...}, 14: {...}}}}`.
-    Ambos pueden ser None/vacío si no había riot_livestats.
+    `builds_data`: output of `BuildObserver.get_builds()` — `{pid: {build_path, skill_order}}`.
+    `midgame_data`: output of `MidGameStatsObserver.get_mid_game_stats()` — `{pid: {marks: {7: {...}, 14: {...}}}}`.
+    Both may be None/empty when there was no riot_livestats.
     """
     players_stats = game_stats.get("players") or {}
     builds_data   = builds_data or {}
@@ -416,22 +411,22 @@ def insert_picks(
     with conn.cursor() as cur:
         for p in participants:
             if p.grid_player_id is None:
-                log.warning("Participant riot_id=%d sin grid_player_id, skip pick.",
+                log.warning("Participant riot_id=%d without grid_player_id, skip pick.",
                             p.riot_id)
                 continue
 
             player_local = player_grid_to_local.get(int(p.grid_player_id))
             if player_local is None:
-                log.warning("Jugador grid_id=%s no resuelto, skip pick.",
+                log.warning("Player grid_id=%s unresolved, skip pick.",
                             p.grid_player_id)
                 continue
 
             champ_id = resolve_champ(p.champion_name, champ_lookup)
             if champ_id is None:
-                log.warning("Campeon %r sin id, skip pick.", p.champion_name)
+                log.warning("Champion %r without id, skip pick.", p.champion_name)
                 continue
 
-            side       = p.team_side  # "BLUE" o "RED"
+            side       = p.team_side  # "BLUE" or "RED"
             result     = (side == winner)
             p_pick_ord = pick_order_for(p.champion_name, draft_data,
                                         p.grid_team_id, champ_lookup)
@@ -439,11 +434,11 @@ def insert_picks(
             p_stats = players_stats.get(p.riot_id) or {}
             b_stats = builds_data.get(p.riot_id) or {}
             m_stats = midgame_data.get(p.riot_id) or {}
-            # Contrato alineado con SoloQ (CLAUDE.md §10). runes/final_items/
-            # summoner_spells salen del PostGameObserver (Riot summary o Tencent);
-            # skill_order/build_path del BuildObserver (Riot livestats); midgame
-            # del MidGameStatsObserver. Quedan fuera de alcance en GRID:
-            # team_position, champ_level, vision_score.
+            # Stats contract aligned with SoloQ. runes/final_items/
+            # summoner_spells come from PostGameObserver (Riot summary or
+            # Tencent); skill_order/build_path from BuildObserver (Riot
+            # livestats); midgame from MidGameStatsObserver. Out of scope in
+            # GRID: team_position, champ_level, vision_score.
             stats_json = {
                 "kills":        p_stats.get("kills"),
                 "deaths":       p_stats.get("deaths"),
@@ -476,33 +471,33 @@ def insert_picks(
 
 
 # ---------------------------------------------------------------------------
-# Flujo unificado de procesado (oficiales y scrims comparten el 85%)
+# Unified processing flow (official and scrims share ~85%)
 # ---------------------------------------------------------------------------
 
 class GameAlreadyInDB(Exception):
-    """Senal de que insert_game choco con ON CONFLICT (la partida ya existia).
+    """Signals that insert_game hit ON CONFLICT (the game already existed).
 
-    Se lanza para forzar el rollback del savepoint de la partida y no dejar
-    un draft huerfano (insert_draft corre antes que insert_game). El caller
-    la trata como 'partida saltada', no como error (CLAUDE.md §5.1, audit #5).
+    Raised to force a rollback of the per-game savepoint and avoid leaving an
+    orphan draft (insert_draft runs before insert_game). The caller treats it
+    as 'game skipped', not an error.
     """
 
 
 @dataclass
 class GameProcessingConfig:
-    """Diferencias de comportamiento entre el flujo oficial y el de scrims.
+    """Behavioral differences between the official and scrim flows.
 
-    El resto del procesado (observers, draft, discovery, INSERTs) es identico
-    y vive en process_one_game (CLAUDE.md §5.3 — logica unica reutilizable).
+    The rest of the processing (observers, draft, discovery, INSERTs) is
+    identical and lives in process_one_game.
     """
     game_type: str                    # 'OFFICIAL' | 'SCRIM'
-    tournament: str                   # nombre del torneo o 'SCRIM'
-    label: str                        # prefijo de logs: 'Serie' | 'Scrim'
-    reconcile: bool                   # reconciliar roster (solo oficiales, §5.5)
-    warn_on_new: bool                 # WARNING al crear team/player (scrims, §5.4)
-    require_participants: bool        # saltar si no hay participants (oficiales)
-    discover_teams_from_draft: bool   # sacar equipos del draft si faltan (scrims)
-    pass_tencent: bool                # incluir tencent_details en el bundle
+    tournament: str                   # tournament name or 'SCRIM'
+    label: str                        # log prefix: 'Series' | 'Scrim'
+    reconcile: bool                   # reconcile roster (official only)
+    warn_on_new: bool                 # WARNING when creating team/player (scrims)
+    require_participants: bool        # skip if no participants (official)
+    discover_teams_from_draft: bool   # derive teams from the draft if missing (scrims)
+    pass_tencent: bool                # include tencent_details in the bundle
 
 
 def _extract_duration_s(
@@ -510,10 +505,10 @@ def _extract_duration_s(
     tencent_raw: dict | None,
     midgame: MidGameStatsObserver,
 ) -> float | None:
-    """Duración de partida en segundos. Prioridad: Riot Summary > Tencent > proxy midgame.
+    """Game duration in seconds. Priority: Riot Summary > Tencent > midgame proxy.
 
-    Riot cambió las unidades de gameDuration de segundos a ms en el parche 11.20.
-    Heurística: si el valor > 7200 (2h en segundos, imposible) → es ms.
+    Riot switched gameDuration units from seconds to ms in patch 11.20.
+    Heuristic: a value > 7200 (2h in seconds, impossible) is ms.
     """
     if riot_summary:
         raw = riot_summary.get("gameDuration")
@@ -529,7 +524,7 @@ def _extract_duration_s(
 
 
 def _build_processor():
-    """Crea el processor y los observers en el orden correcto (§ libreria)."""
+    """Create the processor and observers in the required attach order."""
     proc    = GameEventProcessor()
     teams   = TeamsObserver()
     draft   = DraftObserver()
@@ -545,7 +540,7 @@ def _build_processor():
 
 
 def _gather_participants(teams: TeamsObserver) -> list:
-    """Participantes riot_id 1..10 que el TeamsObserver pudo resolver."""
+    """Participants riot_id 1..10 that the TeamsObserver could resolve."""
     return [
         p for i in range(1, 11)
         if (p := teams.get_player_by_id(i)) is not None
@@ -555,7 +550,7 @@ def _gather_participants(teams: TeamsObserver) -> list:
 def _assign_blue_red(participants: list,
                      grid_team_id_to_local: dict[int, int]
                      ) -> tuple[int | None, int | None]:
-    """team1=BLUE, team2=RED por convencion."""
+    """team1=BLUE, team2=RED by convention."""
     team1_local = team2_local = None
     for p in participants:
         if p.grid_team_id is None:
@@ -582,11 +577,11 @@ def process_one_game(
     grid_game_state=None,
     riot_livestats=None,
 ) -> bool:
-    """Procesa una partida: observers -> auto-discovery -> INSERT.
+    """Process one game: observers -> auto-discovery -> INSERT.
 
-    Flujo compartido por oficiales y scrims; las diferencias van en `cfg`.
-    Devuelve True si se inserto, False si se salto. Lanza GameAlreadyInDB
-    si insert_game choca con ON CONFLICT (para hacer rollback del savepoint).
+    Flow shared by official and scrims; the differences live in `cfg`. Returns
+    True if inserted, False if skipped. Raises GameAlreadyInDB when insert_game
+    hits ON CONFLICT (to roll back the savepoint).
     """
     proc, teams, draft, stats, objs, wards, builds, midgame, solos = _build_processor()
 
@@ -603,35 +598,35 @@ def process_one_game(
         riot_livestats=riot_livestats,
     )
 
-    # Patron A/B/C: sin eventos de draft no hay nada que insertar.
+    # No draft events means there is nothing to insert.
     draft_data = draft.get_draft()
     if not draft_data["draft_found"]:
-        log.warning("%s %s game %d: draft vacio (sin eventos de draft), skip.",
+        log.warning("%s %s game %d: empty draft (no draft events), skip.",
                     cfg.label, series_id, game_number)
         return False
 
     game_stats = stats.get_game_stats(teams)
     winner = game_stats["meta"].get("winner")
 
-    # audit #1: sin ganador valido no insertamos la partida; queda en logs
-    # para revision manual (preferimos no tener la partida que datos sesgados).
+    # Without a valid winner the game is not inserted; it stays in the logs for
+    # manual review (we prefer no game over biased data).
     if winner not in ("BLUE", "RED"):
-        log.warning("%s %s game %d: sin ganador (winner=%r), no se inserta. "
-                    "Revisar manualmente.",
+        log.warning("%s %s game %d: no winner (winner=%r), not inserted. "
+                    "Review manually.",
                     cfg.label, series_id, game_number, winner)
         return False
 
     if game_stats["meta"].get("winner_source") == "gold_heuristic":
-        log.warning("%s %s game %d: ganador por heuristica de oro "
-                    "(datos sospechosos).", cfg.label, series_id, game_number)
+        log.warning("%s %s game %d: winner from gold heuristic "
+                    "(suspect data).", cfg.label, series_id, game_number)
 
     participants = _gather_participants(teams)
     if cfg.require_participants and not participants:
-        log.warning("%s %s game %d: sin participants, skip.",
+        log.warning("%s %s game %d: no participants, skip.",
                     cfg.label, series_id, game_number)
         return False
 
-    # --- Auto-discovery: equipos ---
+    # --- Auto-discovery: teams ---
     series_teams_by_grid = {
         int(t["baseInfo"]["id"]): t["baseInfo"]
         for t in (series_node.get("teams") or [])
@@ -647,8 +642,8 @@ def process_one_game(
             conn, grid_id=gid, name=name, tag=base.get("nameShortened"),
         )
         if is_new and cfg.warn_on_new:
-            log.warning("%s %s game %d: creado TEAM nuevo en BD "
-                        "(grid_id=%d, name=%r) - revisar manualmente.",
+            log.warning("%s %s game %d: created new TEAM in DB "
+                        "(grid_id=%d, name=%r) - review manually.",
                         cfg.label, series_id, game_number, gid, name)
         grid_team_id_to_local[gid] = local_id
 
@@ -656,7 +651,7 @@ def process_one_game(
         if p.grid_team_id is not None:
             _discover_team(int(p.grid_team_id))
 
-    # Scrims sin participants jugados: rescatar equipos del propio draft.
+    # Scrims with no played participants: recover teams from the draft itself.
     if cfg.discover_teams_from_draft:
         for side in ("fp", "sp"):
             tid_str = (draft_data.get(side) or {}).get("team_id")
@@ -666,13 +661,13 @@ def process_one_game(
     team1_local, team2_local = _assign_blue_red(participants,
                                                 grid_team_id_to_local)
 
-    # --- Auto-discovery: jugadores (+ reconciliacion solo en oficiales) ---
+    # --- Auto-discovery: players (+ reconciliation for official games only) ---
     game_date = parse_date(series_node["startTimeScheduled"])
     player_grid_to_local: dict[int, int] = {}
 
     for p in participants:
         if p.grid_player_id is None:
-            log.warning("%s %s game %d: participant riot_id=%d sin "
+            log.warning("%s %s game %d: participant riot_id=%d without "
                         "grid_player_id, skip.",
                         cfg.label, series_id, game_number, p.riot_id)
             continue
@@ -688,9 +683,9 @@ def process_one_game(
             team_local_id=team_local, role=role_obs,
         )
         if is_new and cfg.warn_on_new:
-            log.warning("%s %s game %d: creado PLAYER nuevo en BD "
+            log.warning("%s %s game %d: created new PLAYER in DB "
                         "(grid_id=%d, nickname=%r, team_local=%s, role=%s) - "
-                        "revisar manualmente.",
+                        "review manually.",
                         cfg.label, series_id, game_number, grid_pid, nickname,
                         team_local, role_obs)
         player_grid_to_local[grid_pid] = local_id
@@ -723,12 +718,12 @@ def process_one_game(
         duration_s=_extract_duration_s(riot_summary_raw, tencent_raw, midgame),
     )
 
-    # audit #5: ON CONFLICT -> rollback del savepoint para no dejar el draft
-    # recien insertado huerfano (caso de carrera entre corridas concurrentes).
+    # ON CONFLICT -> roll back the savepoint so the just-inserted draft is not
+    # left orphaned (race between concurrent runs).
     if game_id is None:
         raise GameAlreadyInDB(
             f"{cfg.label} {series_id} game {game_number}: "
-            "ya existia en BD (ON CONFLICT)."
+            "already in DB (ON CONFLICT)."
         )
 
     insert_picks(
@@ -757,46 +752,46 @@ def run_series(
     label: str,
     cfg_for_game,
 ) -> SeriesResult:
-    """Descarga y procesa todas las partidas de una serie (oficial o scrim).
+    """Download and process every game of a series (official or scrim).
 
-    `cfg_for_game(series_node) -> GameProcessingConfig` resuelve la config por
-    partida (el torneo de oficiales depende del series_node). `label` es el
-    prefijo de logs a nivel de serie.
+    `cfg_for_game(series_node) -> GameProcessingConfig` resolves the per-game
+    config (the official tournament depends on series_node). `label` is the
+    series-level log prefix.
     """
     series_id      = series_node["id"]
     grid_series_id = int(series_id)
     result         = SeriesResult()
 
     if series_fully_in_db(conn, grid_series_id, client_graphql, series_id):
-        log.debug("%s %s: ya completa en BD, skip.", label, series_id)
+        log.debug("%s %s: already complete in DB, skip.", label, series_id)
         result.skipped = True
         return result
 
     try:
         full = client_rest.get_grid_events(series_id)
     except GridError as e:
-        log.error("%s %s: error descargando eventos: %s", label, series_id, e)
+        log.error("%s %s: error downloading events: %s", label, series_id, e)
         result.errors += 1
         return result
 
     if not full:
-        log.info("%s %s: sin eventos disponibles, skip.", label, series_id)
+        log.info("%s %s: no events available, skip.", label, series_id)
         result.no_events = True
         return result
 
     games = split_grid_series(full)
-    log.info("%s %s: %d partida(s).", label, series_id, len(games))
+    log.info("%s %s: %d game(s).", label, series_id, len(games))
 
-    # GRID end-state: version + draftActions fallback (LPL principalmente).
+    # GRID end-state: version + draftActions fallback (mainly LPL).
     grid_state = None
     try:
         grid_state = client_rest.get_grid_endstate(series_id)
     except GridError as e:
-        log.warning("%s %s: error en get_grid_endstate: %s",
+        log.warning("%s %s: get_grid_endstate failed: %s",
                     label, series_id, e)
 
-    # Riot LiveStats fragmentado: en LPL no es un fichero unico por partida
-    # sino N fragments por serie que hay que agrupar.
+    # Fragmented Riot LiveStats: in LPL this is not a single file per game but
+    # N fragments per series that must be grouped.
     fragments_grouped = None
     try:
         frags = client_rest.get_riot_livestats_fragments(series_id)
@@ -808,7 +803,7 @@ def run_series(
         pass
 
     def _riot_ls_for(game_number: int):
-        """Fichero unico primero; si no existe, fragments (LPL)."""
+        """Single file first; fall back to fragments (LPL)."""
         ls = client_rest.get_riot_livestats(series_id, game_number)
         if ls is not None:
             return ls
@@ -823,7 +818,7 @@ def run_series(
         game_number = i + 1
 
         if game_in_db(conn, grid_series_id, game_number):
-            log.debug("%s %s game %d: ya en BD, skip.",
+            log.debug("%s %s game %d: already in DB, skip.",
                       label, series_id, game_number)
             result.games_skipped += 1
             continue
@@ -843,7 +838,7 @@ def run_series(
                 )
             if inserted:
                 result.games_new += 1
-                log.info("%s %s game %d: insertada.",
+                log.info("%s %s game %d: inserted.",
                          label, series_id, game_number)
             else:
                 result.games_skipped += 1
@@ -852,7 +847,7 @@ def run_series(
             log.info("%s", e)
             result.games_skipped += 1
         except Exception:
-            log.exception("%s %s game %d: fallo inesperado, sigo.",
+            log.exception("%s %s game %d: unexpected failure, continuing.",
                           label, series_id, game_number)
             result.errors += 1
 

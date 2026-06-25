@@ -1,7 +1,7 @@
-"""Endpoints de catalogo: pueblan los desplegables/filtros del front.
+"""Catalog endpoints: populate the frontend's dropdowns/filters.
 
-El front resuelve nombre->id contra estos endpoints (ej. autocompletar
-"Aatrox" y enviar champ_id); la API de consulta se mantiene id-based.
+The frontend resolves name->id against these endpoints (e.g. autocomplete
+"Aatrox" and send champ_id); the query API stays id-based.
 """
 
 from __future__ import annotations
@@ -40,9 +40,9 @@ def list_tournaments(conn: psycopg.Connection = Depends(db_conn)):
 
 @router.get("/patches")
 def list_patches(conn: psycopg.Connection = Depends(db_conn)):
-    # Orden semantico (major.minor) por numero, no lexicografico: si no, "16.9"
-    # saldria por encima de "16.12". Solo versiones con formato N.N; el resto
-    # (p. ej. 'Unknown', ya excluido) caeria fuera del split numerico.
+    # Semantic (major.minor) numeric order, not lexicographic: otherwise "16.9"
+    # would sort above "16.12". Only N.N versions; the rest (e.g. 'Unknown',
+    # already excluded) would fall outside the numeric split.
     with conn.cursor() as cur:
         cur.execute(
             """

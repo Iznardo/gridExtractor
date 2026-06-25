@@ -1,14 +1,14 @@
-"""GraphQL strings para el script de discovery.
+"""GraphQL query strings for the discovery script.
 
-GRID expone conexiones tipo Relay: `edges { node { ... } }` + `pageInfo`.
-No usar f-strings con comillas dentro: pasar variables via
+GRID exposes Relay-style connections: `edges { node { ... } }` + `pageInfo`.
+Do not inline values with f-strings; pass them through
 `GridGraphQLClient.query_central(query, variables=...)`.
 """
 
-# Busqueda de torneos por nombre. Se filtra en cliente por igualdad exacta
-# (StringFilter.contains da matches parciales). La jerarquia de subfases
-# (Regular Season, Playoffs...) se maneja en SERIES_BY_TOURNAMENTS con
-# `includeChildren`, no aqui.
+# Tournament search by name. Filtered client-side by exact equality
+# (StringFilter.contains returns partial matches). The sub-stage hierarchy
+# (Regular Season, Playoffs...) is handled in SERIES_BY_TOURNAMENTS via
+# `includeChildren`, not here.
 TOURNAMENTS_BY_NAME = """
 query TournamentsByName($name: String!) {
   tournaments(filter: { name: { contains: $name } }, first: 50) {
@@ -27,11 +27,11 @@ query TournamentsByName($name: String!) {
 """
 
 
-# Paginar series de un torneo incluyendo toda su jerarquia de hijos.
-# `SeriesTournamentFilter.includeChildren: { equals: true }` hace que la
-# API devuelva series de sub-torneos (fases, semanas...) sin que nosotros
-# tengamos que enumerarlos. Filtrar ademas por SeriesType = ESPORTS.
-# `orderBy` y `orderDirection` son obligatorios en `allSeries`.
+# Paginate a tournament's series including its whole child hierarchy.
+# `SeriesTournamentFilter.includeChildren: { equals: true }` makes the API
+# return series of sub-tournaments (stages, weeks...) without enumerating them.
+# Also filters by SeriesType = ESPORTS. `orderBy`/`orderDirection` are required
+# on `allSeries`.
 SERIES_BY_TOURNAMENTS = """
 query SeriesByTournaments($tid: ID!, $after: String) {
   allSeries(
@@ -64,9 +64,9 @@ query SeriesByTournaments($tid: ID!, $after: String) {
 }
 """
 
-# Jugadores de un equipo concreto. NullableIdFilter solo admite un ID a la
-# vez, asi que se llama una vez por equipo. El filtro types:[ESPORTS] no
-# esta disponible en runtime aunque aparezca en el schema introspectado.
+# Players of a single team. NullableIdFilter takes one id at a time, so this is
+# called once per team. The types:[ESPORTS] filter is not available at runtime
+# even though it appears in the introspected schema.
 PLAYERS_BY_TEAM = """
 query PlayersByTeam($teamId: ID!, $after: String) {
   players(

@@ -1,9 +1,9 @@
-"""Enrutamiento de la Riot API: plataforma -> region (RIOT_API.md §3).
+"""Riot API routing: platform -> region.
 
-Account-V1 y Match-V5 usan hosts *regionales* (americas/asia/europe/sea);
-el matchId lleva prefijo de *plataforma* (KR_..., EUW1_...), de donde se
-deriva la region. El mapeo ha cambiado historicamente (OCE/SEA) — si Riot
-anade plataformas, actualizar la tabla contra la doc oficial.
+Account-V1 and Match-V5 use *regional* hosts (americas/asia/europe/sea); the
+matchId carries a *platform* prefix (KR_..., EUW1_...), from which the region is
+derived. The mapping has changed over time (OCE/SEA) — if Riot adds platforms,
+update the table against the official docs.
 """
 
 from __future__ import annotations
@@ -35,7 +35,7 @@ def platform_to_region(platform: str) -> str:
     try:
         return PLATFORM_TO_REGION[platform.lower()]
     except KeyError:
-        raise ValueError(f"Plataforma desconocida: {platform!r}") from None
+        raise ValueError(f"Unknown platform: {platform!r}") from None
 
 
 def region_from_match_id(match_id: str) -> str:

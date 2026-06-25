@@ -1,17 +1,17 @@
-"""Entry point del extractor de SoloQ (fase 2: persistencia en BD).
+"""Entry point for the SoloQ extractor (phase 2: DB persistence).
 
-Lanzar:  python -m src.extraction.soloq_run --since YYYY-MM-DD [--limit N]
+Run:  python -m src.extraction.soloq_run --since YYYY-MM-DD [--limit N]
 
-Flujo (CLAUDE.md §5):
-1. Refresca champions desde Data Dragon (barato; evita perder picks cuando
-   sale un campeon nuevo).
-2. Carga las cuentas trackeadas de la tabla accounts (poblada por
+Flow:
+1. Refresh champions from Data Dragon (cheap; avoids losing picks when a new
+   champion is released).
+2. Load tracked accounts from the accounts table (populated by
    src/riot/accounts_sync.py).
-3. Lista los match ids de Ranked Solo/Duo (queue 420) por region desde
-   --since, deduplicando entre cuentas.
-4. Filtra contra BD por riot_api_id ANTES de descargar nada.
-5. Inserta cada partida en su propia transaccion (games + picks). Los
-   remakes se saltan. Sin cache en disco: la BD es la idempotencia.
+3. List Ranked Solo/Duo match ids (queue 420) per region since --since,
+   deduplicating across accounts.
+4. Filter against the DB by riot_api_id BEFORE downloading anything.
+5. Insert each match in its own transaction (games + picks). Remakes are
+   skipped. No on-disk cache: the DB is the idempotency layer.
 """
 
 from __future__ import annotations
@@ -50,12 +50,12 @@ def main() -> int:
     load_dotenv(dotenv_path=REPO_ROOT / ".env")
 
     parser = argparse.ArgumentParser(
-        description="Extrae soloq de la Riot API y la vuelca a la BD."
+        description="Extract soloq from the Riot API into the database."
     )
     parser.add_argument("--since", metavar="YYYY-MM-DD", required=True,
-                        help="Solo partidas desde esta fecha (UTC).")
+                        help="Only matches from this date (UTC).")
     parser.add_argument("--limit", type=int, default=None,
-                        help="Tope de partidas nuevas a procesar.")
+                        help="Cap on new matches to process.")
     args = parser.parse_args()
 
     start_time = int(
@@ -69,14 +69,14 @@ def main() -> int:
     with get_conn() as conn:
         tracked = load_tracked_accounts(conn)
         if not tracked:
-            log.error("La tabla accounts esta vacia — lanzar primero "
-                      "`python -m src.riot.accounts_sync`.")
+            log.error("The accounts table is empty — run "
+                      "`python -m src.riot.accounts_sync` first.")
             return 1
-        log.info("Cuentas trackeadas: %d.", len(tracked))
+        log.info("Tracked accounts: %d.", len(tracked))
 
         champions = ChampionIds(conn)
 
-        # Match ids por region, union deduplicada entre cuentas.
+        # Match ids per region, deduplicated union across accounts.
         by_region: dict[str, list] = defaultdict(list)
         for account in tracked.values():
             by_region[account.region].append(account)
@@ -86,35 +86,35 @@ def main() -> int:
                 ids = get_match_ids(client, region, account.puuid,
                                     queue=RANKED_SOLO_QUEUE,
                                     start_time=start_time)
-                log.info("puuid %s... (%s): %d partidas desde %s.",
+                log.info("puuid %s... (%s): %d matches since %s.",
                          account.puuid[:12], region, len(ids), args.since)
                 all_ids.update(ids)
 
         match_ids = sorted(all_ids, key=match_sort_key, reverse=True)
         new_ids = filter_new_match_ids(conn, match_ids)
-        stats["ya_en_bd"] = len(match_ids) - len(new_ids)
+        stats["already_in_db"] = len(match_ids) - len(new_ids)
         if args.limit is not None:
             new_ids = new_ids[: args.limit]
-        log.info("%d partidas listadas, %d ya en BD, %d a procesar.",
-                 len(match_ids), stats["ya_en_bd"], len(new_ids))
+        log.info("%d matches listed, %d already in DB, %d to process.",
+                 len(match_ids), stats["already_in_db"], len(new_ids))
 
         for match_id in new_ids:
             try:
                 stats[process_match(client, conn, match_id, tracked, champions)] += 1
                 conn.commit()
             except RiotError as e:
-                log.error("RiotError en %s: %s", match_id, e)
+                log.error("RiotError on %s: %s", match_id, e)
                 conn.rollback()
-                stats["errores"] += 1
+                stats["errors"] += 1
             except Exception:
                 conn.rollback()
                 raise
 
-    log.info("Extraccion de soloq completada. insertadas=%d remakes=%d "
-             "ya_en_bd=%d sin_detalle=%d sin_trackeados=%d dup=%d errores=%d",
-             stats["inserted"], stats["remake"], stats["ya_en_bd"],
+    log.info("SoloQ extraction complete. inserted=%d remakes=%d "
+             "already_in_db=%d no_detail=%d no_tracked=%d dup=%d errors=%d",
+             stats["inserted"], stats["remake"], stats["already_in_db"],
              stats["no_detail"], stats["no_tracked"], stats["dup"],
-             stats["errores"])
+             stats["errors"])
     return 0
 
 

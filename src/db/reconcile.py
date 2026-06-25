@@ -1,15 +1,15 @@
-"""Reconciliacion posicional de jugadores desde partidas oficiales.
+"""Positional roster reconciliation from official games.
 
-Implementa CLAUDE.md §5.5: actualiza team_id, role, starter y last_update
-de un jugador a partir de la evidencia de una partida oficial.
+Updates a player's team_id, role, starter and last_update from the evidence of
+an official game.
 
-Reglas:
-- Solo se aplica si la fecha de la partida es POSTERIOR a players.last_update
-  (proteccion de orden cronologico entre corridas).
-- Marca starter=TRUE al jugador que jugo, starter=FALSE a los demas en el
-  mismo (equipo, rol) resultante.
-- Nunca toca datos cosmeticos (name, etc.).
-- Debe llamarse dentro de la transaccion del caller (savepoint por partida).
+Rules:
+- Applied only when the game date is newer than players.last_update (protects
+  chronological order across runs).
+- Sets starter=TRUE for the player who played and starter=FALSE for the others
+  in the resulting (team, role).
+- Never touches cosmetic data (name, etc.).
+- Must run inside the caller's transaction (per-game savepoint).
 """
 
 from __future__ import annotations
@@ -30,35 +30,32 @@ def reconcile_player_roster(
     role_observed: str,
     game_date: date,
 ) -> None:
-    """Aplica CLAUDE.md §5.5 para UN jugador en UNA partida oficial.
+    """Reconcile one player from one official game.
 
-    Parametros:
-        player_local_id: players.id local del jugador.
-        team_local_id:   teams.id local del equipo en que jugo.
-        role_observed:   rol normalizado (TOP/JUNGLE/MID/ADC/SUPPORT).
-        game_date:       fecha de la partida (DATE).
+    Args:
+        player_local_id: local players.id.
+        team_local_id:   local teams.id of the team the player played for.
+        role_observed:   normalized role (TOP/JUNGLE/MID/ADC/SUPPORT).
+        game_date:       game date.
     """
     with conn.cursor() as cur:
-        # 1. Leer estado actual del jugador.
         cur.execute(
             "SELECT last_update FROM players WHERE id = %s",
             (player_local_id,),
         )
         row = cur.fetchone()
         if row is None:
-            log.error("reconcile: jugador %d no existe en BD.", player_local_id)
+            log.error("reconcile: player %d not found in DB.", player_local_id)
             return
 
-        last_update = row[0]  # puede ser None (jugador recien creado)
+        last_update = row[0]  # may be None (freshly created player)
 
-        # 2. Proteccion de orden cronologico: no reconciliar si la partida es
-        #    ANTERIOR a la ultima ya reconciliada. Las del mismo dia si pasan:
-        #    como el caller procesa en orden cronologico global por
-        #    startTimeScheduled (§5.5), la ultima del dia gana correctamente.
+        # Skip if this game predates the last reconciled one. Same-day games do
+        # apply: the caller processes in global chronological order, so the last
+        # game of the day wins correctly.
         if last_update is not None and game_date < last_update.date():
             return
 
-        # 3. Actualizar campos posicionales del jugador.
         cur.execute(
             """
             UPDATE players
@@ -71,9 +68,9 @@ def reconcile_player_roster(
             (team_local_id, role_observed, game_date, player_local_id),
         )
 
-        # 4. Marcar starter=FALSE para otros jugadores en el mismo (equipo, rol).
-        #    Solo los que actualmente son starter=TRUE para no tocar suplentes
-        #    que nunca han jugado en esa posicion.
+        # Demote other current starters in the same (team, role). Only those
+        # already starter=TRUE, so substitutes who never played there are left
+        # untouched.
         cur.execute(
             """
             UPDATE players

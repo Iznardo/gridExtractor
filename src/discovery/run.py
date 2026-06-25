@@ -1,25 +1,25 @@
-"""Discovery en bloque de equipos y jugadores desde GRID.
+"""Bulk discovery of teams and players from GRID.
 
-Flujo (CLAUDE.md §6, DISCOVERY_PLAN.md §3):
+Flow:
 
-  config/tournaments.yaml  -> nombres
+  config/tournaments.yaml  -> names
        │
        ▼
-  tournaments(filter:{name:{contains}})  -> resolver tournamentId
+  tournaments(filter:{name:{contains}})  -> resolve tournamentId
        │
        ▼
-  allSeries(filter:{tournament:{id, includeChildren:true}, types:[ESPORTS]}) paginado
-       │  solo equipos — Series.players[] incompleto en GRID
+  allSeries(filter:{tournament:{id, includeChildren:true}, types:[ESPORTS]}) paginated
+       │  teams only — Series.players[] is incomplete in GRID
        ▼
   teams[]  -> ensure_team
        │
        ▼
-  por cada equipo: players(filter:{teamIdFilter:{id}}) paginado
-       │  roster completo: titulares + suplentes
+  per team: players(filter:{teamIdFilter:{id}}) paginated
+       │  full roster: starters + substitutes
        ▼
-  ensure_player (con role normalizado)
+  ensure_player (with normalized role)
 
-Lanzar:  python -m src.discovery.run
+Run:  python -m src.discovery.run
 """
 
 from __future__ import annotations
@@ -49,17 +49,13 @@ CONFIG_PATH = REPO_ROOT / "config" / "tournaments.yaml"
 log = logging.getLogger("discovery")
 
 
-# ---------------------------------------------------------------------------
-# Config y arranque
-# ---------------------------------------------------------------------------
-
 def load_tournament_names() -> list[str]:
     with CONFIG_PATH.open("r", encoding="utf-8") as f:
         data = yaml.safe_load(f) or {}
     names = data.get("tournaments") or []
     if not isinstance(names, list):
         raise ValueError(
-            f"{CONFIG_PATH}: el campo `tournaments` debe ser una lista YAML."
+            f"{CONFIG_PATH}: the `tournaments` field must be a YAML list."
         )
     return [n for n in names if isinstance(n, str) and n.strip()]
 
@@ -67,24 +63,19 @@ def load_tournament_names() -> list[str]:
 def build_client() -> GridGraphQLClient:
     api_key = os.environ.get("GRID_API_KEY")
     if not api_key:
-        log.error("Falta GRID_API_KEY en el entorno (.env).")
+        log.error("GRID_API_KEY missing from the environment (.env).")
         sys.exit(1)
     return GridGraphQLClient(api_key=api_key)
-
-
-# ---------------------------------------------------------------------------
-# GraphQL: queries especificas (paginacion Relay en src.common.graphql)
-# ---------------------------------------------------------------------------
 
 
 def resolve_tournament_id(
     client: GridGraphQLClient,
     name: str,
 ) -> str | None:
-    """Devuelve el ID del torneo cuyo `name` coincide exacto con `name`.
+    """Return the id of the tournament whose `name` matches exactly.
 
-    Devuelve None si hay 0 matches o ambiguedad (avisar y saltar).
-    La jerarquia de subfases se resuelve en SERIES_BY_TOURNAMENTS con
+    Returns None on zero matches or ambiguity (logs and skips). The sub-stage
+    hierarchy is resolved in SERIES_BY_TOURNAMENTS via
     `includeChildren: { equals: true }`.
     """
     data = client.query_central(TOURNAMENTS_BY_NAME, variables={"name": name})
@@ -93,14 +84,14 @@ def resolve_tournament_id(
     exact = [n for n in candidates if n.get("name") == name]
     if not exact:
         log.warning(
-            "Torneo %r: sin coincidencia exacta. Candidatos (contains): %s",
+            "Tournament %r: no exact match. Candidates (contains): %s",
             name,
             [c.get("name") for c in candidates] or "[]",
         )
         return None
     if len(exact) > 1:
         log.warning(
-            "Torneo %r: %d coincidencias exactas, ambiguo. IDs: %s",
+            "Tournament %r: %d exact matches, ambiguous. IDs: %s",
             name,
             len(exact),
             [n.get("id") for n in exact],
@@ -109,15 +100,11 @@ def resolve_tournament_id(
     return exact[0]["id"]
 
 
-# ---------------------------------------------------------------------------
-# Acumulacion y volcado a BD
-# ---------------------------------------------------------------------------
-
 def accumulate_teams(
     series_nodes,
     teams_by_grid: dict[int, dict[str, Any]],
 ) -> None:
-    """Extrae equipos de los nodos Series, deduplicando por grid_id."""
+    """Extract teams from Series nodes, deduplicating by grid_id."""
     for series in series_nodes:
         for tp in series.get("teams") or []:
             base = (tp or {}).get("baseInfo") or {}
@@ -139,10 +126,10 @@ def accumulate_players(
     teams_by_grid: dict[int, dict[str, Any]],
     players_by_grid: dict[int, dict[str, Any]],
 ) -> None:
-    """Para cada equipo descubierto, consulta sus jugadores directamente.
+    """Query each discovered team's players directly.
 
-    Usamos el team_grid_id por el que consultamos (no Player.team.id) para
-    evitar asociaciones erroneas si un jugador cambio de equipo recientemente.
+    Uses the team_grid_id we queried by (not Player.team.id) to avoid wrong
+    associations if a player recently changed teams.
     """
     for team_grid_id in teams_by_grid:
         for p in paginate(client, PLAYERS_BY_TEAM, "players",
@@ -158,7 +145,7 @@ def accumulate_players(
                 {
                     "grid_id": int(pid),
                     "nickname": p.get("nickname"),
-                    "team_grid_id": team_grid_id,   # equipo por el que consultamos
+                    "team_grid_id": team_grid_id,   # team we queried by
                     "role": role,
                 },
             )
@@ -168,17 +155,17 @@ def write_to_db(
     teams_by_grid: dict[int, dict[str, Any]],
     players_by_grid: dict[int, dict[str, Any]],
 ) -> tuple[int, int]:
-    """Inserta teams y players de forma idempotente. Equipos primero por FK.
+    """Insert teams and players idempotently (teams first for the FK).
 
-    Devuelve (n_teams_nuevos, n_players_nuevos).
+    Returns (new_teams, new_players).
     """
     teams_new = players_new = 0
     with get_conn() as conn:
         team_grid_to_local: dict[int, int] = {}
         for t in teams_by_grid.values():
-            # Guard: GRID puede no aportar name; teams.name es NOT NULL y un
-            # None tumbaria el unico commit del discovery (mismo fallback que
-            # usa el extractor por partida).
+            # GRID may omit name; teams.name is NOT NULL and a None would break
+            # the discovery's single commit (same fallback as the per-game
+            # extractor).
             name = t["name"] or f"Team_{t['grid_id']}"
             local_id, is_new = ensure_team(
                 conn, grid_id=t["grid_id"], name=name, tag=t["tag"],
@@ -188,7 +175,7 @@ def write_to_db(
 
         for p in players_by_grid.values():
             team_local = team_grid_to_local.get(p["team_grid_id"])
-            # Guard analogo: players.name es NOT NULL.
+            # Same guard: players.name is NOT NULL.
             nickname = p["nickname"] or f"Player_{p['grid_id']}"
             _, is_new = ensure_player(
                 conn,
@@ -204,10 +191,6 @@ def write_to_db(
     return teams_new, players_new
 
 
-# ---------------------------------------------------------------------------
-# Entry point
-# ---------------------------------------------------------------------------
-
 def main() -> int:
     logging.basicConfig(
         level=logging.INFO,
@@ -217,12 +200,10 @@ def main() -> int:
 
     names = load_tournament_names()
     if not names:
-        log.info(
-            "config/tournaments.yaml no tiene torneos. Anade alguno y relanza."
-        )
+        log.info("config/tournaments.yaml has no tournaments. Add some and rerun.")
         return 0
 
-    log.info("Torneos a procesar: %s", names)
+    log.info("Tournaments to process: %s", names)
     client = build_client()
 
     teams_by_grid: dict[int, dict[str, Any]] = {}
@@ -232,40 +213,34 @@ def main() -> int:
         try:
             tid = resolve_tournament_id(client, name)
         except GridError as e:
-            log.error("GraphQL error resolviendo torneo %r: %s", name, e)
+            log.error("GraphQL error resolving tournament %r: %s", name, e)
             continue
         if not tid:
             continue
-        log.info("Torneo %r -> id %s. Descubriendo equipos...", name, tid)
+        log.info("Tournament %r -> id %s. Discovering teams...", name, tid)
         try:
             accumulate_teams(
                 paginate(client, SERIES_BY_TOURNAMENTS, "allSeries", {"tid": tid}),
                 teams_by_grid,
             )
         except GridError as e:
-            log.error("GraphQL error paginando series de %r: %s", name, e)
+            log.error("GraphQL error paginating series of %r: %s", name, e)
             continue
 
-    log.info("Equipos acumulados (deduplicados): %d", len(teams_by_grid))
-    log.info("Consultando jugadores por equipo...")
+    log.info("Teams accumulated (deduplicated): %d", len(teams_by_grid))
+    log.info("Querying players per team...")
 
     try:
         accumulate_players(client, teams_by_grid, players_by_grid)
     except GridError as e:
-        log.error("GraphQL error consultando jugadores: %s", e)
+        log.error("GraphQL error querying players: %s", e)
 
-    log.info("Jugadores acumulados (deduplicados): %d", len(players_by_grid))
+    log.info("Players accumulated (deduplicated): %d", len(players_by_grid))
 
     teams_new, players_new = write_to_db(teams_by_grid, players_by_grid)
 
-    log.info(
-        "Equipos: %d procesados, %d nuevos.",
-        len(teams_by_grid), teams_new,
-    )
-    log.info(
-        "Jugadores: %d procesados, %d nuevos.",
-        len(players_by_grid), players_new,
-    )
+    log.info("Teams: %d processed, %d new.", len(teams_by_grid), teams_new)
+    log.info("Players: %d processed, %d new.", len(players_by_grid), players_new)
 
     return 0
 

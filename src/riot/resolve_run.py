@@ -1,15 +1,12 @@
-"""Utilidad: Riot ID -> PUUID (+ deteccion de region de juego).
+"""Utility: Riot ID -> PUUID (+ detection of the region played in).
 
-Lanzar:  python -m src.riot.resolve_run "Byron Love#1v9" [--region europe]
+Run:  python -m src.riot.resolve_run "Byron Love#1v9" [--region europe]
 
-- Resuelve el PUUID via Account-V1 e imprime el gameName/tagLine canonicos.
-- Sin --region, prueba europe -> americas -> asia (Account-V1 es global,
-  cualquier cluster resuelve).
-- Ademas sondea las 4 regiones de Match-V5 pidiendo 1 match id en cada una,
-  para saber donde juega la cuenta (la plataforma sale del prefijo del id).
-
-Es el embrion de la utilidad de carga de `accounts` de la fase 2: en BD las
-cuentas se guardaran como PUUID (los Riot IDs cambian; el puuid no).
+- Resolves the PUUID via Account-V1 and prints the canonical gameName/tagLine.
+- Without --region, tries europe -> americas -> asia (Account-V1 is global, any
+  cluster resolves).
+- Also probes the 4 Match-V5 regions by requesting 1 match id in each, to find
+  where the account plays (the platform comes from the id prefix).
 """
 
 from __future__ import annotations
@@ -34,7 +31,7 @@ _ACCOUNT_CLUSTERS = ("europe", "americas", "asia")
 
 def parse_riot_id(riot_id: str) -> tuple[str, str]:
     if "#" not in riot_id:
-        raise ValueError(f"Riot ID invalido (falta '#'): {riot_id!r}")
+        raise ValueError(f"Invalid Riot ID (missing '#'): {riot_id!r}")
     game_name, tag_line = riot_id.rsplit("#", 1)
     return game_name.strip(), tag_line.strip()
 
@@ -52,7 +49,7 @@ def resolve_account(
 
 
 def probe_match_regions(client: RiotClient, puuid: str) -> dict[str, str]:
-    """region -> match id mas reciente, solo para regiones con partidas."""
+    """region -> most recent match id, only for regions with matches."""
     found = {}
     for region in REGIONS:
         page = client.get(
@@ -72,10 +69,10 @@ def main() -> int:
     )
     load_dotenv(dotenv_path=REPO_ROOT / ".env")
 
-    parser = argparse.ArgumentParser(description="Resuelve un Riot ID a PUUID.")
-    parser.add_argument("riot_id", help='Riot ID con formato "Nombre#TAG".')
+    parser = argparse.ArgumentParser(description="Resolve a Riot ID to a PUUID.")
+    parser.add_argument("riot_id", help='Riot ID in "Name#TAG" format.')
     parser.add_argument("--region", choices=_ACCOUNT_CLUSTERS, default=None,
-                        help="Cluster regional para Account-V1 (opcional).")
+                        help="Regional cluster for Account-V1 (optional).")
     args = parser.parse_args()
 
     client = RiotClient()
@@ -85,7 +82,7 @@ def main() -> int:
         log.error("%s", e)
         return 1
     if account is None:
-        log.error("Riot ID no encontrado: %s", args.riot_id)
+        log.error("Riot ID not found: %s", args.riot_id)
         return 1
 
     print(f"riot_id : {account.get('gameName')}#{account.get('tagLine')}")
@@ -93,10 +90,10 @@ def main() -> int:
 
     regions = probe_match_regions(client, account["puuid"])
     if not regions:
-        print("regiones: sin partidas en ninguna region (matchlist vacio)")
+        print("regions : no matches in any region (empty matchlist)")
     for region, match_id in regions.items():
         platform = match_id.split("_", 1)[0]
-        print(f"regiones: {region} (plataforma {platform}, ultima {match_id})")
+        print(f"regions : {region} (platform {platform}, latest {match_id})")
     return 0
 
 

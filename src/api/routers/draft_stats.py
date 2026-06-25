@@ -1,8 +1,8 @@
-"""Draft Stats — Presencia de campeones y Pick Order Statistics.
+"""Draft Stats — champion presence and pick-order statistics.
 
-Comparten el mismo filtro de base que /drafts (team_id, rival_id, patch,
-game_type, tournament, pick_phase) pero sin filtro por campeón ni paginación:
-siempre devuelven el universo completo de campeones en los drafts filtrados.
+These share the same base filter as /drafts (team_id, rival_id, patch,
+game_type, tournament, pick_phase) but without a champion filter or pagination:
+they always return the full set of champions in the filtered drafts.
 """
 
 from __future__ import annotations
@@ -14,13 +14,13 @@ from src.api.deps import db_conn, get_champ_map
 
 router = APIRouter(tags=["draft-stats"], prefix="/draft-stats")
 
-# ─── filtro base compartido ──────────────────────────────────────────────────
+# --- shared base filter -----------------------------------------------------
 
 _BASE_FROM = """
 FROM games g JOIN drafts d ON d.id = g.draft_id
 WHERE g.draft_id IS NOT NULL
-  -- audit M2: solo partidas con ganador; una NONE contaria como derrota para
-  -- todos los picks y sesgaria el win_rate (y el denominador de presencia).
+  -- only games with a winner; a NONE would count as a loss for every pick and
+  -- bias the win_rate (and the presence denominator).
   AND g.result IN ('BLUE','RED')
   AND (%(team_id)s::int    IS NULL OR g.team1_id = %(team_id)s  OR g.team2_id = %(team_id)s)
   AND (%(rival_id)s::int   IS NULL OR g.team1_id = %(rival_id)s OR g.team2_id = %(rival_id)s)
@@ -42,14 +42,14 @@ SELECT g.id, g.result, g.team1_id, g.team2_id, d.first_pick_team_id,
        d.ban6,d.ban7,d.ban8,d.ban9,d.ban10
 """ + _BASE_FROM
 
-# ─── champion presence ───────────────────────────────────────────────────────
+# --- champion presence -------------------------------------------------------
 
 _PRESENCE_SQL = """
 WITH base AS (""" + _BASE_CTE + """),
--- Game number efectivo:
---   · Scrims (cada serie GRID tiene 1 sola partida): se calcula la posición diaria
---     contra el mismo rival usando ROW_NUMBER sobre (date, pareja de equipos, id).
---   · Oficiales y otros: se usa el game_number ya almacenado (posición en la serie Bo3/Bo5).
+-- Effective game number:
+--   - Scrims (each GRID series has a single game): the daily position against
+--     the same rival is computed via ROW_NUMBER over (date, team pair, id).
+--   - Official and others: the stored game_number (position in the Bo3/Bo5).
 scrim_gn AS (
   SELECT id,
     ROW_NUMBER() OVER (
@@ -103,8 +103,8 @@ picks_raw AS (
   WHERE v.champ_id IS NOT NULL
 ),
 bans_raw AS (
-  -- phase: ban1..5 = bans del first-pick (cronológico), ban6..10 = second-pick.
-  -- 1ª fase = los 3 primeros de cada equipo (slots 1,2,3 y 6,7,8); 2ª = 4,5,9,10.
+  -- phase: ban1..5 = first-pick's bans (chronological), ban6..10 = second-pick.
+  -- Phase 1 = each team's first 3 (slots 1,2,3 and 6,7,8); phase 2 = 4,5,9,10.
   SELECT v.champ_id, v.phase,
     CASE
       WHEN %(team_id)s::int IS NULL                                              THEN NULL
@@ -202,7 +202,7 @@ CROSS JOIN game_totals gt
 ORDER BY presence_pct DESC, picks DESC
 """
 
-# ─── pick order — slots ──────────────────────────────────────────────────────
+# --- pick order — slots ------------------------------------------------------
 
 _SLOTS_SQL = """
 WITH base AS (""" + _BASE_CTE + """),
@@ -240,7 +240,7 @@ GROUP BY champ_id, slot, t.n
 ORDER BY slot, games DESC
 """
 
-# ─── pick order — distribución por rol ──────────────────────────────────────
+# --- pick order — distribution by role ---------------------------------------
 
 _ROLE_SQL = """
 WITH base_ids AS (
@@ -306,7 +306,7 @@ def _base_params(
 
 
 def _parse_game_types(game_types: str | None) -> list[str] | None:
-    """CSV 'OFFICIAL,SCRIM' → ['OFFICIAL','SCRIM']. Vacío/None → None (no filtra)."""
+    """CSV 'OFFICIAL,SCRIM' -> ['OFFICIAL','SCRIM']. Empty/None -> None (no filter)."""
     if not game_types:
         return None
     parsed = [s for s in (p.strip() for p in game_types.split(",")) if s]
@@ -326,7 +326,7 @@ def champion_presence(
     champ_map: dict[int, str] = Depends(get_champ_map),
 ):
     if pick_phase and team_id is None:
-        raise HTTPException(400, "pick_phase requiere team_id")
+        raise HTTPException(400, "pick_phase requires team_id")
 
     params = _base_params(
         team_id, rival_id, patch, pick_phase, game_type, tournament,
@@ -377,14 +377,14 @@ def champion_presence(
     ]
 
 
-# ─── role matchups (blind picks / counterpicks) ─────────────────────────────
+# --- role matchups (blind picks / counterpicks) -----------------------------
 
 _ROLE_MATCHUP_BASE_CTE = """
 WITH base_ids AS (
   SELECT g.id, g.team1_id, g.team2_id
   FROM games g JOIN drafts d ON d.id = g.draft_id
   WHERE g.draft_id IS NOT NULL
-    AND g.result IN ('BLUE','RED')  -- audit M2: excluir NONE del win_rate
+    AND g.result IN ('BLUE','RED')  -- exclude NONE from the win_rate
     AND (%(team_id)s::int    IS NULL OR g.team1_id = %(team_id)s  OR g.team2_id = %(team_id)s)
     AND (%(rival_id)s::int   IS NULL OR g.team1_id = %(rival_id)s OR g.team2_id = %(rival_id)s)
     AND (%(patch)s::text     IS NULL OR g.version   = %(patch)s)
@@ -416,7 +416,7 @@ role_matchups AS (
 
 
 def _build_role_picks_sql(pick_type: str) -> str:
-    """SQL para /role-picks: agrupa por rol y campeón (blind o counter)."""
+    """SQL for /role-picks: groups by role and champion (blind or counter)."""
     our = "p1" if pick_type == "blind" else "p2"
     agg = "blind_champ" if pick_type == "blind" else "counter_champ"
     won = "blind_won" if pick_type == "blind" else "counter_won"
@@ -436,10 +436,10 @@ def _build_role_picks_sql(pick_type: str) -> str:
 
 
 def _build_role_matchup_sql(pick_type: str) -> str:
-    """SQL para /role-pick-matchups: detalle de matchups de un campeón concreto."""
+    """SQL for /role-pick-matchups: matchup detail for a specific champion."""
     our = "p1" if pick_type == "blind" else "p2"
-    # Para blind: filtramos por el blind pick (p1) y mostramos los counters (p2).
-    # Para counter: filtramos por el counter (p2) y mostramos los blinds (p1).
+    # blind: filter by the blind pick (p1) and show the counters (p2).
+    # counter: filter by the counter (p2) and show the blinds (p1).
     filter_pick = "p1" if pick_type == "blind" else "p2"
     agg = "counter_champ" if pick_type == "blind" else "blind_champ"
     won = "blind_won" if pick_type == "blind" else "counter_won"
@@ -474,7 +474,7 @@ def role_picks(
     champ_map: dict[int, str] = Depends(get_champ_map),
 ):
     if pick_phase and team_id is None:
-        raise HTTPException(400, "pick_phase requiere team_id")
+        raise HTTPException(400, "pick_phase requires team_id")
 
     sql = _build_role_picks_sql(pick_type)
     params = _base_params(
@@ -515,7 +515,7 @@ def role_pick_matchups(
     champ_map: dict[int, str] = Depends(get_champ_map),
 ):
     if pick_phase and team_id is None:
-        raise HTTPException(400, "pick_phase requiere team_id")
+        raise HTTPException(400, "pick_phase requires team_id")
 
     sql = _build_role_matchup_sql(pick_type)
     params = {
@@ -555,7 +555,7 @@ def pick_order(
     champ_map: dict[int, str] = Depends(get_champ_map),
 ):
     if pick_phase and team_id is None:
-        raise HTTPException(400, "pick_phase requiere team_id")
+        raise HTTPException(400, "pick_phase requires team_id")
 
     params = _base_params(
         team_id, rival_id, patch, pick_phase, game_type, tournament,
@@ -594,16 +594,16 @@ def pick_order(
     return {"slots": slots, "role_dist": role_dist}
 
 
-# ─── team matchups (más jugados) ────────────────────────────────────────────
+# --- team matchups (most played) --------------------------------------------
 
-# CTE común: ids de partidas del equipo + filtros (multi-fuente). A diferencia
-# del resto del módulo, este endpoint es siempre team-céntrico (team_id obligatorio).
+# Shared CTE: the team's game ids + filters (multi-source). Unlike the rest of
+# the module, this endpoint is always team-centric (team_id required).
 _TEAM_MATCHUP_BASE = """
 WITH base_ids AS (
   SELECT g.id, g.team1_id, g.team2_id
   FROM games g JOIN drafts d ON d.id = g.draft_id
   WHERE g.draft_id IS NOT NULL
-    AND g.result IN ('BLUE','RED')  -- audit M2: excluir NONE del win_rate
+    AND g.result IN ('BLUE','RED')  -- exclude NONE from the win_rate
     AND (g.team1_id = %(team_id)s OR g.team2_id = %(team_id)s)
     AND (%(game_types)s::text[] IS NULL OR g.game_type = ANY(%(game_types)s))
     AND (%(patch)s::text      IS NULL OR g.version    = %(patch)s)
@@ -611,11 +611,11 @@ WITH base_ids AS (
 )
 """
 
-# Una fila por pick del equipo scouteado, emparejada con el rival del mismo
-# carril. LATERAL ... LIMIT 1 deduplica scrims con roles duplicados (igual que
-# matchups.py). "our" = lado del equipo scouteado en cada partida.
-# Arrastra además los snapshots de carril (CS/oro @7 y @14, de picks.stats.midgame)
-# de ambos lados para calcular las diferencias de carril por matchup.
+# One row per scouted team's pick, paired with the same-lane rival.
+# LATERAL ... LIMIT 1 deduplicates scrims with duplicated roles (like
+# matchups.py). "our" = the scouted team's side in each game.
+# Also carries the lane snapshots (CS/gold @7 and @14, from picks.stats.midgame)
+# of both sides to compute per-matchup lane diffs.
 _TEAM_LANE_PAIRS_CTE = _TEAM_MATCHUP_BASE + """,
 lane_pairs AS (
   SELECT pl.role AS role, our.champ_id AS our_champ,
@@ -644,9 +644,9 @@ lane_pairs AS (
 )
 """
 
-# Diferencias de carril: media de (nuestro - rival) en CS/oro @7 y @14. AVG ignora
-# los NULL, así que solo promedia partidas donde ambos lados tienen el snapshot;
-# diff_games_N expone ese tamaño de muestra (puede ser < games si faltó midgame).
+# Lane diffs: mean of (ours - rival) in CS/gold @7 and @14. AVG ignores NULLs,
+# so it only averages games where both sides have the snapshot; diff_games_N
+# exposes that sample size (may be < games if midgame was missing).
 _TEAM_MATCHUP_SQL = _TEAM_LANE_PAIRS_CTE + """
 SELECT role, our_champ, opp_champ,
   COUNT(*) AS games,
@@ -662,10 +662,10 @@ GROUP BY role, our_champ, opp_champ
 ORDER BY role, games DESC
 """
 
-# Baseline por (rol, campeón): WR del equipo con ese campeón EN ESE ROL contra
-# TODOS los rivales (incluido el del matchup). Role-specific: un campeón flexeado
-# tiene baseline distinto por rol (antes se mezclaban). El front resta la fila
-# concreta para obtener el "resto de rivales" → el delta excluye el propio matchup.
+# Baseline by (role, champion): the team's WR with that champion IN THAT ROLE
+# against ALL rivals (including the matchup's). Role-specific: a flexed champion
+# has a different baseline per role. The frontend subtracts the specific row to
+# get the "rest of the rivals" -> the delta excludes the matchup itself.
 _TEAM_BASELINE_SQL = _TEAM_LANE_PAIRS_CTE + """
 SELECT role, our_champ AS champ_id,
   COUNT(*) AS games,
@@ -676,7 +676,7 @@ GROUP BY role, our_champ
 
 @router.get("/team-matchups")
 def team_matchups(
-    team_id: int = Query(..., description="Equipo a scoutear (obligatorio)"),
+    team_id: int = Query(..., description="Team to scout (required)"),
     game_types: str | None = Query(None, description="CSV: OFFICIAL,SCRIM"),
     patch: str | None = Query(None),
     tournament: str | None = None,
@@ -708,7 +708,7 @@ def team_matchups(
             "games": r["games"],
             "wins": r["wins"],
             "win_rate": round(100.0 * r["wins"] / r["games"], 1) if r["games"] else None,
-            # diferencias de carril (media nuestro - rival); oro redondeado a entero
+            # lane diffs (mean ours - rival); gold rounded to integer
             "cs_diff_7":    _avg(r["cs_diff_7"]),
             "gold_diff_7":  _avg(r["gold_diff_7"], 0),
             "cs_diff_14":   _avg(r["cs_diff_14"]),
@@ -717,8 +717,8 @@ def team_matchups(
             "diff_games_14": r["diff_games_14"],
         })
 
-    # baseline[rol][champ_id] = WR del equipo con ese campeón en ese rol (todos
-    # los rivales). El front resta la fila del matchup para excluirlo.
+    # baseline[role][champ_id] = the team's WR with that champion in that role
+    # (all rivals). The frontend subtracts the matchup row to exclude it.
     baseline: dict[str, dict[int, dict]] = {}
     for r in bl_rows:
         baseline.setdefault(r["role"], {})[r["champ_id"]] = {
@@ -729,24 +729,14 @@ def team_matchups(
     return {"matchups": matchups, "baseline": baseline}
 
 
-# ─── lane-matchup: WR de UN matchup jugado por otros equipos (on-demand) ──────
+# lane-matchup: WR of ONE matchup as played by other teams (on-demand).
 #
-# Por qué un endpoint aparte y no un campo más en /team-matchups: calcular este
-# "vs otros equipos" para TODOS los matchups de un equipo a la vez exige emparejar
-# por carril (LATERAL) cada pick de toda la BD → ~17s, inaceptable al cargar la
-# página. En cambio, UN solo par (rol, nuestro champ, rival) filtra por champ_id
-# (indexado) y resuelve en ~4-12ms. El front lo pide on-demand al hacer hover
-# sobre un matchup concreto y React Query lo cachea por par.
-#
-# ALTERNATIVA FUTURA (si interesa tenerlo precargado e instantáneo en vez de
-# on-demand): materializar el emparejamiento de carril una sola vez en una
-# MATERIALIZED VIEW `lane_pairs_mv(game_id, role, champ, opp_champ, team_id, won)`
-# con índice en (role, champ, opp_champ). Entonces tanto este "vs otros" como el
-# baseline/matchups del equipo pasan a ser GROUP BY triviales (ms) y se pueden
-# precargar todos de golpe. Coste: una migración + un `REFRESH MATERIALIZED VIEW
-# lane_pairs_mv` al final de cada corrida de extracción (official.py / scrims.py).
-# Mientras la cadencia de "abrir página" >> "extraer", el on-demand basta y es
-# cero-mantenimiento; si eso se invierte, migrar a la MV.
+# A separate endpoint rather than another field in /team-matchups: computing
+# this "vs other teams" for ALL of a team's matchups at once requires lane-
+# pairing (LATERAL) every pick in the DB -> ~17s, unacceptable on page load. A
+# single (role, our champ, rival) pair filters by champ_id (indexed) and
+# resolves in ~4-12ms. The frontend requests it on-demand on hover over a
+# specific matchup and React Query caches it per pair.
 _LANE_MATCHUP_SQL = """
 WITH all_ids AS (
   SELECT g.id, g.team1_id, g.team2_id
@@ -779,20 +769,20 @@ WHERE team_id IS DISTINCT FROM %(team_id)s
 
 @router.get("/lane-matchup")
 def lane_matchup(
-    team_id: int = Query(..., description="Equipo a excluir del sample (el scouteado)"),
+    team_id: int = Query(..., description="Team to exclude from the sample (the scouted one)"),
     role: str = Query(..., description="TOP/JUNGLE/MID/ADC/SUPPORT"),
-    our: int = Query(..., description="champ_id del lado scouteado"),
-    opp: int = Query(..., description="champ_id del rival de carril"),
+    our: int = Query(..., description="champ_id of the scouted side"),
+    opp: int = Query(..., description="champ_id of the lane rival"),
     game_types: str | None = Query(None, description="CSV: OFFICIAL,SCRIM"),
     patch: str | None = Query(None),
     tournament: str | None = None,
     conn: psycopg.Connection = Depends(db_conn),
 ):
-    """WR de `our` vs `opp` en `role` jugado por TODOS los equipos menos `team_id`.
+    """WR of `our` vs `opp` in `role` as played by ALL teams except `team_id`.
 
-    Referencia "otros jugándolo": cómo le va este mismo matchup al resto de
-    equipos, para contrastar con el rendimiento propio. Respeta los filtros de
-    contexto (tipo de partida, parche, torneo) que la vista tenga activos.
+    An "others playing it" reference: how this same matchup goes for the rest of
+    the teams, to contrast with the team's own performance. Respects the context
+    filters (game type, patch, tournament) active in the view.
     """
     params = {
         "team_id": team_id,

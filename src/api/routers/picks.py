@@ -1,8 +1,8 @@
-"""Picks — primitivo crudo de detalle / drill-down.
+"""Picks — raw detail / drill-down primitive.
 
-Una fila por (jugador, partida). Filtros por tipo de partida, jugador, campeon,
-parche y partida concreta. `stats` se devuelve tal cual (JSONB; contrato
-alineado oficiales/scrims/soloq, CLAUDE.md §10).
+One row per (player, game). Filters by game type, player, champion, patch and
+specific game. `stats` is returned as-is (JSONB; contract aligned across
+official/scrims/soloq).
 """
 
 from __future__ import annotations
@@ -63,7 +63,7 @@ def list_picks(
     game_type: str | None = Query(None, description="OFFICIAL | SCRIM | SOLOQ"),
     player_id: int | None = None,
     champ_id: int | None = None,
-    patch: str | None = Query(None, description="games.version, ej. 14.23"),
+    patch: str | None = Query(None, description="games.version, e.g. 14.23"),
     game_id: int | None = None,
     page: Pagination = Depends(pagination),
     conn: psycopg.Connection = Depends(db_conn),

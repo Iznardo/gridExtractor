@@ -1,14 +1,14 @@
-"""Ventana 1 — Drafts.
+"""Drafts window.
 
-Lista drafts (oficiales y scrims; soloq queda fuera porque no tiene draft).
-Filtros por equipo, rival, parche, fase de pick (first/second) y campeon jugado.
+Lists drafts (official and scrims; soloq is excluded as it has no draft).
+Filters by team, rival, patch, pick phase (first/second) and champion played.
 
-Recordatorio de esquema (CLAUDE.md / extractores):
-- `games.team1_id` = lado BLUE, `team2_id` = lado RED.
-- En `drafts`, pick1..5/ban1..5 = equipo FIRST PICK; pick6..10/ban6..10 =
-  equipo SECOND PICK (cada grupo en orden cronologico del equipo).
-- First/second pick esta DESACOPLADO de blue/red (cambio 2026): se exponen
-  ambos ejes por separado, sin inferir uno del otro.
+Schema reminder:
+- `games.team1_id` = BLUE side, `team2_id` = RED side.
+- In `drafts`, pick1..5/ban1..5 = FIRST PICK team; pick6..10/ban6..10 = SECOND
+  PICK team (each group in the team's chronological order).
+- First/second pick is DECOUPLED from blue/red: both axes are exposed
+  separately, without inferring one from the other.
 """
 
 from __future__ import annotations
@@ -111,7 +111,7 @@ def _shape(row: dict, champ_map: dict[int, str]) -> dict:
 def list_drafts(
     team_id: int | None = None,
     rival_id: int | None = None,
-    patch: str | None = Query(None, description="games.version, ej. 14.23"),
+    patch: str | None = Query(None, description="games.version, e.g. 14.23"),
     pick_phase: str | None = Query(None, pattern="^(first|second)$"),
     champ_id: int | None = None,
     game_type: str | None = Query(None, description="OFFICIAL | SCRIM"),
@@ -121,7 +121,7 @@ def list_drafts(
     champ_map: dict[int, str] = Depends(get_champ_map),
 ):
     if pick_phase and team_id is None:
-        raise HTTPException(400, "pick_phase requiere team_id")
+        raise HTTPException(400, "pick_phase requires team_id")
 
     params = {
         "team_id": team_id,

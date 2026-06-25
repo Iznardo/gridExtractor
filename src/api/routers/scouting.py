@@ -1,15 +1,13 @@
-"""Ventana 2 — Team scouting.
+"""Team scouting window.
 
-Devuelve, para un equipo, qué campeones ha jugado cada jugador, **separado por
-medio** (OFFICIAL / SCRIM / SOLOQ) en `by_medium` → cada medio desglosado por
-jugador. El agregado "todos los medios" (tambien por jugador) lo deriva el
-consumidor de `by_medium`, asi que no se devuelve por separado.
+For a team, returns which champions each player has played, split by medium
+(OFFICIAL / SCRIM / SOLOQ) in `by_medium` -> each medium broken down by player.
+The "all mediums" aggregate (also per player) is derived by the consumer of
+`by_medium`, so it is not returned separately.
 
-Atribucion via `players.team_id` (roster actual): es la unica via comun a los
-3 medios (soloq no tiene team1/team2) y la semantica deseada — la pool del
-roster que se scoutea.
-
-Se ampliara en el futuro (winrate por matchup, rango de parches, etc.).
+Attribution via `players.team_id` (current roster): the only path common to the
+3 mediums (soloq has no team1/team2) and the intended semantics — the pool of
+the roster being scouted.
 """
 
 from __future__ import annotations
@@ -39,23 +37,23 @@ WHERE pl.team_id = %(team_id)s
 GROUP BY pl.id, pl.name, pl.role, c.id, c.name, g.game_type
 """
 
-# Orden de roster habitual; roles NULL/desconocidos van al final.
+# Usual roster order; NULL/unknown roles go last.
 _ROLE_ORDER = {"TOP": 0, "JUNGLE": 1, "MID": 2, "ADC": 3, "SUPPORT": 4}
 _MEDIUMS = {"OFFICIAL": "official", "SCRIM": "scrim", "SOLOQ": "soloq"}
 
 
 @router.get("/scouting/champion-pool")
 def champion_pool(
-    team_id: int = Query(..., description="Equipo a scoutear (obligatorio)"),
-    date_from: date | None = Query(None, description="Solo partidas desde esta fecha"),
-    patch: str | None = Query(None, description="games.version, ej. 14.23"),
+    team_id: int = Query(..., description="Team to scout (required)"),
+    date_from: date | None = Query(None, description="Only games from this date"),
+    patch: str | None = Query(None, description="games.version, e.g. 14.23"),
     conn: psycopg.Connection = Depends(db_conn),
 ):
     with conn.cursor() as cur:
         cur.execute(_SQL, {"team_id": team_id, "date_from": date_from, "patch": patch})
         rows = cur.fetchall()
 
-    # by_medium[medio][player_id] = {player, champions: {champ_id: {...}}}
+    # by_medium[medium][player_id] = {player, champions: {champ_id: {...}}}
     by_medium: dict[str, dict[int, dict]] = {"official": {}, "scrim": {}, "soloq": {}}
 
     for r in rows:
@@ -65,7 +63,7 @@ def champion_pool(
         games = int(r["games"])
         wins = int(r["wins"] or 0)
 
-        # --- desglose por jugador dentro del medio ---
+        # --- per-player breakdown within the medium ---
         bucket = by_medium[medium]
         player = bucket.setdefault(r["player_id"], {
             "player": {
@@ -101,12 +99,12 @@ def champion_pool(
     }
 
 
-# ─── player-shares: % de oro y % de daño por rol (radar del dashboard) ────────
+# --- player-shares: gold% and damage% per role (dashboard radar) -------------
 #
-# Por partida del equipo (lado propio), share de cada jugador = su valor / total
-# del equipo ese game; luego AVG por rol. Media de ratios (no ratio de medias):
-# cada partida pesa igual. Solo OFICIAL/SCRIM tienen stats por jugador completos;
-# soloq queda fuera (no hay equipo entero trackeado).
+# Per team game (our side), each player's share = their value / team total that
+# game; then AVG per role. Mean of ratios (not ratio of means): every game
+# weighs equally. Only OFFICIAL/SCRIM have full per-player stats; soloq is left
+# out (no full team tracked).
 _SHARES_SQL = """
 WITH team_games AS (
   SELECT g.id,
@@ -146,10 +144,10 @@ GROUP BY op.role
 
 @router.get("/scouting/player-shares")
 def player_shares(
-    team_id: int = Query(..., description="Equipo a scoutear (obligatorio)"),
+    team_id: int = Query(..., description="Team to scout (required)"),
     game_types: str | None = Query(None, description="CSV: OFFICIAL,SCRIM"),
-    patch: str | None = Query(None, description="games.version, ej. 14.23"),
-    date_from: date | None = Query(None, description="Solo partidas desde esta fecha"),
+    patch: str | None = Query(None, description="games.version, e.g. 14.23"),
+    date_from: date | None = Query(None, description="Only games from this date"),
     conn: psycopg.Connection = Depends(db_conn),
 ):
     gts = [s for s in (p.strip() for p in (game_types or "").split(",")) if s] or None
@@ -168,5 +166,5 @@ def player_shares(
         }
         for r in rows
     }
-    # Orden de roster fijo TOP→SUPPORT; roles sin datos se omiten.
+    # Fixed roster order TOP->SUPPORT; roles without data are omitted.
     return [by_role[r] for r in ("TOP", "JUNGLE", "MID", "ADC", "SUPPORT") if r in by_role]

@@ -1,7 +1,6 @@
--- gridExtractor — esquema completo de la base de datos `loldata`.
--- PostgreSQL 16+. Lo aplica automaticamente el init-script del contenedor
--- (docker-compose monta este fichero en /docker-entrypoint-initdb.d/).
--- Referencia: CLAUDE.md §4.
+-- gridExtractor — full schema for the `loldata` database.
+-- PostgreSQL 16+. Applied automatically by the container init-script
+-- (docker-compose mounts this file in /docker-entrypoint-initdb.d/).
 
 BEGIN;
 
@@ -10,47 +9,47 @@ BEGIN;
 -- ----------------------------------------------------------------------
 CREATE TABLE teams (
     id       SERIAL PRIMARY KEY,
-    tag      VARCHAR(8),                   -- nullable: GRID puede no aportar nameShortened
+    tag      VARCHAR(8),                   -- nullable: GRID may omit nameShortened
     name     VARCHAR(50) NOT NULL,
-    grid_id  BIGINT UNIQUE                 -- nullable hasta que se descubre
+    grid_id  BIGINT UNIQUE                 -- nullable until discovered
 );
 
 -- ----------------------------------------------------------------------
--- players  (la persona, no la cuenta)
+-- players  (the person, not the account)
 -- ----------------------------------------------------------------------
 CREATE TABLE players (
     id           SERIAL PRIMARY KEY,
     team_id      INTEGER REFERENCES teams(id),
     name         VARCHAR(30) NOT NULL,
-    role         VARCHAR(8),                          -- TOP/JUNGLE/MID/ADC/SUPPORT; NULL al crear desde discovery
-    starter      BOOLEAN NOT NULL DEFAULT FALSE,      -- el discovery siempre crea con FALSE; el extractor de oficiales lo asciende
+    role         VARCHAR(8),                          -- TOP/JUNGLE/MID/ADC/SUPPORT; NULL when created from discovery
+    starter      BOOLEAN NOT NULL DEFAULT FALSE,      -- discovery always creates FALSE; the official extractor promotes it
     grid_id      BIGINT UNIQUE,
-    last_update  TIMESTAMPTZ,                          -- ultima oficial que reconcilio a este jugador (CLAUDE.md §5.5)
+    last_update  TIMESTAMPTZ,                          -- last official game that reconciled this player
     CHECK (role IS NULL OR role IN ('TOP','JUNGLE','MID','ADC','SUPPORT'))
 );
 
 -- ----------------------------------------------------------------------
--- champions  (catalogo de campeones de LoL — cargado desde Data Dragon)
+-- champions  (LoL champion catalog — loaded from Data Dragon)
 -- ----------------------------------------------------------------------
 CREATE TABLE champions (
-    id    INTEGER PRIMARY KEY,          -- Riot champion key (numerico, ej. 266)
+    id    INTEGER PRIMARY KEY,          -- Riot champion key (numeric, e.g. 266)
     name  VARCHAR(50) NOT NULL UNIQUE,  -- display name: "Lee Sin", "Wukong"
     alias VARCHAR(50) NOT NULL UNIQUE   -- internal name: "LeeSin", "MonkeyKing"
 );
 
 -- ----------------------------------------------------------------------
--- accounts  (cuentas de Riot de cada jugador — src/riot/accounts_sync.py)
--- El puuid es la unica identidad: los Riot IDs cambian y NO se persisten.
+-- accounts  (each player's Riot accounts — src/riot/accounts_sync.py)
+-- The puuid is the only identity: Riot IDs change and are NOT persisted.
 -- ----------------------------------------------------------------------
 CREATE TABLE accounts (
     id         SERIAL PRIMARY KEY,
     player_id  INTEGER NOT NULL REFERENCES players(id),
-    region     VARCHAR(8) NOT NULL,               -- cluster regional Match-V5 (europe/americas/asia/sea)
+    region     VARCHAR(8) NOT NULL,               -- Match-V5 regional cluster (europe/americas/asia/sea)
     puuid      CHAR(78) NOT NULL UNIQUE
 );
 
 -- ----------------------------------------------------------------------
--- drafts  (1-a-1 con games; estructura rigida a proposito, CLAUDE.md §4.2)
+-- drafts  (1-to-1 with games; rigid structure on purpose)
 -- ----------------------------------------------------------------------
 CREATE TABLE drafts (
     id                  SERIAL PRIMARY KEY,
@@ -62,7 +61,7 @@ CREATE TABLE drafts (
 );
 
 -- ----------------------------------------------------------------------
--- games  (una fila = una partida de LoL)
+-- games  (one row = one LoL game)
 -- ----------------------------------------------------------------------
 CREATE TABLE games (
     id              SERIAL PRIMARY KEY,
@@ -73,21 +72,21 @@ CREATE TABLE games (
     team1_id        INTEGER REFERENCES teams(id),
     team2_id        INTEGER REFERENCES teams(id),
     result          VARCHAR(5) NOT NULL CHECK (result IN ('BLUE','RED','NONE')),
-    draft_id        INTEGER UNIQUE REFERENCES drafts(id),  -- 1-a-1 con drafts
+    draft_id        INTEGER UNIQUE REFERENCES drafts(id),  -- 1-to-1 with drafts
     grid_series_id  BIGINT,
     game_number     SMALLINT,
-    riot_api_id     VARCHAR(20),   -- matchId completo de Riot, con plataforma ("EUW1_7884453182")
+    riot_api_id     VARCHAR(20),   -- full Riot matchId, with platform ("EUW1_7884453182")
     stats           JSONB,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
-    -- claves naturales: GRID por (serie, numero); soloq por riot_api_id.
-    -- En Postgres los NULL no chocan en UNIQUE, asi que conviven sin choque.
+    -- Natural keys: GRID by (series, number); soloq by riot_api_id.
+    -- In Postgres NULLs do not collide in UNIQUE, so they coexist.
     UNIQUE (grid_series_id, game_number),
     UNIQUE (riot_api_id)
 );
 
 -- ----------------------------------------------------------------------
--- picks  (10 filas por partida — una por jugador)
+-- picks  (10 rows per game — one per player)
 -- ----------------------------------------------------------------------
 CREATE TABLE picks (
     id          BIGSERIAL PRIMARY KEY,
@@ -102,7 +101,7 @@ CREATE TABLE picks (
 );
 
 -- ----------------------------------------------------------------------
--- Indices auxiliares (la idempotencia ya tiene los UNIQUE arriba)
+-- Auxiliary indexes (idempotency is covered by the UNIQUEs above)
 -- ----------------------------------------------------------------------
 CREATE INDEX idx_players_team_id  ON players(team_id);
 CREATE INDEX idx_games_date       ON games(date);
@@ -110,7 +109,7 @@ CREATE INDEX idx_games_game_type  ON games(game_type);
 CREATE INDEX idx_picks_game_id    ON picks(game_id);
 CREATE INDEX idx_picks_player_id  ON picks(player_id);
 
--- Indices para la API read-only (= migracion 003; aqui para instalaciones nuevas).
+-- Indexes for the read-only API (= migration 003; here for fresh installs).
 CREATE INDEX idx_picks_champ_id   ON picks(champ_id);
 CREATE INDEX idx_games_team1_id   ON games(team1_id);
 CREATE INDEX idx_games_team2_id   ON games(team2_id);

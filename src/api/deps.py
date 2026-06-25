@@ -1,11 +1,11 @@
-"""Dependencias compartidas de la API.
+"""Shared API dependencies.
 
-- `db_conn`: entrega una conexion del pool (psycopg_pool) por request. El pool
-  se crea en el lifespan (`main.py`) con autocommit=True y row_factory=dict_row,
-  asi que cada conexion ya viene configurada para solo-lectura.
-- `get_champ_map`: expone el catalogo de campeones (ChampMap) cacheado en
-  `app.state` durante el lifespan, para resolver nombres sin golpear la BD en
-  cada draft. ChampMap se auto-recarga si falta una clave (campeon nuevo).
+- `db_conn`: hands out a pooled connection (psycopg_pool) per request. The pool
+  is created in the lifespan (`main.py`) with autocommit=True and
+  row_factory=dict_row, so every connection comes ready for read-only use.
+- `get_champ_map`: exposes the champion catalog (ChampMap) cached on
+  `app.state`, to resolve names without hitting the DB on every draft. ChampMap
+  reloads itself if a key is missing (new champion).
 """
 
 from __future__ import annotations
@@ -19,18 +19,18 @@ from fastapi import Request
 
 log = logging.getLogger("api")
 
-# Cooldown minimo entre recargas de ChampMap ante un miss, para no martillear la
-# BD si llegan ids desconocidos en rafaga.
+# Minimum cooldown between ChampMap reloads on a miss, to avoid hammering the DB
+# when unknown ids arrive in bursts.
 _RELOAD_COOLDOWN_S = 60.0
 
 
 class ChampMap:
-    """Catalogo id->name de campeones, con recarga perezosa ante un miss.
+    """id->name champion catalog, with lazy reload on a miss.
 
-    Las rutas solo usan `.get(cid)`; si el id no esta (campeon recien anadido a
-    `champions` por un extractor mientras la API ya corria), se intenta UNA
-    recarga por ventana de cooldown. Tambien sirve como auto-curacion si la BD
-    estaba caida al arrancar (mapa vacio -> primer acceso lo rellena).
+    Routes only call `.get(cid)`; if the id is absent (champion just added to
+    `champions` by an extractor while the API was already running), one reload
+    is attempted per cooldown window. It also self-heals when the DB was down at
+    startup (empty map -> first access fills it).
     """
 
     def __init__(self, pool) -> None:
@@ -51,9 +51,9 @@ class ChampMap:
             return
         try:
             self.reload()
-        except Exception as e:  # BD caida / transitorio: no romper la request
-            log.warning("ChampMap: recarga fallida: %s", e)
-            self._last_reload = time.monotonic()  # respeta el cooldown igual
+        except Exception as e:  # DB down / transient: do not break the request
+            log.warning("ChampMap: reload failed: %s", e)
+            self._last_reload = time.monotonic()  # honor the cooldown anyway
 
     def get(self, cid: int | None) -> str | None:
         if cid is None:

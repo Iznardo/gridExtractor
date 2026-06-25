@@ -1,12 +1,12 @@
--- 003 — Indices para acelerar las queries de la API read-only (api_audit A2).
+-- 003 — Indexes to speed up the read-only API queries.
 --
--- La API filtra/joinea por columnas que hoy no estan indexadas:
---   · picks.champ_id  → EXISTS de /games, filtros de /picks, /scouting, /matchups
---   · games.team1_id / team2_id → casi todos los filtros por equipo
---   · games.version / tournament → filtros de parche / torneo
+-- The API filters/joins on columns that were not indexed:
+--   - picks.champ_id  -> /games EXISTS, /picks, /scouting, /matchups filters
+--   - games.team1_id / team2_id -> almost every team filter
+--   - games.version / tournament -> patch / tournament filters
 --
--- Aplicar:  docker compose exec -T db psql -U "$PGUSER" -d "$PGDATABASE" < db/migrations/003_api_indexes.sql
--- (o desde DBeaver). Idempotente: IF NOT EXISTS.
+-- Apply:  docker compose exec -T db psql -U "$PGUSER" -d "$PGDATABASE" < db/migrations/003_api_indexes.sql
+-- (or from DBeaver). Idempotent: IF NOT EXISTS.
 
 BEGIN;
 

@@ -1,14 +1,14 @@
--- SoloQ fase 2: identidad de partidas Riot y limpieza de accounts.
--- Aplicar sobre BDs creadas antes de 2026-06-12; schema.sql ya lo incorpora.
+-- SoloQ phase 2: Riot match identity and accounts cleanup.
+-- Apply to DBs created before 2026-06-12; schema.sql already includes it.
 BEGIN;
 
--- El matchId de Riot lleva prefijo de plataforma (EUW1_..., KR_...);
--- guardarlo completo evita colisiones entre plataformas en el UNIQUE.
+-- Riot's matchId carries a platform prefix (EUW1_..., KR_...); storing it whole
+-- avoids cross-platform collisions in the UNIQUE.
 ALTER TABLE games ALTER COLUMN riot_api_id TYPE VARCHAR(20)
     USING riot_api_id::VARCHAR;
 
--- El puuid es la unica identidad de una cuenta; el Riot ID cambia
--- constantemente y no se persiste (decision 2026-06-12).
+-- The puuid is an account's only identity; the Riot ID changes constantly and
+-- is not persisted.
 ALTER TABLE accounts DROP COLUMN riot_id;
 ALTER TABLE accounts ALTER COLUMN puuid SET NOT NULL;
 

@@ -1,16 +1,16 @@
-"""Descarga de replays (.rofl) — proxy de streaming.
+"""Replay download (.rofl) — streaming proxy.
 
-El navegador pide a NUESTRA API (`/games/{id}/replay`, sin api-key). El backend
-descarga la ROFL de GRID con la cabecera `x-api-key` server-side y reenvia los
-bytes en streaming. La api-key NUNCA llega al navegador (ni en la URL ni en
-cabeceras), asi que no aparece en las DevTools ni en links compartibles.
+The browser asks OUR API (`/games/{id}/replay`, no api-key). The backend
+downloads the ROFL from GRID with the `x-api-key` header server-side and streams
+the bytes back. The api-key NEVER reaches the browser (neither in the URL nor in
+headers), so it does not show up in DevTools or shareable links.
 
-Endpoint de GRID (lo da el cliente, no grid-minion):
+GRID endpoint (provided by the client, not grid-minion):
     GET https://api.grid.gg/file-download/replay/riot/series/{series}/games/{n}
 
-La descarga puede ser de decenas de MB: se hace con `requests` + `stream=True`
-y se reenvia por chunks. El endpoint es `def` (sync) → FastAPI lo corre en su
-threadpool, asi que el streaming no bloquea el event loop.
+A download can be tens of MB: done with `requests` + `stream=True` and forwarded
+in chunks. The endpoint is `def` (sync) so FastAPI runs it in its threadpool,
+keeping the streaming off the event loop.
 """
 
 from __future__ import annotations
@@ -54,29 +54,29 @@ def _filename(row: dict) -> str:
 def download_replay(game_id: int, request: Request):
     api_key = os.environ.get("GRID_API_KEY")
     if not api_key:
-        log.error("GRID_API_KEY ausente en el entorno de la API.")
-        raise HTTPException(503, "Descarga de replays no configurada en el servidor.")
+        log.error("GRID_API_KEY missing from the API environment.")
+        raise HTTPException(503, "Replay download not configured on the server.")
 
-    # Conexion corta del pool solo para resolver la serie/numero; se devuelve al
-    # pool ANTES de empezar el streaming (no retenemos conexion durante la
-    # descarga, que puede durar minutos y agotaria el pool).
+    # Short pool connection only to resolve series/number; returned to the pool
+    # BEFORE streaming starts (we do not hold a connection during the download,
+    # which can take minutes and would exhaust the pool).
     with request.app.state.pool.connection() as conn:
         with conn.cursor() as cur:
             cur.execute(_META_SQL, {"game_id": game_id})
             row = cur.fetchone()
 
     if row is None:
-        raise HTTPException(404, "Partida no encontrada.")
+        raise HTTPException(404, "Game not found.")
     if row["grid_series_id"] is None or row["game_number"] is None:
-        raise HTTPException(404, "Esta partida no tiene replay de GRID (p. ej. soloq).")
+        raise HTTPException(404, "This game has no GRID replay (e.g. soloq).")
 
     url = (
         f"{GRID_BASE}/file-download/replay/riot/series/"
         f"{row['grid_series_id']}/games/{row['game_number']}"
     )
 
-    # La api-key va en cabecera, jamas en la URL — no se loguea aunque se loguee
-    # la URL. No logueamos cabeceras.
+    # The api-key goes in a header, never in the URL — it is not logged even if
+    # the URL is. We do not log headers.
     upstream = requests.get(
         url,
         headers={"x-api-key": api_key, "Accept": "application/octet-stream"},
@@ -86,14 +86,14 @@ def download_replay(game_id: int, request: Request):
 
     if upstream.status_code == 404:
         upstream.close()
-        raise HTTPException(404, "Replay no disponible en GRID todavia.")
+        raise HTTPException(404, "Replay not available on GRID yet.")
     if upstream.status_code in (401, 403):
         upstream.close()
-        log.error("GRID rechazo la api-key al descargar replay (%s).", upstream.status_code)
-        raise HTTPException(502, "Error de credenciales con GRID.")
+        log.error("GRID rejected the api-key on replay download (%s).", upstream.status_code)
+        raise HTTPException(502, "Credential error with GRID.")
     if upstream.status_code != 200:
         upstream.close()
-        raise HTTPException(502, f"GRID devolvio {upstream.status_code}.")
+        raise HTTPException(502, f"GRID returned {upstream.status_code}.")
 
     def stream():
         try:

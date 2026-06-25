@@ -1,9 +1,7 @@
-"""Conexion a PostgreSQL. Carga credenciales del entorno (.env si existe)
-y entrega una conexion psycopg como context manager.
+"""PostgreSQL connection helpers.
 
-Quien la use decide cuando commitear: la conexion se entrega con
-autocommit=False para que el caller controle las transacciones (el
-discovery, por ejemplo, hace un solo commit al final).
+Credentials come from the environment (loaded from .env if present). Connections
+are handed out with autocommit=False so the caller owns transaction boundaries.
 """
 
 from __future__ import annotations
@@ -15,12 +13,11 @@ from typing import Iterator
 import psycopg
 
 
-
 def db_kwargs() -> dict:
-    """Parametros de conexion a Postgres desde el entorno.
+    """Connection parameters read from the environment.
 
-    Compartido por get_conn (extractores, autocommit=False) y por el pool
-    read-only de la API (que ademas fija autocommit=True y row_factory).
+    Shared by get_conn (extractors) and the API read-only pool (which also sets
+    autocommit=True and a row_factory).
     """
     return {
         "host": os.environ.get("PGHOST", "localhost"),
@@ -33,6 +30,7 @@ def db_kwargs() -> dict:
 
 @contextmanager
 def get_conn() -> Iterator[psycopg.Connection]:
+    """Yield a psycopg connection (autocommit=False); the caller commits."""
     conn = psycopg.connect(**db_kwargs(), autocommit=False)
     try:
         yield conn
