@@ -1,7 +1,7 @@
-"""Tests de las funciones puras de shaping de la API (sin BD ni red).
+"""Tests for the API's pure shaping functions (no DB or network).
 
-Cubren la lógica de transformación que no depende de Postgres: parsing de
-parámetros, derivación de relación de pick y composición desde stats de soloq.
+Cover the transformation logic that does not depend on Postgres: parameter
+parsing, pick-relation derivation and composition from soloq stats.
 """
 
 from __future__ import annotations
@@ -26,8 +26,8 @@ def test_parse_game_types_none_and_empty():
 
 
 def test_pick_relation_blind_counter_and_unknown():
-    assert _pick_relation(1, 4) == "blind"      # pickea antes -> blind
-    assert _pick_relation(4, 1) == "counter"    # pickea después -> counter
+    assert _pick_relation(1, 4) == "blind"      # picks earlier -> blind
+    assert _pick_relation(4, 1) == "counter"    # picks later -> counter
     assert _pick_relation(None, 4) is None
     assert _pick_relation(4, None) is None
 
@@ -43,8 +43,8 @@ def test_comp_from_stats_soloq_participants():
             {"team_side": "BLUE", "champion_id": 1},
             {"team_side": "RED", "champion_id": 2},
             {"team_side": "BLUE", "champion_id": 3},
-            {"team_side": "RED", "champion_id": None},   # se ignora
-            {"team_side": "PURPLE", "champion_id": 9},    # lado inválido se ignora
+            {"team_side": "RED", "champion_id": None},   # ignored
+            {"team_side": "PURPLE", "champion_id": 9},    # invalid side ignored
         ]
     }
     comp = _comp_from_stats(stats)
