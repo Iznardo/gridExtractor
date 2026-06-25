@@ -41,3 +41,11 @@ def platform_to_region(platform: str) -> str:
 def region_from_match_id(match_id: str) -> str:
     """'KR_8232000299' -> 'asia'."""
     return platform_to_region(match_id.split("_", 1)[0])
+
+
+def match_sort_key(match_id: str) -> int:
+    """The match id's number, for sorting newest to oldest."""
+    try:
+        return int(match_id.split("_", 1)[1])
+    except (IndexError, ValueError):
+        return 0

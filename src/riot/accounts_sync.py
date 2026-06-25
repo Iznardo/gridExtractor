@@ -25,7 +25,7 @@ from src.db.conn import get_conn
 
 from .client import RiotClient, RiotError
 from .resolve_run import probe_match_regions, resolve_account
-from .soloq_run import match_sort_key
+from .routing import match_sort_key
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 CONFIG_PATH = REPO_ROOT / "config" / "soloq_accounts.yaml"

@@ -28,7 +28,7 @@ from dotenv import load_dotenv
 from src.db.conn import get_conn
 from src.riot.client import RiotClient, RiotError
 from src.riot.endpoints import RANKED_SOLO_QUEUE, get_match_ids
-from src.riot.soloq_run import match_sort_key
+from src.riot.routing import match_sort_key
 
 from .soloq import (
     ChampionIds,
