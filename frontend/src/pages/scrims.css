@@ -1,5 +1,5 @@
-/* Ventana Scrims — dashboard de tracking. Reusa tokens globales y el pool de
-   ChampionPool (scouting.css). Aquí solo lo específico de las vistas nuevas. */
+/* Scrims view — tracking dashboard. Reuses global tokens and the ChampionPool
+   pool (scouting.css). Only the new-view specifics live here. */
 
 .scr-results {
   padding: 0 1.2rem 2rem;
@@ -26,8 +26,8 @@
   letter-spacing: 0.04em;
 }
 
-/* Header de dashboard con enlace a la derecha. Compartido por los dashboards de
-   Scouting (ScoutDashboard) y Scrims; ambos importan scrims.css. */
+/* Dashboard header with a link on the right. Shared by the Scouting
+   (ScoutDashboard) and Scrims dashboards; both import scrims.css. */
 .scout-dash-head {
   display: flex;
   align-items: center;
@@ -42,7 +42,7 @@
   text-decoration: none;
 }
 
-/* Grid de tarjetas (duos/trios) */
+/* Card grid (duos/trios) */
 .scr-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -64,7 +64,7 @@
   font-weight: 700;
 }
 
-/* ---- tablas ---- */
+/* ---- tables ---- */
 .scr-table {
   width: 100%;
   border-collapse: collapse;
@@ -107,13 +107,13 @@
 }
 .scr-champ-empty { color: var(--muted); }
 
-/* ---- WR (glifo no-cromático, coherente con TeamMatchups) ---- */
+/* ---- WR (non-color glyph, consistent with TeamMatchups) ---- */
 .scr-wr-pos { color: var(--win); font-weight: 600; }
 .scr-wr-neg { color: var(--red-text); font-weight: 600; }
 .scr-wr-neutral { color: var(--text); }
 .scr-wr-arrow { font-size: 0.7em; margin-right: 2px; }
 
-/* ---- último bloque ---- */
+/* ---- latest block ---- */
 .scr-block-head {
   display: flex;
   flex-wrap: wrap;
@@ -130,11 +130,11 @@
 
 .scr-empty { padding: 0.7rem; margin: 0; }
 
-/* ---- pestaña Bloques (filas expandibles) ---- */
+/* ---- Blocks tab (expandable rows) ---- */
 .scr-block-row { cursor: pointer; }
 .scr-block-row:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px; }
 .scr-caret { width: 1.4rem; text-align: center; color: var(--muted); }
-/* La tabla de games del detalle va embebida en una celda: sin doble borde. */
+/* The detail games table is embedded in a cell: no double border. */
 .scr-block-detail-row > td { padding: 0; background: var(--panel2); }
 .scr-block-detail-row .scr-block-table { background: transparent; }
 .scr-block-detail-row .scr-block-table th { background: transparent; }

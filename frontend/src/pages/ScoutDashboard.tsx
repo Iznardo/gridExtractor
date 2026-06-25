@@ -13,18 +13,18 @@ import { ChampIcon } from "../components/icons";
 import { Radar } from "../components/Radar";
 import { daysAgoISO } from "../lib/date";
 import { aggAsScoutPlayers, buildAggregate, seriesBlocks, type Series } from "./scouting/aggregate";
-import "./scrims.css"; // reutiliza estilos de card/tabla/bloque desplegable
+import "./scrims.css"; // reuses card/table/collapsible-block styles
 import "./scouting.css";
 
 const RECENT_DAYS = 14;
-const GAMES_LIMIT = 40; // suficiente para cubrir las 5 series más recientes (Bo5 = 5 games)
+const GAMES_LIMIT = 40; // enough to cover the 5 most recent series (Bo5 = 5 games)
 const OFFICIAL = "OFFICIAL";
 const ROLES: Role[] = ["TOP", "JUNGLE", "MID", "ADC", "SUPPORT"];
 const ROLE_SHORT: Record<Role, string> = {
   TOP: "TOP", JUNGLE: "JNG", MID: "MID", ADC: "ADC", SUPPORT: "SUP",
 };
 
-// ---- #1 Últimos picks (2 semanas, agregado de todas las fuentes) ----
+// ---- #1 Latest picks (2 weeks, aggregate of all sources) ----
 
 function RecentPicks({ teamId }: { teamId: number }) {
   const { data: pool } = useScouting(teamId, { dateFrom: daysAgoISO(RECENT_DAYS) });
@@ -34,11 +34,11 @@ function RecentPicks({ teamId }: { teamId: number }) {
   );
   if (!pool) return <ScoutingSkeleton />;
   if (players.length === 0)
-    return <p className="scr-empty muted">Sin partidas en las últimas {RECENT_DAYS} días.</p>;
+    return <p className="scr-empty muted">No games in the last {RECENT_DAYS} days.</p>;
   return <MediumBox players={players} />;
 }
 
-// ---- #2 Últimas series (oficiales, desplegables) ----
+// ---- #2 Latest series (official, collapsible) ----
 
 function ChampRow({
   champs,
@@ -61,7 +61,7 @@ function SeriesTable({ s }: { s: Series }) {
     <table className="scr-table scr-block-table">
       <thead>
         <tr>
-          <th>G</th><th>Lado</th><th>Res</th><th>Nuestra comp</th><th>Rival</th>
+          <th>G</th><th>Side</th><th>Res</th><th>Our comp</th><th>Rival</th>
         </tr>
       </thead>
       <tbody>
@@ -91,13 +91,13 @@ function RecentSeries({ teamId }: { teamId: number }) {
   );
   const [open, setOpen] = useState<Set<string>>(new Set());
 
-  // Récord de series (gana la serie quien gana la mayoría de sus games).
+  // Series record (you win the series by winning the majority of its games).
   const wins = all.filter((s) => s.wins * 2 > s.total).length;
   const losses = all.length - wins;
 
   const header = (
     <div className="scout-series-head">
-      <h3 className="scr-h3">Últimas 5 series oficiales</h3>
+      <h3 className="scr-h3">Last 5 official series</h3>
       {all.length > 0 && (
         <strong className={"scout-series-rec " + (wins >= losses ? "scr-wr-pos" : "scr-wr-neg")}>
           {wins}W {losses}L
@@ -115,7 +115,7 @@ function RecentSeries({ teamId }: { teamId: number }) {
   }
 
   if (isFetching && !games) return <>{header}<ScoutingSkeleton /></>;
-  if (all.length === 0) return <>{header}<p className="scr-empty muted">Sin partidas oficiales.</p></>;
+  if (all.length === 0) return <>{header}<p className="scr-empty muted">No official games.</p></>;
 
   return (
     <>
@@ -124,8 +124,8 @@ function RecentSeries({ teamId }: { teamId: number }) {
       <table className="scr-table scr-blocks-table">
         <thead>
           <tr>
-            <th aria-label="expandir" />
-            <th>Día</th><th>Parche</th><th>Rival</th><th>Resultado</th>
+            <th aria-label="expand" />
+            <th>Day</th><th>Patch</th><th>Rival</th><th>Result</th>
           </tr>
         </thead>
         <tbody>
@@ -169,7 +169,7 @@ function RecentSeries({ teamId }: { teamId: number }) {
   );
 }
 
-// ---- #4 Bans más baneados en 1ª fase vs el equipo (oficiales) ----
+// ---- #4 Most-banned in phase 1 vs the team (official) ----
 
 function BansFaced({ teamId }: { teamId: number }) {
   const { data } = useChampionPresence({ team_id: teamId, game_types: OFFICIAL });
@@ -182,11 +182,11 @@ function BansFaced({ teamId }: { teamId: number }) {
     [data],
   );
   if (!data) return <ScoutingSkeleton />;
-  if (top.length === 0) return <p className="scr-empty muted">Sin bans de 1ª fase registrados.</p>;
+  if (top.length === 0) return <p className="scr-empty muted">No phase-1 bans recorded.</p>;
   return (
     <div className="scout-ban-list">
       {top.map((r) => (
-        <div key={r.champ_id} className="scout-ban" title={`${r.champ_name ?? r.champ_id}: ${r.banned_vs_p1} bans en 1ª fase`}>
+        <div key={r.champ_id} className="scout-ban" title={`${r.champ_name ?? r.champ_id}: ${r.banned_vs_p1} bans in phase 1`}>
           <ChampIcon id={r.champ_id} name={r.champ_name ?? `#${r.champ_id}`} size={40} />
           <span className="scout-ban-count">{r.banned_vs_p1}</span>
         </div>
@@ -195,7 +195,7 @@ function BansFaced({ teamId }: { teamId: number }) {
   );
 }
 
-// ---- #5 % counterpick por rol (oficiales) ----
+// ---- #5 % counterpick per role (official) ----
 
 function CounterRate({ teamId }: { teamId: number }) {
   const filters = { team_id: teamId, game_types: OFFICIAL };
@@ -213,7 +213,7 @@ function CounterRate({ teamId }: { teamId: number }) {
 
   if (!rows) return <ScoutingSkeleton />;
   if (rows.every((r) => r.total === 0))
-    return <p className="scr-empty muted">Sin datos de pick order.</p>;
+    return <p className="scr-empty muted">No pick order data.</p>;
 
   return (
     <div className="scout-counter">
@@ -233,12 +233,12 @@ function CounterRate({ teamId }: { teamId: number }) {
   );
 }
 
-// ---- #6 Radar de % oro / % daño por jugador (oficiales) ----
+// ---- #6 Radar of gold% / damage% per player (official) ----
 
 function SharesRadar({ teamId }: { teamId: number }) {
   const { data } = usePlayerShares(teamId, { gameTypes: OFFICIAL });
   if (!data) return <ScoutingSkeleton />;
-  if (data.length === 0) return <p className="scr-empty muted">Sin datos de oro/daño.</p>;
+  if (data.length === 0) return <p className="scr-empty muted">No gold/damage data.</p>;
 
   const axes = data.map((d) => ROLE_SHORT[d.role as Role] ?? d.role);
   return (
@@ -246,15 +246,15 @@ function SharesRadar({ teamId }: { teamId: number }) {
       <Radar
         axes={axes}
         series={[
-          { label: "% oro", color: "#fde68a", values: data.map((d) => d.gold_pct ?? 0) },
-          { label: "% daño", color: "#3b82f6", values: data.map((d) => d.dmg_pct ?? 0) },
+          { label: "Gold %", color: "#fde68a", values: data.map((d) => d.gold_pct ?? 0) },
+          { label: "Damage %", color: "#3b82f6", values: data.map((d) => d.dmg_pct ?? 0) },
         ]}
       />
       <table className="scr-table scout-radar-table">
         <thead>
           <tr>
-            <th>Rol</th><th>Jugador</th>
-            <th className="scr-num">Oro%</th><th className="scr-num">Daño%</th>
+            <th>Role</th><th>Player</th>
+            <th className="scr-num">Gold%</th><th className="scr-num">Damage%</th>
           </tr>
         </thead>
         <tbody>
@@ -279,14 +279,14 @@ export function ScoutDashboard({ teamId }: { teamId: number }) {
     <div className="scr-dashboard">
       <section className="scr-section">
         <div className="scout-dash-head">
-          <h3 className="scr-h3">Últimos picks por jugador · últimas {RECENT_DAYS} días (agregado)</h3>
+          <h3 className="scr-h3">Latest picks per player · last {RECENT_DAYS} days (aggregate)</h3>
           <a
             className="btn-ghost btn-ghost-sm scout-dash-link"
             href={`/drafts?team=${teamId}`}
             target="_blank"
             rel="noopener"
           >
-            <ExternalLink size={14} aria-hidden="true" /> Abrir drafts
+            <ExternalLink size={14} aria-hidden="true" /> Open drafts
           </a>
         </div>
         <RecentPicks teamId={teamId} />
@@ -298,17 +298,17 @@ export function ScoutDashboard({ teamId }: { teamId: number }) {
 
       <div className="scout-dash-grid">
         <section className="scr-section">
-          <h3 className="scr-h3">Más baneados en 1ª fase · vs este equipo</h3>
+          <h3 className="scr-h3">Most banned in phase 1 · vs this team</h3>
           <BansFaced teamId={teamId} />
         </section>
         <section className="scr-section">
-          <h3 className="scr-h3">% counterpick por rol</h3>
+          <h3 className="scr-h3">% counterpick per role</h3>
           <CounterRate teamId={teamId} />
         </section>
       </div>
 
       <section className="scr-section">
-        <h3 className="scr-h3">Reparto de oro y daño por jugador</h3>
+        <h3 className="scr-h3">Gold and damage share per player</h3>
         <SharesRadar teamId={teamId} />
       </section>
     </div>

@@ -18,7 +18,7 @@ import type {
   TeamMatchupData,
 } from "./types";
 
-// El catálogo cambia poco: cachéalo agresivamente.
+// The catalog changes rarely: cache it aggressively.
 const CATALOG_OPTS = { staleTime: 60 * 60 * 1000 } as const;
 
 export function useChampions() {
@@ -76,7 +76,7 @@ export function useGames(filters: GameFilters, enabled = true) {
   });
 }
 
-// Detalle de una partida: las 10 picks con stats. Fetch perezoso al expandir.
+// Game detail: the 10 picks with stats. Lazy fetch on expand.
 export function useGamePicks(gameId: number | null) {
   return useQuery({
     queryKey: ["picks", gameId],
@@ -104,10 +104,10 @@ export function usePatches() {
 export type MatchupFilters = {
   champ_id?: number;
   champ_id2?: number;
-  champ_id_b?: number; // 2v2: segundo aliado
-  champ_id2_b?: number; // 2v2: segundo rival
+  champ_id_b?: number; // 2v2: second ally
+  champ_id2_b?: number; // 2v2: second rival
   role?: string;
-  role_b?: string; // 2v2: rol del Aliado 2
+  role_b?: string; // 2v2: Ally 2's role
   tournament?: string;
   patch?: string;
   pick_relation?: "blind" | "counter";
@@ -123,12 +123,12 @@ export function useMatchups(filters: MatchupFilters, enabled = true) {
   });
 }
 
-// Filtros para las vistas de stats de draft (sin champ_id ni limit).
+// Filters for the draft-stats views (no champ_id or limit).
 export type StatsFilters = {
   team_id?: number;
   rival_id?: number;
   game_type?: string;
-  game_types?: string; // CSV multi-fuente: "OFFICIAL,SCRIM"
+  game_types?: string; // multi-source CSV: "OFFICIAL,SCRIM"
   pick_phase?: "first" | "second";
   patch?: string;
   tournament?: string;
@@ -199,11 +199,11 @@ export function useTeamMatchups(filters: StatsFilters, enabled = true) {
   });
 }
 
-// "vs otros equipos" de UN matchup, on-demand (al inspeccionar el matchup). Se
-// calcula por par para no penalizar la carga (ver comentario en el endpoint).
+// "vs other teams" for ONE matchup, on-demand (on matchup inspect). Computed per
+// pair so it does not penalize page load (see the endpoint comment).
 export type LaneMatchupOthers = { games: number; wins: number; win_rate: number | null };
 
-// Solo los filtros de contexto (Pick<> chocaría con el tipo Pick de LoL importado).
+// Context filters only (Pick<> would clash with the imported LoL Pick type).
 export type LaneMatchupCtx = { game_types?: string; patch?: string; tournament?: string };
 
 export function useLaneMatchupOthers(
@@ -219,7 +219,7 @@ export function useLaneMatchupOthers(
           buildQuery({ ...args, ...filters } as QueryParams),
       ),
     enabled: enabled && args.team_id != null,
-    staleTime: 5 * 60_000, // el sample ajeno cambia poco; cachear 5 min
+    staleTime: 5 * 60_000, // the others' sample changes little; cache 5 min
   });
 }
 

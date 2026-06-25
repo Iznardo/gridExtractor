@@ -1,4 +1,4 @@
-/* Leyenda de WR */
+/* WR legend */
 .po-legend {
   padding: 0.35rem 1.2rem 0.1rem;
   font-size: 0.68rem;
@@ -12,7 +12,7 @@
   gap: 1.5rem;
 }
 
-/* ── sección azul / roja ───────────────────────────────────────────────── */
+/* ── blue / red section ─────────────────────────────────────────────────── */
 
 .po-section-label {
   font-size: 0.68rem;
@@ -25,7 +25,7 @@
 .po-section-label.blue { color: var(--blue-fg); }
 .po-section-label.red  { color: var(--red-fg); }
 
-/* Grid de columnas */
+/* Column grid */
 .po-cols {
   display: grid;
   gap: 0.6rem;
@@ -44,7 +44,7 @@
   .po-cols.red  { grid-template-columns: 1fr; }
 }
 
-/* Columna de slot */
+/* Slot column */
 .po-col {
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -70,7 +70,7 @@
   max-height: 260px;
 }
 
-/* Entrada de campeón dentro de la columna */
+/* Champion entry inside the column */
 .po-entry {
   display: flex;
   align-items: center;
@@ -101,10 +101,10 @@
 .po-wr-pos { color: var(--win); }
 .po-wr-neg { color: var(--red-text); }
 
-/* Glifo direccional del WR (refuerzo no-cromático del verde/rojo). */
+/* Directional WR glyph (non-color reinforcement of green/red). */
 .po-wr-arrow { font-size: 0.6rem; margin-right: 1px; }
 
-/* Skeleton dentro de columna */
+/* Skeleton inside the column */
 .po-skel {
   height: 30px;
   margin: 4px 8px;
@@ -120,7 +120,7 @@
   .po-skel { animation: none; }
 }
 
-/* ── tablas de distribución de rol ─────────────────────────────────────── */
+/* ── role distribution tables ───────────────────────────────────────────── */
 
 .rd-pair {
   display: grid;
@@ -182,9 +182,9 @@
   font-size: 0.72rem;
 }
 
-/* Heatmap de rol — el hue sigue el lado de la tabla para no colisionar con la
-   semántica de color: Blue Side usa azul, Red Side usa rojo. Antes ambas tablas
-   usaban azul, tiñendo de azul (= acción/lado azul) la tabla de Red Side
+/* Role heatmap — the hue follows the table side so it doesn't collide with the
+   color semantics: Blue Side uses blue, Red Side uses red. Previously both tables
+   used blue, tinting the Red Side table blue (= blue action/side)
    (Semantic-Only Colour Rule, DESIGN.md §2). */
 .rd-table.blue .rd-heat-1 { background: rgba(59, 130, 246, 0.08); }
 .rd-table.blue .rd-heat-2 { background: rgba(59, 130, 246, 0.16); }
@@ -198,9 +198,9 @@
 .rd-table.red .rd-heat-4 { background: rgba(239, 68, 68, 0.40); }
 .rd-table.red .rd-heat-5 { background: rgba(239, 68, 68, 0.54); color: var(--red-fg); }
 
-/* Sub-línea de WR dentro de la celda: hereda el color de texto de la celda
-   (que en heat-5 ya es el fg legible) y de-enfatiza por opacidad, no por un gris
-   --muted que perdía contraste sobre los tintes fuertes. */
+/* WR sub-line inside the cell: inherits the cell's text color (which at heat-5
+   is already the legible fg) and de-emphasizes by opacity, not by a --muted gray
+   that lost contrast over strong tints. */
 .rd-wr {
   font-size: 0.65rem;
   color: inherit;

@@ -1,7 +1,7 @@
 /**
- * Radar (estrella) en SVG puro — sin dependencias. Plano y preciso: rejilla
- * hairline 1px, sin sombras, color por serie (encoding de dato). Cada eje es una
- * categoría; cada serie un polígono superpuesto.
+ * Radar (star) chart in pure SVG — no dependencies. Flat and precise: 1px
+ * hairline grid, no shadows, color per series (data encoding). Each axis is a
+ * category; each series an overlaid polygon.
  */
 import "./radar.css";
 
@@ -26,7 +26,7 @@ export function Radar({
   const n = axes.length;
   if (n < 3) return null;
 
-  const pad = 30; // espacio para las etiquetas de eje
+  const pad = 30; // room for the axis labels
   const cx = size / 2;
   const cy = size / 2;
   const R = size / 2 - pad;
@@ -59,7 +59,7 @@ export function Radar({
         aria-label={ariaLabel}
         className="radar-svg"
       >
-        {/* rejilla concéntrica */}
+        {/* concentric grid */}
         {rings.map((r) => (
           <polygon
             key={r}
@@ -67,7 +67,7 @@ export function Radar({
             className="radar-grid"
           />
         ))}
-        {/* radios */}
+        {/* spokes */}
         {axes.map((_, i) => {
           const [x, y] = point(i, 1);
           return <line key={i} x1={cx} y1={cy} x2={x} y2={y} className="radar-spoke" />;
@@ -81,7 +81,7 @@ export function Radar({
             style={{ stroke: s.color, fill: s.color }}
           />
         ))}
-        {/* etiquetas de eje */}
+        {/* axis labels */}
         {axes.map((ax, i) => {
           const [x, y] = point(i, 1.16);
           return (

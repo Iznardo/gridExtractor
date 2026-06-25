@@ -16,10 +16,10 @@ import {
 
 export type DdragonData = {
   version: string;
-  perks: Map<number, RuneDef>; // todas las runas (no shards) por id
-  styles: Map<number, RuneStyle>; // árboles (Domination, etc.) por id
-  spells: Map<number, { name: string; image: string }>; // summoner spells por id
-  items: Map<number, string>; // id → nombre de ítem
+  perks: Map<number, RuneDef>; // all runes (not shards) by id
+  styles: Map<number, RuneStyle>; // trees (Domination, etc.) by id
+  spells: Map<number, { name: string; image: string }>; // summoner spells by id
+  items: Map<number, string>; // id -> item name
 };
 
 const EMPTY: DdragonData = {
@@ -36,7 +36,7 @@ async function loadDdragon(): Promise<DdragonData> {
     const versions: string[] = await (await fetch(versionsUrl())).json();
     if (versions?.[0]) version = versions[0];
   } catch {
-    /* usa fallback */
+    /* use fallback */
   }
 
   const perks = new Map<number, RuneDef>();
@@ -53,7 +53,7 @@ async function loadDdragon(): Promise<DdragonData> {
       }
     }
   } catch {
-    /* runas no disponibles */
+    /* runes unavailable */
   }
 
   try {
@@ -62,7 +62,7 @@ async function loadDdragon(): Promise<DdragonData> {
       spells.set(Number(s.key), { name: s.name, image: s.image.full });
     }
   } catch {
-    /* spells no disponibles */
+    /* spells unavailable */
   }
 
   try {
@@ -71,7 +71,7 @@ async function loadDdragon(): Promise<DdragonData> {
       items.set(Number(id), item.name);
     }
   } catch {
-    /* ítems no disponibles */
+    /* items unavailable */
   }
 
   return { version, perks, styles, spells, items };

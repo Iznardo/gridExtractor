@@ -1,6 +1,6 @@
-// Tipos espejo de las respuestas de la API (src/api/ de gridExtractor).
-// Verificados contra los routers reales; los campos nullables reflejan la
-// realidad de los datos (soloq no tiene equipos, GRID no tiene team_position...).
+// Mirror types of the API responses (gridExtractor src/api/).
+// Verified against the real routers; nullable fields reflect the data reality
+// (soloq has no teams, GRID has no team_position...).
 
 export type Side = "BLUE" | "RED";
 export type GameResult = "BLUE" | "RED" | "NONE";
@@ -9,7 +9,7 @@ export type GameType = "OFFICIAL" | "SCRIM" | "SOLOQ";
 export type ChampRef = { id: number; name: string | null };
 export type TeamRef = { id: number; name: string; tag: string | null } | null;
 
-// ---- catálogo ----
+// ---- catalog ----
 export type Champion = { id: number; name: string; alias: string };
 export type Team = { id: number; name: string; tag: string | null };
 export type Player = {
@@ -129,7 +129,7 @@ export type Matchup = {
   team2: TeamRef;
   pick: MatchupSide;
   opponent: MatchupSide | null;
-  // 2v2: segundo aliado del mismo lado y su rival de carril. null en 1v1.
+  // 2v2: second ally on the same side and its lane rival. null in 1v1.
   pick_ally: MatchupSide | null;
   opponent_ally: MatchupSide | null;
 };
@@ -149,19 +149,19 @@ export type ChampionPresenceRow = {
   bans: number;
   banned_by: number;
   banned_vs: number;
-  banned_by_p1: number; // baneados por el equipo en 1ª fase de baneo
-  banned_vs_p1: number; // baneados contra el equipo en 1ª fase de baneo
+  banned_by_p1: number; // banned by the team in the 1st ban phase
+  banned_vs_p1: number; // banned against the team in the 1st ban phase
   total_games: number;
   presence_pct: number;
   picked_pct: number;
   win_rate: number | null;
-  // picks y wins por game number
+  // picks and wins per game number
   picks_g1: number; wins_g1: number; picks_g1_by: number; picks_g1_vs: number;
   picks_g2: number; wins_g2: number; picks_g2_by: number; picks_g2_vs: number;
   picks_g3: number; wins_g3: number; picks_g3_by: number; picks_g3_vs: number;
   picks_g4: number; wins_g4: number; picks_g4_by: number; picks_g4_vs: number;
   picks_g5: number; wins_g5: number; picks_g5_by: number; picks_g5_vs: number;
-  // total de partidas en cada game number (igual en todas las filas)
+  // total games per game number (same across all rows)
   total_g1: number;
   total_g2: number;
   total_g3: number;
@@ -233,7 +233,7 @@ export type TeamMatchupEntry = {
   games: number;
   wins: number;
   win_rate: number | null;
-  // diferencias de carril (media nuestro − rival) desde midgame; null sin muestra
+  // lane diffs (mean ours − rival) from midgame; null when no sample
   cs_diff_7: number | null;
   gold_diff_7: number | null;
   cs_diff_14: number | null;
@@ -245,8 +245,8 @@ export type BaselineEntry = { games: number; wins: number; win_rate: number | nu
 export type TeamMatchupData = {
   /** Keyed by role (TOP/JUNGLE/MID/ADC/SUPPORT). */
   matchups: Partial<Record<string, TeamMatchupEntry[]>>;
-  /** role → champ_id → WR del equipo con ese campeón EN ESE ROL (todos los
-   *  rivales). El front resta la fila del matchup para excluirlo del delta. */
+  /** role -> champ_id -> the team's WR with that champion IN THAT ROLE (all
+   *  rivals). The frontend subtracts the matchup row to exclude it from the delta. */
   baseline: Partial<Record<string, Record<number, BaselineEntry>>>;
 };
 
@@ -268,7 +268,7 @@ export type ScoutingPool = {
 
 // ---- /scrims/games ----
 export type ScrimRole = "TOP" | "JUNGLE" | "MID" | "ADC" | "SUPPORT";
-/** Una fila por scrim del equipo trackeado. El front agrega (duos/trios/etc.). */
+/** One row per scrim of the tracked team. The frontend aggregates (duos/trios/etc.). */
 export type ScrimGame = {
   game_id: number;
   date: string;
@@ -276,8 +276,8 @@ export type ScrimGame = {
   our_side: Side;
   won: boolean;
   first_pick: boolean;
-  block_game_number: number; // posición dentro del bloque vs ese rival
+  block_game_number: number; // position within the block vs that rival
   rival: { id: number; name: string; tag: string | null } | null;
-  lineup: Record<ScrimRole, number | null>; // champ_id por rol (lado propio)
-  rival_champs: number[]; // picks rivales, lista plana (sin rol)
+  lineup: Record<ScrimRole, number | null>; // champ_id per role (our side)
+  rival_champs: number[]; // rival picks, flat list (no role)
 };

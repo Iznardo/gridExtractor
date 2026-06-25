@@ -34,7 +34,7 @@ const LIMIT_DEFAULT = "50";
 function CompCell({ champions, side }: { champions: ChampRef[]; side?: "BLUE" | "RED" }) {
   if (!champions.length) return <span className="muted">—</span>;
   return (
-    <div className="comp" aria-label={side ? `Composición ${side}` : undefined}>
+    <div className="comp" aria-label={side ? `Composition ${side}` : undefined}>
       {champions.map((c, i) => (
         <ChampIcon key={i} id={c.id} name={c.name} size={24} />
       ))}
@@ -62,7 +62,7 @@ const columns = [
       <button
         type="button"
         className="expander"
-        aria-label={row.getIsExpanded() ? "Colapsar" : "Desplegar"}
+        aria-label={row.getIsExpanded() ? "Collapse" : "Expand"}
         aria-expanded={row.getIsExpanded()}
       >
         {row.getIsExpanded() ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
@@ -70,15 +70,15 @@ const columns = [
     ),
   }),
   col.accessor("game_number", {
-    header: () => <span title="Número de partida dentro de la serie">G#</span>,
+    header: () => <span title="Game number within the series">G#</span>,
     cell: ({ getValue }) => {
       const n = getValue();
       return n != null ? <span className="game-num">G{n}</span> : <span className="muted">—</span>;
     },
   }),
-  col.accessor("date", { header: "Fecha" }),
-  col.accessor((g) => g.tournament ?? "—", { id: "tournament", header: "Torneo" }),
-  col.accessor((g) => (g.version ? `v${g.version}` : "—"), { id: "version", header: "Parche" }),
+  col.accessor("date", { header: "Date" }),
+  col.accessor((g) => g.tournament ?? "—", { id: "tournament", header: "Tournament" }),
+  col.accessor((g) => (g.version ? `v${g.version}` : "—"), { id: "version", header: "Patch" }),
   col.accessor("team1", { header: "BLUE", cell: ({ getValue }) => teamLabel(getValue()) }),
   col.accessor("team2", { header: "RED", cell: ({ getValue }) => teamLabel(getValue()) }),
   col.display({
@@ -93,7 +93,7 @@ const columns = [
   }),
   col.display({
     id: "result",
-    header: "Ganador",
+    header: "Winner",
     cell: ({ row }) => (
       <ResultCell
         result={row.original.result}
@@ -114,10 +114,10 @@ export function Games() {
   const { byName, list: champList } = useChampMaps();
   const [params, setParams] = useSearchParams();
 
-  // Contexto de scouting compartido: arrastra el equipo+parche aplicados.
+  // Shared scouting context: carries the applied team+patch.
   useScoutingContextSync(params.get("team") ?? "", params.get("patch") ?? "");
 
-  // Formulario inicializado desde la URL — un link compartido pre-rellena filtros.
+  // Form seeded from the URL — a shared link pre-fills the filters.
   const [teamId, setTeamId] = useState(() => params.get("team") ?? "");
   const [champ, setChamp] = useState(() => params.get("champ") ?? "");
   const [champ2, setChamp2] = useState(() => params.get("champ2") ?? "");
@@ -130,7 +130,7 @@ export function Games() {
   const [formError, setFormError] = useState("");
   const [expanded, setExpanded] = useState<ExpandedState>({});
 
-  // La búsqueda activa vive en la URL (única fuente de verdad → compartible/bookmarkeable).
+  // The active search lives in the URL (single source of truth -> shareable/bookmarkable).
   const applied = useMemo<GameFilters>(() => {
     const champName = params.get("champ")?.trim().toLowerCase();
     const champ2Name = params.get("champ2")?.trim().toLowerCase();
@@ -160,13 +160,13 @@ export function Games() {
     setFormError("");
     const c1 = resolve(champ);
     const c2 = resolve(champ2);
-    if (c1 === null) return setFormError(`Campeón no reconocido: "${champ}".`);
-    if (c2 === null) return setFormError(`Campeón no reconocido: "${champ2}".`);
+    if (c1 === null) return setFormError(`Unrecognized champion: "${champ}".`);
+    if (c2 === null) return setFormError(`Unrecognized champion: "${champ2}".`);
     if (opposing && (c1 == null || c2 == null)) {
-      return setFormError("«Lados opuestos» requiere dos campeones.");
+      return setFormError("«Opposing sides» requires two champions.");
     }
     if (dateFrom && dateTo && dateFrom > dateTo) {
-      return setFormError("La fecha «Desde» no puede ser posterior a «Hasta».");
+      return setFormError("The «From» date cannot be after «To».");
     }
     const effectiveLimit = limit.trim() || LIMIT_DEFAULT;
     if (effectiveLimit !== limit) setLimit(effectiveLimit);
@@ -205,11 +205,11 @@ export function Games() {
     if (params.get("team")) out.push(teamName(params.get("team")!));
     if (params.get("champ")) out.push(`«${params.get("champ")}»`);
     if (params.get("champ2")) out.push(`matchup ${params.get("champ2")}`);
-    if (params.get("opposing") === "1") out.push("lados opuestos");
-    if (params.get("patch")) out.push(`parche ${params.get("patch")}`);
-    if (params.get("dateFrom")) out.push(`desde ${params.get("dateFrom")}`);
-    if (params.get("dateTo")) out.push(`hasta ${params.get("dateTo")}`);
-    if (params.get("limit")) out.push(`${params.get("limit")} partidas`);
+    if (params.get("opposing") === "1") out.push("opposing sides");
+    if (params.get("patch")) out.push(`patch ${params.get("patch")}`);
+    if (params.get("dateFrom")) out.push(`from ${params.get("dateFrom")}`);
+    if (params.get("dateTo")) out.push(`to ${params.get("dateTo")}`);
+    if (params.get("limit")) out.push(`${params.get("limit")} games`);
     return out;
   }
 
@@ -231,49 +231,49 @@ export function Games() {
   return (
     <div className="page">
       <FilterBar onSubmit={submit}>
-        <Field label="Equipo">
+        <Field label="Team">
           <TeamPicker value={teamId} onChange={setTeamId} teams={teams ?? []} />
         </Field>
-        <Field label="Campeón">
+        <Field label="Champion">
           <ChampionPicker value={champ} onChange={setChamp} champions={champList} />
         </Field>
-        <Field label="Campeón 2 (matchup)">
-          <ChampionPicker value={champ2} onChange={setChamp2} champions={champList} placeholder="ej. Yasuo" />
+        <Field label="Champion 2 (matchup)">
+          <ChampionPicker value={champ2} onChange={setChamp2} champions={champList} placeholder="e.g. Yasuo" />
         </Field>
         <label className="field check">
-          <span className="field-label">Lados opuestos</span>
+          <span className="field-label">Opposing sides</span>
           <input
             type="checkbox"
             checked={opposing}
             onChange={(e) => setOpposing(e.target.checked)}
-            title="Marcado: los dos campeones en lados contrarios. Sin marcar: cualquier equipo."
+            title="Checked: the two champions on opposite sides. Unchecked: any team."
           />
         </label>
-        <Field label="Parche">
+        <Field label="Patch">
           <input value={patch} onChange={(e) => setPatch(e.target.value)} placeholder="14.23" size={8} />
         </Field>
-        <Field label="Desde">
+        <Field label="From">
           <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
         </Field>
-        <Field label="Hasta">
+        <Field label="To">
           <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
         </Field>
-        <Field label="Límite">
+        <Field label="Limit">
           <input type="number" value={limit} min={1} max={500} onChange={(e) => setLimit(e.target.value)} size={5} />
         </Field>
-        <button type="submit" className="btn-primary">Buscar</button>
+        <button type="submit" className="btn-primary">Search</button>
         {hasFilters && (
-          <button type="button" className="btn-ghost" onClick={clearFilters}>Limpiar</button>
+          <button type="button" className="btn-ghost" onClick={clearFilters}>Clear</button>
         )}
       </FilterBar>
 
       {hasFilters && (
-        <div className="filter-chips" aria-label="Filtros activos">
+        <div className="filter-chips" aria-label="Active filters">
           {activeFilterLabels().map((label, i) => (
             <span key={i} className="filter-chip">{label}</span>
           ))}
           <button type="button" className="filter-chip-clear" onClick={clearFilters}>
-            × limpiar
+            × clear
           </button>
         </div>
       )}
@@ -283,12 +283,12 @@ export function Games() {
       )}
 
       <p className={"status" + (error ? " error" : "")} role="status" aria-live="polite">
-        {error ? (error as Error).message : isFetching ? "Buscando…" : games == null ? " " : `${games.length} partidas.`}
+        {error ? (error as Error).message : isFetching ? "Searching…" : games == null ? " " : `${games.length} games.`}
       </p>
 
       <div className="games-table-wrap">
         <table className="games-table">
-          <caption className="sr-only">Partidas oficiales</caption>
+          <caption className="sr-only">Official games</caption>
           <thead>
             {table.getHeaderGroups().map((hg) => (
               <tr key={hg.id}>

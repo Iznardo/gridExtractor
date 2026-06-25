@@ -5,10 +5,10 @@
   padding: 0.6em 1.2rem;
   border-bottom: 1px solid var(--border);
   background: var(--panel);
-  /* Barra superior (logo + navegación) congelada a 14px: no escala con el
-     tamaño base de la app (index.css), que se sube para agrandar los datos.
-     Sus hijos usan em o heredan, relativos a este 14px. El padding horizontal
-     queda en rem para alinear con el contenido de las páginas. */
+  /* Top bar (logo + navigation) frozen at 14px: it does not scale with the
+     app base size (index.css), which is raised to enlarge the data. Its children
+     use em or inherit, relative to this 14px. Horizontal padding stays in rem to
+     align with the page content. */
   font-size: 14px;
 }
 

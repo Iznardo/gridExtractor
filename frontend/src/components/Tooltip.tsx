@@ -6,22 +6,22 @@ import "./tooltip.css";
 
 type TipState = { x: number; y: number; below: boolean };
 
-// Tooltip propio que sustituye al atributo `title` nativo. Motivo: en
-// Chrome/Windows el title del navegador sale como cajita blanca del SO, sin
-// estilar y con retardo — incoherente con el tema oscuro (en Firefox se integra
-// mejor). Este se renderiza en un portal a <body> con position:fixed, así que
-// escapa del overflow del contenedor (p. ej. .cp-wrap con overflow-x:auto) sin
-// recortarse, y se ve igual en todos los navegadores. Soporta multilínea: el
-// string con "\n" se respeta vía white-space:pre-line en tooltip.css.
+// Custom tooltip replacing the native `title` attribute. Why: on Chrome/Windows
+// the browser title shows as an unstyled OS box with a delay — inconsistent with
+// the dark theme (Firefox integrates better). This renders in a portal to <body>
+// with position:fixed, so it escapes the container's overflow (e.g. .cp-wrap
+// with overflow-x:auto) without clipping, and looks the same in every browser.
+// Supports multiline: a string with "\n" is honored via white-space:pre-line in
+// tooltip.css.
 //
-// Uso: const { anchorProps, tip } = useTooltip(content);
-//      <td {...anchorProps}>…{tip}</td>
+// Usage: const { anchorProps, tip } = useTooltip(content);
+//        <td {...anchorProps}>…{tip}</td>
 export function useTooltip(content: ReactNode) {
   const [state, setState] = useState<TipState | null>(null);
 
   function show(e: MouseEvent | FocusEvent) {
     const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    const below = r.top < 80; // pegado al borde superior (thead sticky) → abajo
+    const below = r.top < 80; // near the top edge (sticky thead) -> show below
     setState({ x: r.left + r.width / 2, y: below ? r.bottom : r.top, below });
   }
   function hide() {

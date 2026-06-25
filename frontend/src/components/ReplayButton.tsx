@@ -9,9 +9,9 @@ function filenameFromDisposition(header: string | null, fallback: string): strin
   return m ? m[1] : fallback;
 }
 
-// Botón de descarga de replay: icono solo, inline.
-// Llama stopPropagation para no activar el expander del padre.
-// Error: icono se vuelve rojo + tooltip con el mensaje.
+// Replay download button: icon only, inline.
+// Calls stopPropagation so it does not trigger the parent's expander.
+// On error: the icon turns red + tooltip with the message.
 export function ReplayButton({ gameId }: { gameId: number }) {
   const [state, setState] = useState<"idle" | "loading">("idle");
   const [error, setError] = useState("");
@@ -27,7 +27,7 @@ export function ReplayButton({ gameId }: { gameId: number }) {
         try {
           const body = await res.json();
           if (typeof body?.detail === "string") detail = body.detail;
-        } catch { /* sin cuerpo JSON */ }
+        } catch { /* no JSON body */ }
         setError(detail);
         return;
       }
@@ -45,7 +45,7 @@ export function ReplayButton({ gameId }: { gameId: number }) {
       a.remove();
       URL.revokeObjectURL(url);
     } catch (err) {
-      setError((err as Error).message || "Fallo de red");
+      setError((err as Error).message || "Network failure");
     } finally {
       setState("idle");
     }
@@ -57,8 +57,8 @@ export function ReplayButton({ gameId }: { gameId: number }) {
       className={"btn-ghost btn-ghost-sm replay-btn" + (error ? " replay-btn-error" : "")}
       onClick={download}
       disabled={state === "loading"}
-      title={error || "Descargar replay (.rofl)"}
-      aria-label={error || "Descargar replay (.rofl)"}
+      title={error || "Download replay (.rofl)"}
+      aria-label={error || "Download replay (.rofl)"}
     >
       {state === "loading" ? (
         <Loader2 size={13} className="spin" />

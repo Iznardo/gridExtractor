@@ -1,18 +1,18 @@
-/* Token de WR neutro (entre rojo y verde) */
+/* Neutral WR token (between red and green) */
 :root {
-  --wr-mid: #ca8a04; /* amarillo oscuro — legible sobre --panel */
+  --wr-mid: #ca8a04; /* dark yellow — legible over --panel */
 }
 
 .scout-results {
   padding: 0 1.2rem 2rem;
 }
 
-/* La ventana Blind/Counter reusa RolePickSection, que ya trae su propio inset
-   horizontal de 1.2rem; dentro de scout-results (también con inset) eso doblaría
-   el margen. Se neutraliza para alinear con el resto de ventanas. */
+/* The Blind/Counter view reuses RolePickSection, which already brings its own
+   1.2rem horizontal inset; inside scout-results (also inset) that would double
+   the margin. It is neutralized to align with the rest of the views. */
 .scout-results .rps-section { padding-left: 0; padding-right: 0; }
 
-/* ---- box (un panel envolviendo los tabs) ---- */
+/* ---- box (a panel wrapping the tabs) ---- */
 .scout-box {
   background: var(--panel);
   border: 1px solid var(--border);
@@ -20,7 +20,7 @@
   overflow: hidden;
 }
 
-/* tabs-head dentro del box: sin margen inferior, fondo panel2 */
+/* tabs-head inside the box: no bottom margin, panel2 background */
 .scout-box .tabs-head {
   margin-bottom: 0;
   padding: 0 0.6rem;
@@ -31,7 +31,7 @@
   padding: 0;
 }
 
-/* ---- barra fuentes Agregado ---- */
+/* ---- Aggregate sources bar ---- */
 .agg-source-bar {
   display: flex;
   align-items: center;
@@ -74,7 +74,7 @@
   font-style: italic;
 }
 
-/* ---- toggle expand global por sección ---- */
+/* ---- global expand toggle per section ---- */
 .pool-expand-footer {
   display: flex;
   justify-content: center;
@@ -93,7 +93,7 @@
 }
 .pool-expand-toggle:hover { color: var(--text); }
 
-/* ---- grid de 5 columnas ---- */
+/* ---- 5-column grid ---- */
 .pool-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
@@ -114,7 +114,7 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  /* alinea headers aunque una columna esté vacía */
+  /* aligns headers even if a column is empty */
   min-height: 46px;
   justify-content: center;
 }
@@ -135,7 +135,7 @@
   text-overflow: ellipsis;
 }
 
-/* ---- lista de campeones ---- */
+/* ---- champion list ---- */
 .pool-champs {
   display: flex;
   flex-direction: column;
@@ -182,7 +182,7 @@
   white-space: nowrap;
 }
 
-/* pool-n: fallback para n < WR_MIN_GAMES */
+/* pool-n: fallback for n < WR_MIN_GAMES */
 .pool-n {
   font-size: 0.72rem;
   color: var(--muted);
@@ -259,10 +259,10 @@
   .sk-bar, .sk-icon { animation: none; }
 }
 
-/* Header de dashboard con enlace (.scout-dash-head / .scout-dash-link) vive en
-   scrims.css: es la base compartida por ambos dashboards (Scouting y Scrims). */
+/* The dashboard header with link (.scout-dash-head / .scout-dash-link) lives in
+   scrims.css: it is the base shared by both dashboards (Scouting and Scrims). */
 
-/* ---- Dashboard Fase 2: bans, counter%, radar ---- */
+/* ---- Dashboard Phase 2: bans, counter%, radar ---- */
 .scout-dash-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -270,7 +270,7 @@
 }
 @media (max-width: 760px) { .scout-dash-grid { grid-template-columns: 1fr; } }
 
-/* bans 1ª fase */
+/* phase-1 bans */
 .scout-ban-list { display: flex; flex-wrap: wrap; gap: 0.6rem; }
 .scout-ban { position: relative; line-height: 0; }
 .scout-ban-count {
@@ -290,7 +290,7 @@
   line-height: 15px;
 }
 
-/* counter% por rol */
+/* counter% per role */
 .scout-counter { display: flex; flex-direction: column; gap: 7px; }
 .scout-counter-row { display: grid; grid-template-columns: 64px 1fr auto; align-items: center; gap: 8px; }
 .scout-counter-role {
@@ -309,7 +309,7 @@
 .scout-counter-fill { height: 100%; background: var(--blue); }
 .scout-counter-val { font-size: 0.78rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
 
-/* radar + tabla */
+/* radar + table */
 .scout-radar-wrap { display: flex; flex-wrap: wrap; gap: 1.4rem; align-items: center; }
 .scout-radar-table { min-width: 280px; flex: 1; }
 

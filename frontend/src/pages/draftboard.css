@@ -5,14 +5,14 @@
   overflow: hidden;
   width: 100%;
   min-width: 0;
-  /* Permite consultar el ancho REAL de la card (no el del viewport): las cards
-     se quedan más estrechas justo antes de cada salto de columnas. */
+  /* Lets us query the REAL card width (not the viewport's): cards get narrower
+     right before each column break. */
   container-type: inline-size;
 }
 
-/* Card estrecha: priorizamos los nombres de equipo y ocultamos los pills de
-   lado (BLUE/RED). Mejor saber QUÉ equipos jugaron que en qué lado cuando no
-   cabe todo. La W (victoria) se mantiene: es pequeña y es info clave. */
+/* Narrow card: prioritize team names and hide the side pills (BLUE/RED). Better
+   to know WHICH teams played than which side when not everything fits. The W
+   (win) stays: it's small and it's key info. */
 @container (max-width: 240px) {
   .dh-side { display: none; }
 }
@@ -25,7 +25,7 @@
   padding: 0.5rem 0.7rem;
   gap: 0.35rem;
 }
-/* Equipos debajo de la meta: first pick a la izquierda, second pick a la derecha. */
+/* Teams below the meta: first pick on the left, second pick on the right. */
 .db-teams {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -41,8 +41,8 @@
 .dh-team.sp { justify-content: flex-end; }
 .dh-name { font-weight: 700; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-/* Meta arriba, SIEMPRE en una sola línea (sin wrap); el torneo recortado
-    elipsa si no cabe, fecha y versión quedan siempre visibles. */
+/* Meta on top, ALWAYS on a single line (no wrap); the truncated tournament
+    ellipsizes if it doesn't fit, date and version stay always visible. */
 .db-meta {
   display: flex;
   flex-flow: row nowrap;
@@ -55,7 +55,7 @@
   white-space: nowrap;
 }
 .db-meta > span:first-child,
-.db-meta > span:last-child { flex: 0 0 auto; }   /* fecha y versión no encogen */
+.db-meta > span:last-child { flex: 0 0 auto; }   /* date and version don't shrink */
 .db-meta > span:not(:first-child)::before {
   content: "·";
   margin-right: 0.3rem;
@@ -63,8 +63,8 @@
 }
 .db-meta .db-tourn { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 
-/* Nombre completo del torneo, debajo de los equipos. Envuelve si hace falta
-    (no elipsa: queremos el nombre completo, y aquí sí hay sitio para 2 líneas). */
+/* Full tournament name, below the teams. Wraps if needed (no ellipsis: we want
+    the full name, and here there is room for 2 lines). */
 .db-tourn-full {
   font-size: 0.64rem;
   color: var(--muted);
@@ -76,21 +76,21 @@
 .row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  grid-auto-rows: 36px; /* track fijo: una imagen rota/sin cargar (object-fit:
-                           cover, natural 0x0) inflaba el max-content de su celda
-                           y estiraba la fila; la celda vacía hermana se iba con
-                           ella. Fijar el track lo impide de raíz. */
+  grid-auto-rows: 36px; /* fixed track: a broken/unloaded image (object-fit:
+                           cover, natural 0x0) inflated the max-content of its
+                           cell and stretched the row; the sibling empty cell
+                           went with it. Fixing the track prevents this entirely. */
   align-items: center;
   border-bottom: 1px solid #00000030;
 }
-.ban-row  { background: #202024; }       /* gris neutro — iconos en greyscale ya dan el tono */
-.pick-row { /* fondo gestionado por celda */ }
+.ban-row  { background: #202024; }       /* neutral gray — greyscale icons already set the tone */
+.pick-row { /* background handled per cell */ }
 
-/* FP (izquierda): 2 azules alternos — B1=a  B2-3=b  B4-5=a */
+/* FP (left): 2 alternating blues — B1=a  B2-3=b  B4-5=a */
 .cell.ph-fp-a { background: var(--draft-fp-a); }
 .cell.ph-fp-b { background: var(--draft-fp-b); }
 
-/* SP (derecha): 2 rojos alternos — R1-2=a  R3=b  R4=a  R5=b */
+/* SP (right): 2 alternating reds — R1-2=a  R3=b  R4=a  R5=b */
 .cell.ph-sp-a { background: var(--draft-sp-a); }
 .cell.ph-sp-b { background: var(--draft-sp-b); }
 
@@ -111,4 +111,4 @@
 .cell .cn { font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cell.ban .cn { font-weight: 500; }
 
-/* ---- skeleton: .sk-line / .sk-chip son utilidades globales (index.css) ---- */
+/* ---- skeleton: .sk-line / .sk-chip are global utilities (index.css) ---- */

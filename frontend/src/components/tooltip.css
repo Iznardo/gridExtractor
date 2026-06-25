@@ -1,9 +1,9 @@
-/* Tooltip propio (ver Tooltip.tsx). Renderizado en portal a <body>, posicionado
-   con position:fixed sobre coordenadas de getBoundingClientRect. */
+/* Custom tooltip (see Tooltip.tsx). Rendered in a portal to <body>, positioned
+   with position:fixed over getBoundingClientRect coordinates. */
 .tip {
   position: fixed;
   z-index: var(--z-tooltip);
-  /* Por defecto encima del ancla, centrado; 6px de holgura. */
+  /* By default above the anchor, centered; 6px of slack. */
   transform: translate(-50%, calc(-100% - 6px));
   max-width: 280px;
   padding: 6px 9px;
@@ -13,13 +13,13 @@
   color: var(--text);
   font-size: 0.78rem;
   line-height: 1.45;
-  white-space: pre-line; /* respeta los \n de los tooltips multilínea */
+  white-space: pre-line; /* respects the \n of multi-line tooltips */
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
-  pointer-events: none; /* no debe interceptar el ratón sobre la celda */
+  pointer-events: none; /* must not intercept the mouse over the cell */
   animation: tip-fade 100ms ease-out;
 }
 
-/* Cuando el ancla está pegada al borde superior, se muestra debajo. */
+/* When the anchor is flush with the top edge, it shows below. */
 .tip-below {
   transform: translate(-50%, 6px);
 }

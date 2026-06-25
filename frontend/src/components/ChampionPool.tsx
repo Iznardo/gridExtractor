@@ -1,11 +1,8 @@
 /**
- * Pool de campeones por rol — componente compartido entre Scouting y Scrims.
+ * Champion pool by role — component shared between Scouting and Scrims.
  *
- * Extraído de Scouting.tsx sin cambios de lógica para poder reutilizarlo en el
- * dashboard de Scrims (pools por jugador: último parche / últimos 7 días).
- *
- * Las clases CSS viven en pages/scouting.css (globales una vez importadas); se
- * importan aquí para que el componente sea autónomo donde se use.
+ * The CSS classes live in pages/scouting.css (global once imported); imported
+ * here so the component is self-contained wherever it is used.
  */
 import { useState } from "react";
 
@@ -121,7 +118,7 @@ export function PoolColumn({
           })}
         </div>
       ) : (
-        <p className="pool-empty muted">Sin partidas</p>
+        <p className="pool-empty muted">No games</p>
       )}
     </div>
   );
@@ -156,7 +153,7 @@ export function MediumBox({ players }: { players: ScoutPlayer[] }) {
             className="pool-expand-toggle"
             onClick={() => setExpanded((v) => !v)}
           >
-            {expanded ? "Colapsar" : "Ver todo"}
+            {expanded ? "Collapse" : "Show all"}
           </button>
         </div>
       )}

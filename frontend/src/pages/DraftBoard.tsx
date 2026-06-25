@@ -4,8 +4,8 @@ import "./draftboard.css";
 
 type TeamSide = { id: number; name: string; tag: string | null; side: Side | null } | null;
 
-// El segundo pick es el equipo de la partida que NO es first pick; su lado es
-// el contrario (first/second pick y blue/red son ejes independientes, 2026).
+// The second pick is the game's team that is NOT first pick; its side is the
+// opposite (first/second pick and blue/red are independent axes).
 function secondPickTeam(d: Draft): TeamSide {
   const fpId = d.first_pick_team?.id ?? null;
   for (const t of [d.team1, d.team2]) {
@@ -127,9 +127,9 @@ export function DraftBoardSkeleton() {
 export function DraftBoard({ d }: { d: Draft }) {
   const fp = d.first_pick_team;
   const sp = secondPickTeam(d);
-  // Arriba mostramos el torneo recortado hasta el primer "-" (en scrims es
-  // "SCRIM"); no mostramos el game_type ("OFFICIAL"). El nombre completo va
-  // debajo de los equipos, solo si difiere del recorte (evita duplicar "SCRIM").
+  // Up top we show the tournament trimmed to the first "-" (for scrims it is
+  // "SCRIM"); we do not show the game_type ("OFFICIAL"). The full name goes
+  // below the teams, only if it differs from the trim (avoids duplicating "SCRIM").
   const tournFull = d.tournament ?? null;
   const tournShort = tournFull ? tournFull.split("-")[0].trim() : null;
   return (

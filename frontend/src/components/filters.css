@@ -5,11 +5,10 @@
   align-items: flex-end;
   padding: 1em 1.2rem;
   border-bottom: 1px solid var(--border);
-  /* La barra de filtros se congela a 14px aunque el tamaño base de la app suba
-     (index.css). Los controles (input/select) usan `font: inherit` y las
-     etiquetas/dropdown usan em — todos relativos a este 14px. Gap y padding
-     vertical en em (alto congelado); padding horizontal en rem para mantener la
-     alineación con el contenido. */
+  /* The filter bar is frozen at 14px even if the app base size goes up
+     (index.css). Controls (input/select) use `font: inherit` and labels/dropdown
+     use em — all relative to this 14px. Gap and vertical padding in em (frozen
+     height); horizontal padding in rem to keep alignment with the content. */
   font-size: 14px;
 }
 
@@ -31,7 +30,7 @@
 }
 .field.check .field-label { text-transform: none; }
 
-/* ---- combobox de campeón ---- */
+/* ---- champion combobox ---- */
 .champ-combo { position: relative; }
 
 .champ-list {
@@ -62,7 +61,7 @@
   transition: background 100ms ease-out;
 }
 .champ-opt .cn { font-size: 0.85em; }
-/* Activa: tinte translúcido del acento (no relleno sólido) — legible y on-brand. */
+/* Active: translucent accent tint (not solid fill) — legible and on-brand. */
 .champ-opt.active { background: rgba(59, 130, 246, 0.18); }
 
 .champ-none {
@@ -80,15 +79,15 @@
   .champ-list { animation: none; }
 }
 
-/* ---- Select (listbox propio que reemplaza a <select> nativo) ----
-   El trigger imita la caja del input/select global (index.css) para alinearse
-   con el resto de la barra; la lista reutiliza .champ-list / .champ-opt. */
+/* ---- Select (custom listbox replacing the native <select>) ----
+   The trigger mimics the global input/select box (index.css) to align with the
+   rest of the bar; the list reuses .champ-list / .champ-opt. */
 .select-combo { position: relative; }
 
 .select-trigger {
-  /* Reset del chrome nativo del <button>: en Chrome/Windows un botón arrastra
-     fondo/borde/foco del SO que en Linux no se ve. Sin esto el trigger se ve
-     distinto entre plataformas. */
+  /* Reset the native <button> chrome: on Chrome/Windows a button carries OS
+     background/border/focus that doesn't show on Linux. Without this the trigger
+     looks different across platforms. */
   appearance: none;
   display: inline-flex;
   align-items: center;
@@ -125,7 +124,7 @@
   .select-caret { transition: none; }
 }
 
-/* La opción que coincide con el valor actual (distinta del hover .active). */
+/* The option matching the current value (distinct from the hover .active). */
 .champ-opt.selected .cn { color: var(--text); font-weight: 600; }
 .champ-opt.selected::after {
   content: "✓";

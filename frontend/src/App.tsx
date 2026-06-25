@@ -11,8 +11,8 @@ import { Scrims } from "./pages/Scrims";
 import "./App.css";
 
 function AppShell() {
-  // Contexto de scouting (equipo + parche). Solo lo arrastran las tres ventanas
-  // de scouting de equipo; Scrims y Picks usan rutas planas a propósito.
+  // Scouting context (team + patch). Only the three team-scouting windows carry
+  // it; Scrims and Picks use flat routes on purpose.
   const { ctx } = useScoutingContext();
 
   return (
@@ -28,7 +28,7 @@ function AppShell() {
           <NavLink to="/scrims">Scrims</NavLink>
           <NavLink to="/picks">Picks</NavLink>
         </nav>
-        <span className="api-base muted" title="Base de la API (VITE_API_BASE)">
+        <span className="api-base muted" title="API base (VITE_API_BASE)">
           {API_BASE}
         </span>
       </header>

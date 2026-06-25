@@ -22,7 +22,7 @@ function wrClass(wr: number | null): string {
   return "rps-wr-neutral";
 }
 
-// Glifo direccional: el WR no se apoya solo en verde/rojo (daltonismo).
+// Directional glyph: WR is not conveyed by green/red alone (color blindness).
 function wrArrow(wr: number | null): string {
   if (wr == null) return "";
   if (wr >= 55) return "▲";
@@ -30,8 +30,8 @@ function wrArrow(wr: number | null): string {
   return "";
 }
 
-// WR con su refuerzo no-cromático. Devuelve el % precedido del glifo cuando
-// procede; «—» cuando no hay dato.
+// WR with its non-color reinforcement. Returns the % preceded by the glyph when
+// applicable; "—" when there is no data.
 function WrValue({ wr }: { wr: number | null }) {
   if (wr == null) return <>—</>;
   const arrow = wrArrow(wr);
@@ -60,18 +60,18 @@ function DetailPanel({
 
   const label =
     type === "blind"
-      ? `Pickeado como blind pick ${champ.games}g · WR ${champ.win_rate != null ? champ.win_rate.toFixed(1) + "%" : "—"} — Counterpicks recibidos:`
-      : `Pickeado como counterpick ${champ.games}g · WR ${champ.win_rate != null ? champ.win_rate.toFixed(1) + "%" : "—"} — Blind picks respondidos:`;
+      ? `Picked as blind pick ${champ.games}g · WR ${champ.win_rate != null ? champ.win_rate.toFixed(1) + "%" : "—"} — Counterpicks faced:`
+      : `Picked as counterpick ${champ.games}g · WR ${champ.win_rate != null ? champ.win_rate.toFixed(1) + "%" : "—"} — Blind picks answered:`;
 
   return (
-    <div className="rps-detail-panel" role="region" aria-label="Detalle de matchups">
+    <div className="rps-detail-panel" role="region" aria-label="Matchup detail">
       <div className="rps-detail-header">
         <div className="rps-detail-champ">
           <ChampIcon id={champ.champ_id} name={champ.champ_name ?? ""} size={24} />
           <span className="rps-detail-name">{champ.champ_name ?? `#${champ.champ_id}`}</span>
           <span className="rps-detail-meta">{label}</span>
         </div>
-        <button className="rps-detail-close" onClick={onClose} aria-label="Cerrar detalle">
+        <button className="rps-detail-close" onClick={onClose} aria-label="Close detail">
           ×
         </button>
       </div>
@@ -80,7 +80,7 @@ function DetailPanel({
         {error ? (
           <div className="rps-detail-error">
             <AlertTriangle size={14} />
-            <span>No se pudieron cargar los matchups.</span>
+            <span>Could not load matchups.</span>
           </div>
         ) : isFetching ? (
           <div className="rps-detail-skeleton">
@@ -89,7 +89,7 @@ function DetailPanel({
             ))}
           </div>
         ) : !data || data.length === 0 ? (
-          <p className="rps-detail-empty">Sin matchups registrados para estos filtros.</p>
+          <p className="rps-detail-empty">No matchups recorded for these filters.</p>
         ) : (
           <ul className="rps-matchup-list">
             {data.map((m: MatchupEntry) => (
@@ -158,7 +158,7 @@ function RoleColumn({
           className="rps-show-more"
           onClick={() => setShown((n) => n + initialLimit)}
         >
-          +{Math.min(initialLimit, entries.length - shown)} más
+          +{Math.min(initialLimit, entries.length - shown)} more
         </button>
       )}
     </div>
@@ -194,7 +194,7 @@ export function RolePickSection({
       {error ? (
         <div className="rps-load-error">
           <AlertTriangle size={14} />
-          <span>No se pudieron cargar los datos.</span>
+          <span>Could not load data.</span>
         </div>
       ) : (
         <>
@@ -213,7 +213,7 @@ export function RolePickSection({
               ) : entries.length === 0 ? (
                 <div key={role} className="rps-col">
                   <div className="rps-col-head">{ROLE_LABEL[role]}</div>
-                  <p className="rps-col-empty">Sin datos</p>
+                  <p className="rps-col-empty">No data</p>
                 </div>
               ) : (
                 <RoleColumn

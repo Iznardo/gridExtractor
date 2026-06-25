@@ -5,21 +5,20 @@ import type { Champion } from "../api/types";
 import { ChampIcon } from "./icons";
 import "./filters.css";
 
-// Combobox accesible para elegir campeón. La resolución nombre->id la sigue
-// haciendo la página padre (la API es id-based); este control solo garantiza
-// que el texto resultante sea un nombre válido (al elegir de la lista no hay
-// typo posible). El catálogo llega por prop, no por useChampions(): re-suscribir
-// el query en el hijo dispara "Cannot update a component while rendering a
-// different component" en React 19. Es una lista propia (<ul>/<li>), no un
-// <datalist> nativo — el datalist con <option> dinámicos causaba un loop de
-// reconciliación.
-const MAX_VISIBLE = 50; // tope de opciones renderizadas a la vez
+// Accessible combobox to pick a champion. name->id resolution stays in the
+// parent page (the API is id-based); this control only guarantees the resulting
+// text is a valid name (picking from the list rules out typos). The catalog
+// arrives by prop, not via useChampions(): re-subscribing the query in the child
+// triggers "Cannot update a component while rendering a different component" in
+// React 19. It is a custom list (<ul>/<li>), not a native <datalist> — a
+// datalist with dynamic <option>s caused a reconciliation loop.
+const MAX_VISIBLE = 50; // cap on options rendered at once
 
 export function ChampionPicker({
   value,
   onChange,
   champions,
-  placeholder = "ej. Aatrox",
+  placeholder = "e.g. Aatrox",
   hasError,
   inputRef: externalRef,
 }: {
@@ -46,10 +45,10 @@ export function ChampionPicker({
     return pool.slice(0, MAX_VISIBLE);
   }, [champions, q]);
 
-  // Si el texto ya es un nombre exacto, no hace falta abrir al enfocar.
+  // If the text is already an exact name, no need to open on focus.
   const exact = useMemo(() => champions.some((c) => c.name.toLowerCase() === q), [champions, q]);
 
-  // Mantener visible la opción activa al navegar con flechas.
+  // Keep the active option visible when navigating with arrows.
   useEffect(() => {
     if (!open) return;
     const el = listRef.current?.children[active] as HTMLElement | undefined;
@@ -74,8 +73,8 @@ export function ChampionPicker({
       e.preventDefault();
       if (open) setActive((i) => Math.max(i - 1, 0));
     } else if (e.key === "Enter") {
-      // Con la lista abierta, Enter elige (no envía el formulario). Cerrada,
-      // deja que el form se envíe normalmente.
+      // With the list open, Enter selects (does not submit the form). Closed,
+      // let the form submit normally.
       if (open && matches[active]) {
         e.preventDefault();
         choose(matches[active]);
@@ -95,8 +94,8 @@ export function ChampionPicker({
     <div
       className="champ-combo"
       onBlur={(e) => {
-        // Cerrar solo cuando el foco sale del contenedor (no al pasar del input
-        // a una opción).
+        // Close only when focus leaves the container (not when moving from the
+        // input to an option).
         if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setOpen(false);
       }}
     >
@@ -127,7 +126,7 @@ export function ChampionPicker({
         <ul className="champ-list" role="listbox" id={listId} ref={listRef}>
           {matches.length === 0 ? (
             <li className="champ-none" aria-disabled="true">
-              Sin coincidencias
+              No matches
             </li>
           ) : (
             matches.map((c, i) => (
@@ -137,8 +136,8 @@ export function ChampionPicker({
                 role="option"
                 aria-selected={i === active}
                 className={"champ-opt" + (i === active ? " active" : "")}
-                // onMouseDown (no onClick): preventDefault conserva el foco del
-                // input para que el click se registre antes del blur.
+                // onMouseDown (not onClick): preventDefault keeps the input
+                // focus so the click registers before the blur.
                 onMouseDown={(e) => {
                   e.preventDefault();
                   choose(c);

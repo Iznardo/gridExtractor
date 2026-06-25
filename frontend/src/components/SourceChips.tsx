@@ -1,5 +1,5 @@
-// Barra de chips de fuentes (medios). Reutilizada por el Agregado de Scouting y
-// por las pestañas de Matchups / Blind-Counter. Estilos en scouting.css (.agg-*).
+// Source (medium) chip bar. Reused by the Scouting aggregate and the Matchups /
+// Blind-Counter tabs. Styles in scouting.css (.agg-*).
 
 export function SourceChips<T extends string>({
   all,
@@ -14,7 +14,7 @@ export function SourceChips<T extends string>({
 }) {
   return (
     <div className="agg-source-bar">
-      <span className="agg-source-label">Fuentes:</span>
+      <span className="agg-source-label">Sources:</span>
       {all.map((m) => (
         <button
           key={m}
@@ -28,7 +28,7 @@ export function SourceChips<T extends string>({
       ))}
       {active.size < all.length && (
         <span className="agg-partial-notice">
-          Mostrando {active.size}/{all.length} fuentes
+          Showing {active.size}/{all.length} sources
         </span>
       )}
     </div>

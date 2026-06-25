@@ -15,27 +15,27 @@ import { TeamMatchups } from "./TeamMatchups";
 import { aggAsScoutPlayers, buildAggregate } from "./scouting/aggregate";
 import "./scouting.css";
 
-// ---- constantes ----
+// ---- constants ----
 
 const ALL_MEDIUMS: Medium[] = ["official", "scrim", "soloq"];
 const MEDIUM_LABELS: Record<Medium, string> = {
-  official: "Oficiales",
+  official: "Official",
   scrim: "Scrims",
   soloq: "SoloQ",
 };
 
-// Sub-pestañas del pool de campeones (dentro de la ventana "Pool").
-type TabId = "oficial" | "scrim" | "soloq" | "agregado";
+// Champion-pool sub-tabs (inside the "Pool" window).
+type TabId = "official" | "scrim" | "soloq" | "aggregate";
 
-// Ventanas de primer nivel de Scouting (?view=). "dashboard" es la inicial.
+// Top-level Scouting windows (?view=). "dashboard" is the initial one.
 const VIEW_IDS = ["dashboard", "pool", "matchups", "blindcounter"] as const;
 
-// Agregación de pools (buildAggregate/aggAsScoutPlayers) vive en
-// ./scouting/aggregate — compartida con el Dashboard.
+// Pool aggregation (buildAggregate/aggAsScoutPlayers) lives in
+// ./scouting/aggregate — shared with the Dashboard.
 
-// ---- AggregadoBox (fuentes + MediumBox) ----
+// ---- AggregateBox (sources + MediumBox) ----
 
-function AggregadoBox({
+function AggregateBox({
   pool,
   sources,
   onToggle,
@@ -57,7 +57,7 @@ function AggregadoBox({
   );
 }
 
-// ---- pestañas de draft (Matchups, Blind/Counter): solo OFFICIAL + SCRIM ----
+// ---- draft tabs (Matchups, Blind/Counter): OFFICIAL + SCRIM only ----
 
 const DRAFT_MEDIUMS: Medium[] = ["official", "scrim"];
 const MEDIUM_TO_GAME_TYPE: Record<Medium, string> = {
@@ -97,15 +97,15 @@ export function Scouting() {
   const { data: teams } = useTeams();
   const [params, setParams] = useSearchParams();
 
-  // Contexto de scouting: Scouting solo controla el equipo (sin parche);
-  // `undefined` conserva el parche del contexto fijado en Drafts/Games.
+  // Scouting context: Scouting controls only the team (no patch); `undefined`
+  // keeps the context patch set in Drafts/Games.
   useScoutingContextSync(params.get("team") ?? "", undefined);
 
   const [teamId, setTeamId] = useState(() => params.get("team") ?? "");
   const [dateFrom, setDateFrom] = useState(() => params.get("dateFrom") ?? "");
   const [submitError, setSubmitError] = useState("");
 
-  const activeTab = (params.get("tab") as TabId) ?? "oficial";
+  const activeTab = (params.get("tab") as TabId) ?? "official";
   const viewParam = params.get("view");
   const activeView = (VIEW_IDS as readonly string[]).includes(viewParam ?? "")
     ? (viewParam as (typeof VIEW_IDS)[number])
@@ -113,13 +113,13 @@ export function Scouting() {
   const appliedTeamId = params.get("team") ? Number(params.get("team")) : null;
   const appliedDateFrom = params.get("dateFrom") || undefined;
 
-  // Fuentes del Agregado persistidas en URL (?sources=official,scrim,soloq)
+  // Aggregate sources persisted in the URL (?sources=official,scrim,soloq)
   const sourcesParam = params.get("sources");
   const activeSources: Set<Medium> = sourcesParam
     ? new Set(sourcesParam.split(",").filter((s): s is Medium => (ALL_MEDIUMS as string[]).includes(s)))
     : new Set(ALL_MEDIUMS);
 
-  // Fuentes de las pestañas de draft (?dsources=official,scrim) — sin soloq.
+  // Draft-tab sources (?dsources=official,scrim) — no soloq.
   const dsourcesParam = params.get("dsources");
   const draftSources: Set<Medium> = dsourcesParam
     ? new Set(dsourcesParam.split(",").filter((s): s is Medium => (DRAFT_MEDIUMS as string[]).includes(s)))
@@ -129,7 +129,7 @@ export function Scouting() {
 
   function submit() {
     if (!teamId) {
-      setSubmitError("Selecciona un equipo antes de scoutear.");
+      setSubmitError("Select a team before scouting.");
       return;
     }
     setSubmitError("");
@@ -149,7 +149,7 @@ export function Scouting() {
 
   function handleViewChange(id: string) {
     const next = new URLSearchParams(params);
-    if (id === "dashboard") next.delete("view"); // estado por defecto, no ensuciar URL
+    if (id === "dashboard") next.delete("view"); // default state, keep URL clean
     else next.set("view", id);
     setParams(next);
   }
@@ -160,7 +160,7 @@ export function Scouting() {
     if (next.has(m)) next.delete(m); else next.add(m);
     const nextParams = new URLSearchParams(params);
     if (next.size === ALL_MEDIUMS.length) {
-      nextParams.delete("sources"); // estado por defecto, no ensuciar URL
+      nextParams.delete("sources"); // default state, keep URL clean
     } else {
       nextParams.set("sources", Array.from(next).join(","));
     }
@@ -173,18 +173,18 @@ export function Scouting() {
     if (next.has(m)) next.delete(m); else next.add(m);
     const nextParams = new URLSearchParams(params);
     if (next.size === DRAFT_MEDIUMS.length) {
-      nextParams.delete("dsources"); // estado por defecto, no ensuciar URL
+      nextParams.delete("dsources"); // default state, keep URL clean
     } else {
       nextParams.set("dsources", Array.from(next).join(","));
     }
     setParams(nextParams);
   }
 
-  // Sub-pestañas del pool de campeones (fuentes), dentro de la ventana "Pool".
+  // Champion-pool sub-tabs (sources), inside the "Pool" window.
   const poolTabs = [
     {
-      id: "oficial",
-      label: "Oficiales",
+      id: "official",
+      label: "Official",
       content: pool ? <MediumBox players={pool.by_medium.official} /> : null,
     },
     {
@@ -198,15 +198,15 @@ export function Scouting() {
       content: pool ? <MediumBox players={pool.by_medium.soloq} /> : null,
     },
     {
-      id: "agregado",
+      id: "aggregate",
       label: activeSources.size < ALL_MEDIUMS.length
-        ? `Agregado (${activeSources.size}/${ALL_MEDIUMS.length})`
-        : "Agregado",
-      content: pool ? <AggregadoBox pool={pool} sources={activeSources} onToggle={toggleSource} /> : null,
+        ? `Aggregate (${activeSources.size}/${ALL_MEDIUMS.length})`
+        : "Aggregate",
+      content: pool ? <AggregateBox pool={pool} sources={activeSources} onToggle={toggleSource} /> : null,
     },
   ];
 
-  // Contenido de la ventana "Pool": skeleton mientras carga, luego el box de tabs.
+  // "Pool" window content: skeleton while loading, then the tabs box.
   const poolWindow = isFetching ? (
     <ScoutingSkeleton />
   ) : pool ? (
@@ -215,15 +215,15 @@ export function Scouting() {
     </div>
   ) : null;
 
-  // Ventanas de primer nivel. Matchups y Blind/Counter son independientes del
-  // pool (su propia carga); solo OFFICIAL+SCRIM (sin soloq).
+  // Top-level windows. Matchups and Blind/Counter are independent of the pool
+  // (their own load); OFFICIAL+SCRIM only (no soloq).
   const windowTabs = [
     {
       id: "dashboard",
       label: "Dashboard",
       content: appliedTeamId != null ? <ScoutDashboard teamId={appliedTeamId} /> : null,
     },
-    { id: "pool", label: "Pool de campeones", content: poolWindow },
+    { id: "pool", label: "Champion pool", content: poolWindow },
     {
       id: "matchups",
       label: "Matchups",
@@ -252,19 +252,19 @@ export function Scouting() {
   return (
     <div className="page">
       <FilterBar onSubmit={submit}>
-        <Field label="Equipo *">
+        <Field label="Team *">
           <TeamPicker value={teamId} onChange={setTeamId} teams={teams ?? []} />
         </Field>
-        <Field label="Desde fecha">
+        <Field label="From date">
           <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
         </Field>
         <button
           type="submit"
           className="btn-primary"
           disabled={!teamId}
-          title={!teamId ? "Selecciona un equipo primero" : undefined}
+          title={!teamId ? "Select a team first" : undefined}
         >
-          Scoutear
+          Scout
         </button>
       </FilterBar>
 
@@ -280,11 +280,11 @@ export function Scouting() {
         aria-live="polite"
       >
         {appliedTeamId == null
-          ? "Elige un equipo para empezar."
+          ? "Pick a team to start."
           : activeView === "pool" && error
-            ? <>{(error as Error).message} <button type="button" className="btn-ghost btn-ghost-sm" onClick={() => refetch()}>Reintentar</button></>
+            ? <>{(error as Error).message} <button type="button" className="btn-ghost btn-ghost-sm" onClick={() => refetch()}>Retry</button></>
             : activeView === "pool" && isFetching
-              ? "Cargando…"
+              ? "Loading…"
               : " "}
       </p>
 

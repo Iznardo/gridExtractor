@@ -19,7 +19,7 @@
   padding: 0 1.2rem 2rem;
 }
 
-/* Llegada suave de los resultados reales (skeleton→grid). */
+/* Smooth arrival of the real results (skeleton→grid). */
 @keyframes grid-arrive {
   from { opacity: 0.6; }
   to   { opacity: 1; }
@@ -29,7 +29,7 @@
   .draft-grid.results { animation: none; }
 }
 
-/* En pantallas estrechas, menos columnas para que no se aplasten. */
+/* On narrow screens, fewer columns so they don't get squished. */
 @media (max-width: 1150px) {
   .draft-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }

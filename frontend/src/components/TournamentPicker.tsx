@@ -3,14 +3,14 @@ import type { KeyboardEvent } from "react";
 
 import "./filters.css";
 
-// Combobox para seleccionar torneo. El catálogo es string[] (nombres directos),
-// así que value y la opción elegida son el mismo string — sin resolución id↔nombre.
+// Combobox to select a tournament. The catalog is string[] (direct names), so
+// value and the chosen option are the same string — no id<->name resolution.
 
 export function TournamentPicker({
   value,
   onChange,
   tournaments,
-  placeholder = "Buscar torneo…",
+  placeholder = "Search tournament…",
 }: {
   value: string;
   onChange: (v: string) => void;
@@ -117,12 +117,12 @@ export function TournamentPicker({
               onMouseDown={(e) => { e.preventDefault(); clear(); }}
             >
               <span className="cn" style={{ color: "var(--muted)", fontStyle: "italic" }}>
-                (todos)
+                (all)
               </span>
             </li>
           )}
           {matches.length === 0 ? (
-            <li className="champ-none" aria-disabled="true">Sin coincidencias</li>
+            <li className="champ-none" aria-disabled="true">No matches</li>
           ) : (
             matches.map((t, i) => (
               <li

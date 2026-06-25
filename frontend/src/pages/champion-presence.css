@@ -1,4 +1,4 @@
-/* Leyenda discreta encima de la tabla */
+/* Discreet legend above the table */
 .cp-legend {
   display: flex;
   flex-wrap: wrap;
@@ -12,7 +12,7 @@
 
 .cp-legend-sep { opacity: 0.4; }
 
-/* Muestra los dots de heatmap a escala reducida */
+/* Shows the heatmap dots at reduced scale */
 .cp-legend-heat span[class^="cp-heat"] {
   display: inline-block;
   width: 10px;
@@ -65,13 +65,13 @@
 
 .cp-table thead th.cp-sorted { color: var(--text); }
 
-/* ⇅ siempre visible (affordance de sortabilidad); ▼/▲ en la col activa.
-   En columnas no activas el ⇅ aparece atenuado para no competir con los datos. */
+/* ⇅ always visible (sortability affordance); ▼/▲ on the active column.
+   On inactive columns the ⇅ appears dimmed so it doesn't compete with the data. */
 .cp-sort-arrow {
   display: inline-block;
   margin-left: 3px;
   font-size: 0.6rem;
-  opacity: 0.35; /* default: atenuado */
+  opacity: 0.35; /* default: dimmed */
   transition: opacity 80ms ease-out;
 }
 .cp-table thead th:hover .cp-sort-arrow { opacity: 0.7; }
@@ -96,7 +96,7 @@
   padding-left: 4px;
 }
 
-/* Celda de campeón */
+/* Champion cell */
 .cp-champ-cell {
   display: flex;
   align-items: center;
@@ -109,15 +109,15 @@
   font-weight: 500;
 }
 
-/* Heatmap: presencia — tinte rojo escalonado por intensidad relativa */
+/* Heatmap: presence — red tint stepped by relative intensity */
 .cp-heat-1 { background: rgba(239, 68, 68, 0.07); }
 .cp-heat-2 { background: rgba(239, 68, 68, 0.14); }
 .cp-heat-3 { background: rgba(239, 68, 68, 0.22); }
 .cp-heat-4 { background: rgba(239, 68, 68, 0.32); }
 .cp-heat-5 { background: rgba(239, 68, 68, 0.44); }
 
-/* WR colorizado — el color se refuerza con un glifo direccional (▲/▼) para no
-   depender solo de verde/rojo (daltonismo). */
+/* Colorized WR — the color is reinforced with a directional glyph (▲/▼) so it
+   doesn't rely on green/red alone (color blindness). */
 .cp-wr-pos { color: var(--win); }
 .cp-wr-neg { color: var(--red-text); }
 .cp-wr-neutral { color: var(--muted); }
@@ -128,10 +128,10 @@
   vertical-align: 1px;
 }
 
-/* Cero real (no ausencia): atenuado para distinguirlo de «—». */
+/* Real zero (not absence): dimmed to distinguish it from "—". */
 .cp-zero { color: var(--muted); }
 
-/* Columnas de game number — estilo diferenciado, no sortable */
+/* Game-number columns — differentiated style, not sortable */
 .cp-gn-head {
   cursor: default;
   color: var(--muted) !important;
@@ -146,7 +146,7 @@
   font-size: 0.78rem;
 }
 
-/* Show-more button para la tabla */
+/* Show-more button for the table */
 .cp-show-more {
   display: block;
   width: 100%;

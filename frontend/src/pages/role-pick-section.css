@@ -1,4 +1,4 @@
-/* RolePickSection — Blind Picks y Counterpicks */
+/* RolePickSection — Blind Picks and Counterpicks */
 
 .rps-section {
   padding: 0 1.2rem 2rem;
@@ -15,7 +15,7 @@
   border-top: 1px solid var(--border);
 }
 
-/* Grid de 5 columnas (una por rol) */
+/* 5-column grid (one per role) */
 .rps-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
@@ -29,7 +29,7 @@
   .rps-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
-/* Columna de rol */
+/* Role column */
 .rps-col {
   border-right: 1px solid var(--border);
   display: flex;
@@ -62,7 +62,7 @@
   margin: 0;
 }
 
-/* Skeleton por columna */
+/* Per-column skeleton */
 .rps-col-skel {
   padding: 4px 8px;
   display: flex;
@@ -83,7 +83,7 @@
   .rps-skel-entry { animation: none; }
 }
 
-/* Entrada de campeón */
+/* Champion entry */
 .rps-entry {
   display: flex;
   align-items: center;
@@ -133,15 +133,15 @@
   text-align: right;
 }
 
-/* WR coloreado — reforzado con glifo direccional (▲/▼) para no depender solo
-   del verde/rojo (daltonismo). */
+/* Colorized WR — reinforced with a directional glyph (▲/▼) so it doesn't rely
+   on green/red alone (color blindness). */
 .rps-wr-pos     { color: var(--win); }
 .rps-wr-neg     { color: var(--red-text); }
 .rps-wr-neutral { color: var(--muted); }
 
 .rps-wr-arrow { font-size: 0.6rem; margin-right: 2px; }
 
-/* Botón "mostrar más" dentro de columna */
+/* "show more" button inside a column */
 .rps-show-more {
   display: block;
   width: 100%;
@@ -157,7 +157,7 @@
 }
 .rps-show-more:hover { color: var(--text); background: var(--panel2); }
 
-/* Error de carga de la sección */
+/* Section load error */
 .rps-load-error {
   display: flex;
   align-items: center;
@@ -167,7 +167,7 @@
   padding: 0.5rem 0;
 }
 
-/* Panel de detalle */
+/* Detail panel */
 .rps-detail-panel {
   margin-top: 1px;
   border: 1px solid var(--border);
@@ -226,7 +226,7 @@
   padding: 10px 12px;
 }
 
-/* Skeleton del panel de detalle */
+/* Detail panel skeleton */
 .rps-detail-skeleton {
   display: flex;
   flex-direction: column;
@@ -253,7 +253,7 @@
   margin: 0;
 }
 
-/* Lista de matchups en el panel de detalle */
+/* Matchup list in the detail panel */
 .rps-matchup-list {
   list-style: none;
   margin: 0;

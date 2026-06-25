@@ -62,22 +62,22 @@ function Scoreboard({
         <div className="sb-side">
           <span className={"pill " + side}>{side}</span>
           {team && <span className="sb-team">{team.tag ?? team.name}</span>}
-          <span className="muted">{won ? "Victoria" : "Derrota"}</span>
+          <span className="muted">{won ? "Win" : "Loss"}</span>
         </div>
         <table className="grid">
           <thead>
             <tr>
-              <th scope="col">Campeón</th>
+              <th scope="col">Champion</th>
               {hasSpells && <th scope="col" />}
               <th scope="col">KDA</th>
               <th scope="col" className="num">CS</th>
-              <th scope="col" className="num" title="% del oro total del equipo">Oro%</th>
-              {hasDamage && <th scope="col" className="num" title="% del daño total del equipo">Daño%</th>}
+              <th scope="col" className="num" title="% of team total gold">Gold%</th>
+              {hasDamage && <th scope="col" className="num" title="% of team total damage">Damage%</th>}
               {hasDamage && durationMin != null && <th scope="col" className="num">DPM</th>}
               {durationMin != null && <th scope="col" className="num">CS/min</th>}
-              {hasMidgame && <th scope="col" className="num" title="Diferencia de oro vs su laner a los 7 min">GD@7</th>}
-              {hasMidgame && <th scope="col" className="num" title="Diferencia de oro vs su laner a los 14 min">GD@14</th>}
-              {hasLevel && <th scope="col" className="num">Nv</th>}
+              {hasMidgame && <th scope="col" className="num" title="Gold diff vs laner at 7 min">GD@7</th>}
+              {hasMidgame && <th scope="col" className="num" title="Gold diff vs laner at 14 min">GD@14</th>}
+              {hasLevel && <th scope="col" className="num">Lvl</th>}
               {hasVision && <th scope="col" className="num">Vis</th>}
               <th scope="col">Items</th>
             </tr>
@@ -178,7 +178,7 @@ function Scoreboard({
   );
 }
 
-// ------------------------------ Build / Runas ------------------------------
+// ------------------------------ Build / Runes ------------------------------
 
 function BuildView({ players }: { players: Pick[] }) {
   const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -211,7 +211,7 @@ function BuildView({ players }: { players: Pick[] }) {
 function GameDetailSkeleton() {
   return (
     <div className="game-detail">
-      <span className="sr-only" role="status">Cargando partida…</span>
+      <span className="sr-only" role="status">Loading game…</span>
       <div className="scoreboard" aria-hidden="true">
         {["BLUE", "RED"].map((side) => (
           <div key={side} className="sb-block">
@@ -251,7 +251,7 @@ export function GameDetail({
 
   if (isLoading) return <GameDetailSkeleton />;
   if (error) return <div className="gd-msg error">{(error as Error).message}</div>;
-  if (!picks?.length) return <div className="gd-msg muted">Sin picks para esta partida.</div>;
+  if (!picks?.length) return <div className="gd-msg muted">No picks for this game.</div>;
 
   const blue = sortPlayers(picks.filter((p) => p.side === "BLUE"));
   const red = sortPlayers(picks.filter((p) => p.side === "RED"));

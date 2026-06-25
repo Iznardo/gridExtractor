@@ -1,14 +1,14 @@
 /**
- * Agregaciones puras de la pestaña Scouting. Sin estado ni red: testeables.
+ * Pure aggregations for the Scouting tab. No state or network: testable.
  *
- * - Pool agregado entre medios (compartido por la ventana "Pool" y el Dashboard).
- * - Series: agrupar partidas oficiales por `grid_series_id` para el dashboard.
+ * - Pool aggregated across mediums (shared by the "Pool" window and the Dashboard).
+ * - Series: group official games by `grid_series_id` for the dashboard.
  */
 import type { Game, Medium, ScoutPlayer, ScoutingPool, TeamRef } from "../../api/types";
 
 const ALL_MEDIUMS: Medium[] = ["official", "scrim", "soloq"];
 
-// ---- pool agregado entre medios ----
+// ---- pool aggregated across mediums ----
 
 type AggCount = { games: number; wins: number };
 type AggChamp = {
@@ -17,7 +17,7 @@ type AggChamp = {
 };
 export type AggPlayer = { player: ScoutPlayer["player"]; champions: AggChamp[] };
 
-/** Funde el pool de varios medios en una sola lista por jugador. */
+/** Merges the pool of several mediums into a single list per player. */
 export function buildAggregate(pool: ScoutingPool, sources: Medium[] = ALL_MEDIUMS): AggPlayer[] {
   const players = new Map<
     number,
@@ -49,7 +49,7 @@ export function buildAggregate(pool: ScoutingPool, sources: Medium[] = ALL_MEDIU
   }));
 }
 
-/** Adapta el agregado al shape que consume `<MediumBox>`. */
+/** Adapts the aggregate to the shape `<MediumBox>` consumes. */
 export function aggAsScoutPlayers(agg: AggPlayer[]): ScoutPlayer[] {
   return agg.map((ap) => ({
     player: ap.player,
@@ -61,7 +61,7 @@ export function aggAsScoutPlayers(agg: AggPlayer[]): ScoutPlayer[] {
   }));
 }
 
-// ---- series (dashboard: últimas partidas agrupadas) ----
+// ---- series (dashboard: latest games grouped) ----
 
 export type SeriesGame = {
   game: Game;
@@ -72,18 +72,18 @@ export type SeriesGame = {
 };
 
 export type Series = {
-  key: string;             // grid_series_id o `g${game_id}` si falta
+  key: string;             // grid_series_id or `g${game_id}` if missing
   date: string;
   version: string | null;
   rival: TeamRef;
-  games: SeriesGame[];     // ordenadas por game_number asc
+  games: SeriesGame[];     // sorted by game_number asc
   wins: number;
   total: number;
 };
 
-/** Agrupa partidas (ya filtradas a un equipo) en series por `grid_series_id`.
- *  Team-céntrico: `our_side`/`won`/champs se resuelven respecto a `teamId`.
- *  Devuelve las series más recientes primero. */
+/** Groups games (already filtered to a team) into series by `grid_series_id`.
+ *  Team-centric: `our_side`/`won`/champs are resolved relative to `teamId`.
+ *  Returns the most recent series first. */
 export function seriesBlocks(rows: Game[], teamId: number): Series[] {
   const map = new Map<string, Game[]>();
   for (const r of rows) {
@@ -121,7 +121,7 @@ export function seriesBlocks(rows: Game[], teamId: number): Series[] {
     });
   }
 
-  // Más reciente primero: por fecha y, a igualdad, por el game más nuevo.
+  // Most recent first: by date and, on ties, by the newest game.
   const maxId = (s: Series) => Math.max(...s.games.map((g) => g.game.game_id));
   out.sort((a, b) => b.date.localeCompare(a.date) || maxId(b) - maxId(a));
   return out;

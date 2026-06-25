@@ -5,16 +5,16 @@ import type { Champion } from "../api/types";
 
 export type ChampMaps = {
   byId: Map<number, Champion>;
-  byName: Map<string, number>; // nombre en minúsculas -> id
-  list: Champion[]; // catálogo ordenado por nombre (para el combobox de filtros)
+  byName: Map<string, number>; // lowercase name -> id
+  list: Champion[]; // catalog sorted by name (for the filter combobox)
   ready: boolean;
 };
 
-// Mapas derivados del catálogo /champions: id->Champion (para iconos/alias),
-// nombre->id (para que los filtros acepten "Aatrox" y manden champ_id; la API
-// es id-based, la resolución es del front) y la lista ordenada (para el
-// combobox de campeón, que recibe el catálogo por prop en vez de re-suscribir
-// el query — evita el warning de React 19 al renderizar).
+// Maps derived from the /champions catalog: id->Champion (for icons/alias),
+// name->id (so filters accept "Aatrox" and send champ_id; the API is id-based,
+// resolution is the frontend's job) and the sorted list (for the champion
+// combobox, which receives the catalog by prop instead of re-subscribing the
+// query — avoids the React 19 render warning).
 export function useChampMaps(): ChampMaps {
   const { data } = useChampions();
   return useMemo(() => {

@@ -7,7 +7,7 @@ import {
   type ScoutCtx,
 } from "./scoutingContext";
 
-/** Provider del contexto de scouting (equipo + parche). Ver `scoutingContext.ts`. */
+/** Scouting context provider (team + patch). See `scoutingContext.ts`. */
 export function ScoutingContextProvider({ children }: { children: ReactNode }) {
   const [ctx, setCtxState] = useState<ScoutCtx>(readScoutCtx);
 

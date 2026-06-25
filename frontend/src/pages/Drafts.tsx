@@ -32,11 +32,11 @@ export function Drafts() {
   const [params, setParams] = useSearchParams();
   const champRef = useRef<HTMLInputElement>(null);
 
-  // Contexto de scouting compartido: arrastra el equipo+parche aplicados.
+  // Shared scouting context: carries the applied team+patch.
   useScoutingContextSync(params.get("team") ?? "", params.get("patch") ?? "");
 
-  // El formulario se inicializa desde la URL: un link compartido pre-rellena
-  // los filtros y lanza la misma búsqueda.
+  // The form is seeded from the URL: a shared link pre-fills the filters and
+  // runs the same search.
   const [teamId, setTeamId] = useState(() => params.get("team") ?? "");
   const [rivalId, setRivalId] = useState(() => params.get("rival") ?? "");
   const [gameType, setGameType] = useState(() => params.get("type") ?? "");
@@ -47,10 +47,10 @@ export function Drafts() {
   const [limit, setLimit] = useState(() => params.get("limit") ?? LIMIT_DEFAULT);
   const [formError, setFormError] = useState("");
 
-  // El tab activo vive en la URL para que sea compartible.
+  // The active tab lives in the URL so it is shareable.
   const view = params.get("view") ?? "drafts";
 
-  // La búsqueda activa vive en la URL (única fuente de verdad → compartible).
+  // The active search lives in the URL (single source of truth -> shareable).
   const applied = useMemo<DraftFilters>(() => {
     const champName = params.get("champ")?.trim().toLowerCase();
     return {
@@ -65,7 +65,7 @@ export function Drafts() {
     };
   }, [params, byName]);
 
-  // Filtros para las tabs de stats: igual que applied pero sin champ_id ni limit.
+  // Filters for the stats tabs: same as applied but without champ_id or limit.
   const statsApplied = useMemo<StatsFilters>(() => ({
     team_id: applied.team_id,
     rival_id: applied.rival_id,
@@ -77,8 +77,8 @@ export function Drafts() {
 
   const { data: drafts, isFetching, error, refetch } = useDrafts(applied, view === "drafts");
 
-  // Indica si el error actual es específicamente del campo campeón.
-  const champError = formError.startsWith("Campeón");
+  // Whether the current error is specifically about the champion field.
+  const champError = formError.startsWith("Unrecognized champion");
 
   function handleViewChange(v: string) {
     const next: Record<string, string> = { ...Object.fromEntries(params) };
@@ -90,11 +90,11 @@ export function Drafts() {
   function submit() {
     setFormError("");
     if (phase && !teamId) {
-      setFormError("La fase de pick requiere seleccionar un equipo.");
+      setFormError("Pick phase requires selecting a team.");
       return;
     }
     if (champ.trim() && byName.get(champ.trim().toLowerCase()) == null) {
-      setFormError(`Campeón no reconocido: "${champ}". Elige uno de la lista.`);
+      setFormError(`Unrecognized champion: "${champ}". Pick one from the list.`);
       champRef.current?.focus();
       return;
     }
@@ -132,13 +132,13 @@ export function Drafts() {
     const teamName = (id: string) => teams?.find((t) => String(t.id) === id)?.name ?? `#${id}`;
     const out: string[] = [];
     if (params.get("team")) out.push(teamName(params.get("team")!));
-    if (params.get("rival")) out.push(`rival ${teamName(params.get("rival")!)}`);
+    if (params.get("rival")) out.push(`vs ${teamName(params.get("rival")!)}`);
     if (params.get("type")) out.push(params.get("type")!.toLowerCase());
     if (params.get("phase")) out.push(`${params.get("phase")} pick`);
     if (params.get("champ")) out.push(`«${params.get("champ")}»`);
-    if (params.get("patch")) out.push(`parche ${params.get("patch")}`);
+    if (params.get("patch")) out.push(`patch ${params.get("patch")}`);
     if (params.get("tournament")) out.push(params.get("tournament")!);
-    if (params.get("limit")) out.push(`${params.get("limit")} partidas`);
+    if (params.get("limit")) out.push(`${params.get("limit")} games`);
     return out;
   }
 
@@ -147,10 +147,10 @@ export function Drafts() {
     results = (
       <div className="empty">
         <AlertTriangle size={22} className="empty-icon" style={{ color: "var(--red)" }} />
-        <p className="empty-title">No se pudieron cargar los drafts.</p>
+        <p className="empty-title">Could not load the drafts.</p>
         <p className="empty-sub">{(error as Error).message}</p>
         <button type="button" className="btn-ghost" onClick={() => refetch()}>
-          Reintentar
+          Retry
         </button>
       </div>
     );
@@ -167,15 +167,15 @@ export function Drafts() {
     results = (
       <div className="empty">
         <SearchX size={22} className="empty-icon" />
-        <p className="empty-title">Sin drafts para estos filtros.</p>
+        <p className="empty-title">No drafts for these filters.</p>
         <p className="empty-sub">
           {hasFilters
-            ? `Ningún draft coincide con ${labels.join(" · ")}. Prueba a relajar un filtro.`
-            : "Todavía no hay drafts en la base de datos."}
+            ? `No draft matches ${labels.join(" · ")}. Try relaxing a filter.`
+            : "No drafts in the database yet."}
         </p>
         {hasFilters && (
           <button type="button" className="btn-ghost" onClick={clearFilters}>
-            Limpiar filtros
+            Clear filters
           </button>
         )}
       </div>
@@ -193,40 +193,40 @@ export function Drafts() {
   return (
     <div className="page">
       <FilterBar onSubmit={submit}>
-        <Field label="Equipo">
+        <Field label="Team">
           <TeamPicker value={teamId} onChange={setTeamId} teams={teams ?? []} />
         </Field>
         <Field label="Rival">
           <TeamPicker value={rivalId} onChange={setRivalId} teams={teams ?? []} />
         </Field>
-        <Field label="Tipo">
+        <Field label="Type">
           <Select
             value={gameType}
             onChange={setGameType}
-            ariaLabel="Tipo"
+            ariaLabel="Type"
             options={[
-              { value: "", label: "(todos)" },
-              { value: "OFFICIAL", label: "Oficiales" },
+              { value: "", label: "(all)" },
+              { value: "OFFICIAL", label: "Official" },
               { value: "SCRIM", label: "Scrims" },
             ]}
           />
         </Field>
-        <Field label="Torneo">
+        <Field label="Tournament">
           <TournamentPicker value={tournament} onChange={setTournament} tournaments={tournaments ?? []} />
         </Field>
-        <Field label="Fase de pick">
+        <Field label="Pick phase">
           <Select
             value={phase}
             onChange={setPhase}
-            ariaLabel="Fase de pick"
+            ariaLabel="Pick phase"
             options={[
-              { value: "", label: "(cualquiera)" },
+              { value: "", label: "(any)" },
               { value: "first", label: "First pick" },
               { value: "second", label: "Second pick" },
             ]}
           />
         </Field>
-        <Field label="Campeón jugado">
+        <Field label="Champion played">
           <ChampionPicker
             value={champ}
             onChange={(v) => { setChamp(v); setFormError(""); }}
@@ -235,14 +235,14 @@ export function Drafts() {
             inputRef={champRef}
           />
         </Field>
-        <Field label="Parche">
+        <Field label="Patch">
           <input value={patch} onChange={(e) => setPatch(e.target.value)} placeholder="14.23" size={8} />
         </Field>
-        <Field label="Mostrar">
+        <Field label="Show">
           <Select
             value={limit}
             onChange={setLimit}
-            ariaLabel="Mostrar"
+            ariaLabel="Show"
             options={[
               { value: "20", label: "20" },
               { value: "50", label: "50" },
@@ -251,26 +251,26 @@ export function Drafts() {
             ]}
           />
         </Field>
-        <button type="submit" className="btn-primary">Buscar</button>
+        <button type="submit" className="btn-primary">Search</button>
         {hasFilters && (
-          <button type="button" className="btn-ghost" onClick={clearFilters}>Limpiar</button>
+          <button type="button" className="btn-ghost" onClick={clearFilters}>Clear</button>
         )}
       </FilterBar>
 
-      {/* Chip row: sticky, visible cuando hay filtros activos. Ancla el contexto
-          de búsqueda mientras el analista scrollea el grid. */}
+      {/* Chip row: sticky, visible when there are active filters. Anchors the
+          search context while the analyst scrolls the grid. */}
       {hasFilters && (
-        <div className="filter-chips" aria-label="Filtros activos">
+        <div className="filter-chips" aria-label="Active filters">
           {activeFilterLabels().map((label, i) => (
             <span key={i} className="filter-chip">{label}</span>
           ))}
           <button type="button" className="filter-chip-clear" onClick={clearFilters}>
-            × limpiar
+            × clear
           </button>
         </div>
       )}
 
-      {/* Error de formulario (campo inválido) — canal separado del status de carga. */}
+      {/* Form error (invalid field) — separate channel from the load status. */}
       {formError && (
         <p className="field-error" role="alert">{formError}</p>
       )}
@@ -284,11 +284,11 @@ export function Drafts() {
             label: "Drafts",
             content: (
               <>
-                {/* Solo feedback transitorio: el contador "N drafts" sobra
-                    porque el límite lo elige el usuario en el filtro "Mostrar". */}
+                {/* Transient feedback only: the "N drafts" counter is redundant
+                    since the user picks the limit in the "Show" filter. */}
                 {(isFetching || error) && (
                   <p className={"status" + (error ? " error" : "")} role="status" aria-live="polite">
-                    {error ? "Error al cargar." : "Buscando…"}
+                    {error ? "Failed to load." : "Searching…"}
                   </p>
                 )}
                 {results}
@@ -296,8 +296,8 @@ export function Drafts() {
             ),
           },
           {
-            id: "presencia",
-            label: "Presencia",
+            id: "presence",
+            label: "Presence",
             content: <ChampionPresence filters={statsApplied} teamId={applied.team_id} />,
           },
           {

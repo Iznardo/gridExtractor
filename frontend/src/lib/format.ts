@@ -1,4 +1,4 @@
-// Formateadores pequeños y puros para la UI.
+// Small pure formatters for the UI.
 
 export function kdaRatio(k = 0, d = 0, a = 0): string {
   if (d === 0) return "Perfect";
@@ -22,6 +22,6 @@ export function perMin(total: number | undefined, durationS: number | undefined)
 }
 
 export function teamLabel(team: { name: string; tag: string | null } | null): string {
-  if (!team) return "(desconocido)";
+  if (!team) return "(unknown)";
   return team.tag ? `${team.name} (${team.tag})` : team.name;
 }

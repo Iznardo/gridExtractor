@@ -38,7 +38,7 @@ import {
 import "./scrims.css";
 
 const LS_KEY = "scrims:lastTeam";
-const VIEW_IDS = ["dashboard", "bloques", "matchups", "duos", "trios", "vsteams", "vspicks"] as const;
+const VIEW_IDS = ["dashboard", "blocks", "matchups", "duos", "trios", "vsteams", "vspicks"] as const;
 
 const DUO_SETS: ScrimRole[][] = [
   ["TOP", "JUNGLE"],
@@ -57,7 +57,7 @@ const VSPICK_LIMIT = 20;
 
 type ById = ReturnType<typeof useChampMaps>["byId"];
 
-// ---- helpers de WR (coherentes con TeamMatchups: glifo no-cromático) ----
+// ---- WR helpers (consistent with TeamMatchups: non-color glyph) ----
 
 function wrClass(c: Count): string {
   const wr = winRate(c);
@@ -89,7 +89,7 @@ function Champ({ id, byId, size = 22 }: { id: number | null; byId: ById; size?: 
   return <ChampIcon id={id} name={name} size={size} />;
 }
 
-// ---- bloque: resumen + tabla de games (reutilizados por #3 y la pestaña Bloques) ----
+// ---- block: summary + games table (reused by #3 and the Blocks tab) ----
 
 function BlockSummaryLine({ block }: { block: BlockSummary }) {
   const losses = block.total.games - block.total.wins;
@@ -108,7 +108,7 @@ function BlockGamesTable({ block, byId }: { block: BlockSummary; byId: ById }) {
     <table className="scr-table scr-block-table">
       <thead>
         <tr>
-          <th>G</th><th>Lado</th><th>Res</th><th>Nuestro draft</th><th>Rival</th>
+          <th>G</th><th>Side</th><th>Res</th><th>Our draft</th><th>Rival</th>
         </tr>
       </thead>
       <tbody>
@@ -138,16 +138,16 @@ function BlockGamesTable({ block, byId }: { block: BlockSummary; byId: ById }) {
   );
 }
 
-// ---- #3 Último bloque (dashboard) ----
+// ---- #3 Latest block (dashboard) ----
 
 function LastBlockCard({ rows, byId }: { rows: ScrimGame[]; byId: ById }) {
   const block = useMemo(() => lastBlock(rows), [rows]);
-  if (!block) return <p className="scr-empty muted">Sin scrims para este equipo.</p>;
+  if (!block) return <p className="scr-empty muted">No scrims for this team.</p>;
   return (
     <div className="scr-card">
       <div className="scr-block-head">
         <span className="scr-block-title">
-          Último bloque · vs {block.rival?.tag ?? block.rival?.name ?? "(?)"} · {block.date}
+          Latest block · vs {block.rival?.tag ?? block.rival?.name ?? "(?)"} · {block.date}
         </span>
         <BlockSummaryLine block={block} />
       </div>
@@ -156,13 +156,13 @@ function LastBlockCard({ rows, byId }: { rows: ScrimGame[]; byId: ById }) {
   );
 }
 
-// ---- Pestaña Bloques: lista de todos los bloques, expandible ----
+// ---- Blocks tab: list of all blocks, expandable ----
 
 function BlocksView({ rows, byId }: { rows: ScrimGame[]; byId: ById }) {
   const all = useMemo(() => blocks(rows), [rows]);
   const [open, setOpen] = useState<Set<string>>(new Set());
 
-  if (all.length === 0) return <p className="scr-empty muted">Sin scrims.</p>;
+  if (all.length === 0) return <p className="scr-empty muted">No scrims.</p>;
 
   function toggle(k: string) {
     setOpen((prev) => {
@@ -177,8 +177,8 @@ function BlocksView({ rows, byId }: { rows: ScrimGame[]; byId: ById }) {
       <table className="scr-table scr-blocks-table">
         <thead>
           <tr>
-            <th aria-label="expandir" />
-            <th>Día</th><th>Parche</th><th>Rival</th><th>Resultado</th>
+            <th aria-label="expand" />
+            <th>Day</th><th>Patch</th><th>Rival</th><th>Result</th>
           </tr>
         </thead>
         <tbody>
@@ -227,7 +227,7 @@ function ComboTable({ rows, roles, byId }: { rows: ScrimGame[]; roles: ScrimRole
     <div className="scr-card">
       <div className="scr-card-title">{title}</div>
       {combos.length === 0 ? (
-        <p className="scr-empty muted">Sin datos.</p>
+        <p className="scr-empty muted">No data.</p>
       ) : (
         <table className="scr-table">
           <thead>
@@ -252,18 +252,18 @@ function ComboTable({ rows, roles, byId }: { rows: ScrimGame[]; roles: ScrimRole
   );
 }
 
-// ---- #6 vs-Equipos ----
+// ---- #6 vs-Teams ----
 
 function VsTeamsView({ rows }: { rows: ScrimGame[] }) {
   const data = useMemo(() => vsTeams(rows), [rows]);
-  // columnas de game number presentes en los datos (1..maxBlock)
+  // game-number columns present in the data (1..maxBlock)
   const maxGn = useMemo(
     () => data.reduce((m, t) => Math.max(m, ...Array.from(t.byGame.keys())), 1),
     [data],
   );
   const gns = Array.from({ length: maxGn }, (_, i) => i + 1);
 
-  if (data.length === 0) return <p className="scr-empty muted">Sin scrims.</p>;
+  if (data.length === 0) return <p className="scr-empty muted">No scrims.</p>;
   return (
     <div className="scr-card">
       <table className="scr-table">
@@ -309,12 +309,12 @@ function VsTeamsView({ rows }: { rows: ScrimGame[] }) {
 
 function VsPicksView({ rows, byId }: { rows: ScrimGame[]; byId: ById }) {
   const data = useMemo(() => vsPicks(rows), [rows]);
-  if (data.length === 0) return <p className="scr-empty muted">Sin scrims.</p>;
+  if (data.length === 0) return <p className="scr-empty muted">No scrims.</p>;
   return (
     <div className="scr-card">
       <table className="scr-table">
         <thead>
-          <tr><th>Campeón rival</th><th className="scr-num">G</th><th className="scr-num">Nuestro WR</th></tr>
+          <tr><th>Rival champion</th><th className="scr-num">G</th><th className="scr-num">Our WR</th></tr>
         </thead>
         <tbody>
           {data.slice(0, VSPICK_LIMIT).map((p) => (
@@ -343,7 +343,7 @@ export function Scrims() {
   const { data: patches } = usePatches();
   const { data: teams } = useTeams();
 
-  // Equipo recordado: URL manda; si no hay, cae a localStorage.
+  // Remembered team: URL wins; if absent, falls back to localStorage.
   const remembered = typeof localStorage !== "undefined" ? localStorage.getItem(LS_KEY) : null;
   const appliedTeam = params.get("team") ?? remembered ?? "";
   const appliedTeamId = appliedTeam ? Number(appliedTeam) : null;
@@ -357,7 +357,7 @@ export function Scrims() {
     ? (viewParam as string)
     : "dashboard";
 
-  // Persistir el equipo aplicado en localStorage (recordatorio entre sesiones).
+  // Persist the applied team in localStorage (remembered across sessions).
   useEffect(() => {
     if (appliedTeam) localStorage.setItem(LS_KEY, appliedTeam);
   }, [appliedTeam]);
@@ -365,8 +365,8 @@ export function Scrims() {
   const appliedDateFrom = params.get("dateFrom") || undefined;
   const appliedPatch = params.get("patch") || undefined;
 
-  // Una sola descarga de scrims; las vistas agregan en cliente. El filtro global
-  // (parche / fecha) acota todo menos los dos pools fijos del dashboard.
+  // Single scrims download; views aggregate client-side. The global filter
+  // (patch / date) narrows everything except the two fixed dashboard pools.
   const scrimFilters: ScrimGamesFilters = {
     team_id: appliedTeamId,
     date_from: appliedDateFrom,
@@ -374,9 +374,9 @@ export function Scrims() {
   };
   const { data: rows, isFetching, error, refetch } = useScrimGames(scrimFilters);
 
-  // Pools del dashboard. "Último parche" = el parche más reciente CON scrims de
-  // este equipo (no el global: un equipo puede no haber jugado scrims en el
-  // último parche). Se deriva del dataset ya cargado (rows van date DESC).
+  // Dashboard pools. "Latest patch" = the most recent patch WITH scrims for
+  // this team (not the global one: a team may not have played scrims on the
+  // latest patch). Derived from the already-loaded dataset (rows are date DESC).
   const dashPatch = (rows && rows.length > 0 ? rows[0].version : null) ?? patches?.[0];
   const { data: poolPatch } = useScouting(appliedTeamId, { patch: dashPatch });
   const { data: pool7 } = useScouting(appliedTeamId, { dateFrom: daysAgoISO(7) });
@@ -404,7 +404,7 @@ export function Scrims() {
       <section className="scr-section">
         <div className="scout-dash-head">
           <h3 className="scr-h3">
-            Top picks por jugador · último parche {dashPatch ? `(${dashPatch})` : ""}
+            Top picks per player · latest patch {dashPatch ? `(${dashPatch})` : ""}
           </h3>
           <a
             className="btn-ghost btn-ghost-sm scout-dash-link"
@@ -412,17 +412,17 @@ export function Scrims() {
             target="_blank"
             rel="noopener"
           >
-            <ExternalLink size={14} aria-hidden="true" /> Abrir drafts
+            <ExternalLink size={14} aria-hidden="true" /> Open drafts
           </a>
         </div>
         {poolPatch ? <MediumBox players={poolPatch.by_medium.scrim} /> : <ScoutingSkeleton />}
       </section>
       <section className="scr-section">
-        <h3 className="scr-h3">Top picks por jugador · últimos 7 días</h3>
+        <h3 className="scr-h3">Top picks per player · last 7 days</h3>
         {pool7 ? <MediumBox players={pool7.by_medium.scrim} /> : <ScoutingSkeleton />}
       </section>
       <section className="scr-section">
-        <h3 className="scr-h3">Resumen del último bloque</h3>
+        <h3 className="scr-h3">Latest block summary</h3>
         <LastBlockCard rows={rows ?? []} byId={byId} />
       </section>
     </div>
@@ -444,8 +444,8 @@ export function Scrims() {
     </div>
   );
 
-  // Matchups (campeón vs campeón por rol): reutiliza TeamMatchups, acotado a
-  // scrims y al filtro de parche global.
+  // Matchups (champion vs champion per role): reuses TeamMatchups, scoped to
+  // scrims and the global patch filter.
   const matchupFilters: StatsFilters = {
     team_id: appliedTeamId ?? undefined,
     game_types: "SCRIM",
@@ -454,43 +454,43 @@ export function Scrims() {
 
   const windowTabs = [
     { id: "dashboard", label: "Dashboard", content: dashboard },
-    { id: "bloques", label: "Bloques", content: <BlocksView rows={rows ?? []} byId={byId} /> },
+    { id: "blocks", label: "Blocks", content: <BlocksView rows={rows ?? []} byId={byId} /> },
     { id: "matchups", label: "Matchups", content: <TeamMatchups filters={matchupFilters} /> },
     { id: "duos", label: "Duos", content: duosView },
     { id: "trios", label: "Trios", content: triosView },
-    { id: "vsteams", label: "vs Equipos", content: <VsTeamsView rows={rows ?? []} /> },
+    { id: "vsteams", label: "vs Teams", content: <VsTeamsView rows={rows ?? []} /> },
     { id: "vspicks", label: "vs Picks", content: <VsPicksView rows={rows ?? []} byId={byId} /> },
   ];
 
   return (
     <div className="page">
       <FilterBar onSubmit={submit}>
-        <Field label="Equipo *">
+        <Field label="Team *">
           <TeamPicker value={teamId} onChange={setTeamId} teams={teams ?? []} />
         </Field>
-        <Field label="Parche">
+        <Field label="Patch">
           <Select
             value={patch}
             onChange={setPatch}
-            ariaLabel="Parche"
-            options={[{ value: "", label: "(todos)" }, ...(patches ?? []).map((p) => ({ value: p, label: p }))]}
+            ariaLabel="Patch"
+            options={[{ value: "", label: "(all)" }, ...(patches ?? []).map((p) => ({ value: p, label: p }))]}
           />
         </Field>
-        <Field label="Desde fecha">
+        <Field label="From date">
           <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
         </Field>
         <button type="submit" className="btn-primary" disabled={!teamId}>
-          Trackear
+          Track
         </button>
       </FilterBar>
 
       <p className={"status" + (error ? " error" : "")} role="status" aria-live="polite">
         {appliedTeamId == null
-          ? "Elige tu equipo para trackear sus scrims."
+          ? "Pick your team to track its scrims."
           : error
-            ? <>{(error as Error).message} <button type="button" className="btn-ghost btn-ghost-sm" onClick={() => refetch()}>Reintentar</button></>
+            ? <>{(error as Error).message} <button type="button" className="btn-ghost btn-ghost-sm" onClick={() => refetch()}>Retry</button></>
             : isFetching
-              ? "Cargando scrims…"
+              ? "Loading scrims…"
               : `${rows?.length ?? 0} scrims.`}
       </p>
 

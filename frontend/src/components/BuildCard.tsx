@@ -27,7 +27,7 @@ export function SkillGrid({ order }: { order: string }) {
 }
 
 export function BuildCard({ stats }: { stats: PickStats | null }) {
-  if (!stats) return <span className="muted">sin datos</span>;
+  if (!stats) return <span className="muted">no data</span>;
   const buys = (stats.build_path ?? []).filter((b) => b.action === "BUY");
   const r = stats.runes;
   const spells = stats.summoner_spells ?? [];
@@ -61,7 +61,7 @@ export function BuildCard({ stats }: { stats: PickStats | null }) {
           </div>
         </div>
       ) : (
-        <span className="muted">sin runas</span>
+        <span className="muted">no runes</span>
       )}
 
       {buys.length > 0 ? (
@@ -74,13 +74,13 @@ export function BuildCard({ stats }: { stats: PickStats | null }) {
           ))}
         </div>
       ) : (
-        <span className="muted">sin build order</span>
+        <span className="muted">no build order</span>
       )}
 
       {stats.skill_order ? (
         <SkillGrid order={stats.skill_order} />
       ) : (
-        <span className="muted">sin skill order</span>
+        <span className="muted">no skill order</span>
       )}
     </div>
   );

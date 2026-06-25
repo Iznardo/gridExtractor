@@ -3,16 +3,16 @@ import type { CSSProperties, KeyboardEvent } from "react";
 
 import "./filters.css";
 
-// Listbox propio que sustituye a los <select> nativos en las barras de filtro.
-// Motivo: en Chrome/Linux la lista desplegada de un <select> la dibuja el SO
-// (GTK) y no respeta el tema oscuro — se ve incoherente frente a Firefox. Este
-// control es 100% DOM propio (botón + <ul role="listbox">), así que se renderiza
-// igual en todos los navegadores. Mismo lenguaje visual y de teclado que
-// TeamPicker / ChampionPicker (reutiliza .champ-list / .champ-opt de filters.css).
+// Custom listbox replacing the native <select> in the filter bars.
+// Why: on Chrome/Linux a <select>'s dropdown is drawn by the OS (GTK) and does
+// not respect the dark theme — inconsistent against Firefox. This control is
+// 100% custom DOM (button + <ul role="listbox">), so it renders the same in
+// every browser. Same visual and keyboard language as TeamPicker /
+// ChampionPicker (reuses .champ-list / .champ-opt from filters.css).
 //
-// API deliberadamente igual a la del <select> que reemplaza: value string +
-// onChange(value) — el padre no cambia. No hay búsqueda: es para listas fijas o
-// cortas (rol, parche, tipo…); para catálogos grandes seguir usando los pickers.
+// API deliberately identical to the <select> it replaces: value string +
+// onChange(value) — the parent does not change. No search: it is for fixed or
+// short lists (role, patch, type...); for large catalogs use the pickers.
 
 export type SelectOption = { value: string; label: string; title?: string };
 
@@ -40,13 +40,13 @@ export function Select({
   const selectedIndex = options.findIndex((o) => o.value === value);
   const selected = selectedIndex >= 0 ? options[selectedIndex] : null;
 
-  // Al abrir, el cursor de teclado arranca sobre la opción ya seleccionada.
+  // On open, the keyboard cursor starts on the already-selected option.
   function openMenu() {
     setActive(selectedIndex >= 0 ? selectedIndex : 0);
     setOpen(true);
   }
 
-  // Mantener la opción activa a la vista al navegar con flechas.
+  // Keep the active option in view when navigating with arrows.
   useEffect(() => {
     if (!open) return;
     const el = listRef.current?.children[active] as HTMLElement | undefined;

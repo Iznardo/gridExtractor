@@ -14,23 +14,23 @@
   --red-fg: #fecaca;
   --red-text: #f87171;
 
-  /* Vocabulario de colores de habilidades — vocabulario cerrado (DESIGN.md §5) */
+  /* Skill color vocabulary — closed vocabulary (DESIGN.md §5) */
   --skill-q: #38bdf8;
   --skill-w: #f97316;
   --skill-e: #a855f7;
   --skill-r: #ef4444;
 
-  /* Diff de carril (gold/cs en GameDetail): positivo verde; negativo usa --red. */
+  /* Lane diff (gold/cs in GameDetail): positive green; negative uses --red. */
   --gd-pos: #4caf78;
 
-  /* Tintes de fase del draft (draftboard) — azules/rojos alternos por slot. */
+  /* Draft phase tints (draftboard) — alternating blues/reds per slot. */
   --draft-fp-a: #1f3558;
   --draft-fp-b: #132240;
   --draft-sp-a: #4d1c1c;
   --draft-sp-b: #341010;
 
-  /* Badges de relación de pick (matchups): blind neutro, counter púrpura.
-     Contraste AA verificado: blind 5.6:1, counter 8.1:1. */
+  /* Pick relation badges (matchups): blind neutral, counter purple.
+     AA contrast verified: blind 5.6:1, counter 8.1:1. */
   --badge-blind-bg: #1f2937;
   --badge-blind-fg: #d1d5db;
   --badge-blind-border: #374151;
@@ -38,7 +38,7 @@
   --badge-counter-fg: #c4b5fd;
   --badge-counter-border: #4c1d95;
 
-  /* Escala z-index semántica (dropdown → sticky → modal → toast → tooltip) */
+  /* Semantic z-index scale (dropdown → sticky → modal → toast → tooltip) */
   --z-dropdown: 100;
   --z-sticky: 200;
   --z-modal: 400;
@@ -47,11 +47,11 @@
 
   color-scheme: dark;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  /* Tamaño base de la app. Todo el contenido de datos usa rem, así que esta es
-     la palanca única para escalar la densidad de lectura. Subido a 18px (≈130%
-     del 14px original) para que los datos se lean cómodos en portátil. La barra
-     superior (App.css) y la de filtros (filters.css) se congelan a 14px aparte
-     para que NO crezcan con esto: solo crecen los datos. */
+  /* App base size. All data content uses rem, so this is the single lever to
+     scale reading density. Raised to 18px (≈130% of the original 14px) so data
+     reads comfortably on a laptop. The top bar (App.css) and the filter bar
+     (filters.css) are frozen at 14px separately so they do NOT grow with this:
+     only the data grows. */
   font-size: 18px;
 }
 
@@ -67,9 +67,9 @@ a { color: inherit; text-decoration: none; }
 
 button { font: inherit; cursor: pointer; }
 
-/* Foco visible y preciso en todo control interactivo (promesa "preciso y
-   técnico" de DESIGN.md). :where() mantiene especificidad 0 para que un
-   componente pueda ajustar el offset si lo necesita. */
+/* Visible, precise focus on every interactive control (the "precise and
+   technical" promise of DESIGN.md). :where() keeps specificity 0 so a component
+   can adjust the offset if it needs to. */
 :where(a, button, input, select, textarea, [tabindex]):focus-visible {
   outline: 2px solid var(--blue);
   outline-offset: 2px;
@@ -84,10 +84,10 @@ input, select {
   padding: 6px 8px;
   min-height: 32px;
 }
-/* El placeholder por defecto del navegador queda corto de contraste; --muted
-   sobre --panel2 ≈ 4.7:1 (AA). */
+/* The browser default placeholder is low-contrast; --muted on --panel2 ≈ 4.7:1
+   (AA). */
 input::placeholder { color: var(--muted); opacity: 1; }
-/* Estado de error en inputs: borde rojo (no solo texto rojo fuera del campo). */
+/* Input error state: red border (not just red text outside the field). */
 input[aria-invalid="true"] {
   border-color: var(--red);
 }
@@ -97,7 +97,7 @@ input[aria-invalid="true"]:focus-visible {
 
 table { border-collapse: collapse; }
 
-/* ---- utilidades compartidas ---- */
+/* ---- shared utilities ---- */
 .pill {
   font-size: 0.68rem;
   text-transform: uppercase;
@@ -116,7 +116,7 @@ table { border-collapse: collapse; }
 
 .status { padding: 0.4rem 0; color: var(--muted); min-height: 1.2rem; }
 .status.error { color: var(--red); }
-/* Refuerzo no-cromático: el error no depende solo del rojo (daltonismo). */
+/* Non-color reinforcement: the error does not rely on red alone (color blindness). */
 .status.error::before { content: "⚠"; margin-right: 0.4em; }
 
 .page > .status { padding: 0.5rem 1.2rem; }
@@ -150,8 +150,8 @@ table { border-collapse: collapse; }
   min-height: unset;
 }
 
-/* Error de campo (campeón no reconocido, validaciones). Canal separado del
-   status de carga para que no compitan en urgencia visual. */
+/* Field error (unrecognized champion, validations). A separate channel from the
+   loading status so they don't compete for visual urgency. */
 .field-error {
   padding: 0.3rem 1.2rem;
   color: var(--red);
@@ -160,8 +160,8 @@ table { border-collapse: collapse; }
 }
 .field-error::before { content: "⚠ "; }
 
-/* Chip row: sticky debajo de la filter bar. Mantiene visible el contexto de
-   búsqueda mientras el analista scrollea. */
+/* Chip row: sticky below the filter bar. Keeps the search context visible
+   while the analyst scrolls. */
 .filter-chips {
   display: flex;
   flex-wrap: wrap;
@@ -208,7 +208,7 @@ table { border-collapse: collapse; }
   border: 0;
 }
 
-/* Hint de un campo: explicación breve bajo el control. */
+/* Field hint: brief explanation below the control. */
 .field-hint {
   font-size: 0.68rem;
   color: var(--muted);
@@ -216,7 +216,7 @@ table { border-collapse: collapse; }
   line-height: 1.35;
 }
 
-/* ---- Skeleton: primitivas compartidas (draftboard, gamedetail, …) ---- */
+/* ---- Skeleton: shared primitives (draftboard, gamedetail, …) ---- */
 @keyframes sk-shimmer {
   from { background-position: -200% 0; }
   to   { background-position:  200% 0; }

@@ -1,4 +1,4 @@
-/* TeamMatchups — matchups más jugados por rol (ventana de Scouting) */
+/* TeamMatchups — most-played matchups per role (Scouting view) */
 
 .tm-grid {
   display: grid;
@@ -44,7 +44,7 @@
   margin: 0;
 }
 
-/* Entrada (dos líneas: nuestro campeón / vs rival + meta) */
+/* Entry (two lines: our champion / vs opponent + meta) */
 .tm-entry {
   position: relative;
   padding: 5px 8px;
@@ -109,15 +109,15 @@
   text-align: right;
 }
 
-/* WR coloreado + glifo direccional (no-cromático). */
+/* Colorized WR + directional glyph (non-color). */
 .tm-wr-pos     { color: var(--win); }
 .tm-wr-neg     { color: var(--red-text); }
 .tm-wr-neutral { color: var(--muted); }
 .tm-wr-arrow   { font-size: 0.6rem; margin-right: 2px; }
 
-/* Popover de delta — aparece en hover/focus de la entrada. Crece a la derecha
-   (max-content) porque ahora lleva tres referencias + columna de delta y no cabe
-   en el ancho de la columna del rol. */
+/* Delta popover — appears on hover/focus of the entry. Grows to the right
+   (max-content) because it now carries three references + a delta column and
+   doesn't fit within the role column width. */
 .tm-pop {
   position: absolute;
   top: 100%;
@@ -147,7 +147,7 @@
   transition: opacity 100ms ease-out, transform 100ms ease-out;
 }
 
-/* Bloque de referencias: 3 filas (label | WR·g | delta). */
+/* References block: 3 rows (label | WR·g | delta). */
 .tm-pop-refs { display: flex; flex-direction: column; gap: 1px; }
 .tm-pop-ref {
   display: grid;
@@ -177,9 +177,9 @@
   text-align: right;
   white-space: nowrap;
 }
-.tm-pop-d-anchor { min-width: 46px; } /* reserva la columna delta en la fila base */
+.tm-pop-d-anchor { min-width: 46px; } /* reserves the delta column in the base row */
 
-/* Bloque de diferencias de carril: 3 columnas (stat | @7 | @14). */
+/* Lane diff block: 3 columns (stat | @7 | @14). */
 .tm-pop-lane {
   margin-top: 6px;
   padding-top: 6px;
@@ -211,7 +211,7 @@
   .tm-entry:focus-visible .tm-pop { transform: none; }
 }
 
-/* Botón "+N más" por columna (expansión progresiva, como RolePickSection) */
+/* "+N more" button per column (progressive expansion, like RolePickSection) */
 .tm-show-more {
   display: block;
   width: 100%;
@@ -227,7 +227,7 @@
 }
 .tm-show-more:hover { color: var(--text); background: var(--panel2); }
 
-/* Skeleton por columna */
+/* Per-column skeleton */
 .tm-col-skel {
   padding: 5px 8px;
   display: flex;

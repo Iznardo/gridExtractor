@@ -11,7 +11,7 @@ import type { BaselineEntry, TeamMatchupEntry } from "../api/types";
 import { ChampIcon } from "../components/icons";
 import "./team-matchups.css";
 
-// Filtros de contexto que el "vs otros equipos" hereda de la vista.
+// Context filters that "vs other teams" inherits from the view.
 type CtxFilters = LaneMatchupCtx;
 
 const ROLES = ["TOP", "JUNGLE", "MID", "ADC", "SUPPORT"] as const;
@@ -23,7 +23,7 @@ const ROLE_LABEL: Record<string, string> = {
   SUPPORT: "SUP",
 };
 
-// Mínimo de partidas para fiarse de un WR (coherente con la pool de scouting).
+// Minimum games to trust a WR (consistent with the scouting pool).
 const WR_MIN_GAMES = 3;
 const COL_LIMIT = 10;
 
@@ -34,7 +34,7 @@ function wrClass(wr: number | null, games: number): string {
   return "tm-wr-neutral";
 }
 
-// Glifo direccional no-cromático (daltonismo) — coherente con el resto del front.
+// Directional non-color glyph (color blindness) — consistent with the rest of the front.
 function wrArrow(wr: number | null, games: number): string {
   if (wr == null || games < WR_MIN_GAMES) return "";
   if (wr >= 55) return "▲";
@@ -53,13 +53,13 @@ function WrValue({ wr, games }: { wr: number | null; games: number }) {
   );
 }
 
-// Dos referencias para cada matchup:
-//  1. Este matchup (nuestro equipo).
-//  2. "Resto": nuestro campeón en ese rol vs los DEMÁS rivales — baseline (rol,
-//     campeón) menos la fila del matchup. Role-specific, excluye el propio duelo.
-// El delta solo se calcula si ambos lados llegan a WR_MIN_GAMES.
+// Two references for each matchup:
+//  1. This matchup (our team).
+//  2. "Rest": our champion in that role vs ALL OTHER opponents — baseline (role,
+//     champion) minus the matchup row. Role-specific, excludes the duel itself.
+// The delta is only computed if both sides reach WR_MIN_GAMES.
 function computeRefs(entry: TeamMatchupEntry, roleBase: BaselineEntry | undefined) {
-  // resto de rivales (baseline − este matchup)
+  // other opponents (baseline − this matchup)
   const restGames = roleBase ? roleBase.games - entry.games : 0;
   const restWins = roleBase ? roleBase.wins - entry.wins : 0;
   const restWr = restGames > 0 ? Math.round((100 * restWins) / restGames * 10) / 10 : null;
@@ -73,14 +73,14 @@ function computeRefs(entry: TeamMatchupEntry, roleBase: BaselineEntry | undefine
   return { restGames, restWr, deltaRest };
 }
 
-// Formatea una diferencia de carril (oro entero, CS con 1 decimal) con signo.
+// Formats a lane diff (gold as integer, CS with 1 decimal) with sign.
 function fmtLane(v: number | null, decimals = 0): string {
   if (v == null) return "—";
   const body = decimals ? v.toFixed(decimals) : Math.round(v).toString();
   return (v > 0 ? "+" : "") + body;
 }
 
-// Clase de color para cualquier diferencia (positivo = a nuestro favor).
+// Color class for any diff (positive = in our favor).
 function diffClass(v: number | null): string {
   if (v == null) return "tm-wr-neutral";
   if (v > 0) return "tm-wr-pos";
@@ -88,7 +88,7 @@ function diffClass(v: number | null): string {
   return "tm-wr-neutral";
 }
 
-// Línea de delta de WR con glifo direccional no-cromático.
+// WR delta line with a directional non-color glyph.
 function DeltaTag({ d }: { d: number | null }) {
   if (d == null) return <span className="tm-wr-neutral tm-pop-d">—</span>;
   return (
@@ -120,8 +120,8 @@ function MatchupEntryRow({
   const oppName = entry.opp_champ_name ?? `#${entry.opp_champ_id}`;
   const hasLane = entry.diff_games_7 > 0 || entry.diff_games_14 > 0;
 
-  // "vs otros equipos": on-demand. Se activa al inspeccionar la fila (hover/focus)
-  // para no lanzar 840 fetches al cargar la página. React Query cachea por par.
+  // "vs other teams": on-demand. Activated when inspecting the row (hover/focus)
+  // to avoid firing 840 fetches on page load. React Query caches per pair.
   const [active, setActive] = useState(false);
   const others = useLaneMatchupOthers(
     { team_id: teamId, role, our: entry.our_champ_id, opp: entry.opp_champ_id },
@@ -136,10 +136,10 @@ function MatchupEntryRow({
       : null;
 
   const ariaLabel =
-    `${ourName} vs ${oppName}: ${entry.games} partidas` +
+    `${ourName} vs ${oppName}: ${entry.games} games` +
     (entry.win_rate != null ? `, ${entry.win_rate.toFixed(0)}% WR` : "") +
     (deltaRest != null
-      ? `. Diferencia con ${ourName} en ${roleLabel} contra el resto de rivales: ${deltaRest > 0 ? "+" : ""}${deltaRest}%`
+      ? `. Difference for ${ourName} in ${roleLabel} against the rest of opponents: ${deltaRest > 0 ? "+" : ""}${deltaRest}%`
       : "");
 
   return (
@@ -168,11 +168,11 @@ function MatchupEntryRow({
         </div>
       </div>
 
-      {/* Popover — visible en hover/focus. Texto ya cubierto por aria-label. */}
+      {/* Popover — visible on hover/focus. Text already covered by aria-label. */}
       <div className="tm-pop" role="presentation">
         <div className="tm-pop-refs">
           <div className="tm-pop-ref">
-            <span className="tm-pop-label">Este matchup</span>
+            <span className="tm-pop-label">This matchup</span>
             <span className="tm-pop-val">
               {entry.win_rate != null ? `${entry.win_rate.toFixed(0)}%` : "—"}
               <span className="tm-pop-g"> · {entry.games}g</span>
@@ -180,7 +180,7 @@ function MatchupEntryRow({
             <span className="tm-pop-d tm-pop-d-anchor" aria-hidden="true" />
           </div>
           <div className="tm-pop-ref">
-            <span className="tm-pop-label">Otros equipos</span>
+            <span className="tm-pop-label">Other teams</span>
             <span className="tm-pop-val">
               {others.isLoading || !active ? (
                 <span className="tm-pop-g">…</span>
@@ -190,13 +190,13 @@ function MatchupEntryRow({
                   <span className="tm-pop-g"> · {othersData.games}g</span>
                 </>
               ) : (
-                <span className="tm-pop-g">sin muestra</span>
+                <span className="tm-pop-g">no sample</span>
               )}
             </span>
             <DeltaTag d={deltaOthers} />
           </div>
           <div className="tm-pop-ref">
-            <span className="tm-pop-label">{ourName} en {roleLabel} · resto</span>
+            <span className="tm-pop-label">{ourName} in {roleLabel} · rest</span>
             <span className="tm-pop-val">
               {restWr != null ? `${restWr.toFixed(0)}%` : "—"}
               <span className="tm-pop-g"> · {restGames}g</span>
@@ -208,7 +208,7 @@ function MatchupEntryRow({
         {hasLane && (
           <div className="tm-pop-lane">
             <div className="tm-lane-row tm-lane-head">
-              <span className="tm-lane-stat">Carril Δ</span>
+              <span className="tm-lane-stat">Lane Δ</span>
               <span className="tm-lane-col">@7</span>
               <span className="tm-lane-col">@14</span>
             </div>
@@ -218,7 +218,7 @@ function MatchupEntryRow({
               <span className={"tm-lane-col " + diffClass(entry.cs_diff_14)}>{fmtLane(entry.cs_diff_14, 1)}</span>
             </div>
             <div className="tm-lane-row">
-              <span className="tm-lane-stat">Oro</span>
+              <span className="tm-lane-stat">Gold</span>
               <span className={"tm-lane-col " + diffClass(entry.gold_diff_7)}>{fmtLane(entry.gold_diff_7)}</span>
               <span className={"tm-lane-col " + diffClass(entry.gold_diff_14)}>{fmtLane(entry.gold_diff_14)}</span>
             </div>
@@ -259,7 +259,7 @@ function Column({
           ))}
         </div>
       ) : entries.length === 0 ? (
-        <p className="tm-col-empty">Sin datos</p>
+        <p className="tm-col-empty">No data</p>
       ) : (
         <>
           <ul className="tm-col-list">
@@ -281,7 +281,7 @@ function Column({
               className="tm-show-more"
               onClick={() => setShown((n) => n + COL_LIMIT)}
             >
-              +{Math.min(COL_LIMIT, entries.length - shown)} más
+              +{Math.min(COL_LIMIT, entries.length - shown)} more
             </button>
           )}
         </>
@@ -293,8 +293,8 @@ function Column({
 export function TeamMatchups({ filters }: { filters: StatsFilters }) {
   const { data, isFetching, error } = useTeamMatchups(filters, true);
 
-  // El "vs otros equipos" hereda el contexto de la vista (tipo, parche, torneo)
-  // pero NO el team (es justo a quien excluye). Se pasa a cada fila on-demand.
+  // "vs other teams" inherits the view context (type, patch, tournament)
+  // but NOT the team (it's exactly what it excludes). Passed to each row on-demand.
   const ctx: CtxFilters = {
     game_types: filters.game_types,
     patch: filters.patch,
@@ -305,7 +305,7 @@ export function TeamMatchups({ filters }: { filters: StatsFilters }) {
     return (
       <div className="tm-load-error">
         <AlertTriangle size={14} />
-        <span>No se pudieron cargar los matchups.</span>
+        <span>Could not load matchups.</span>
       </div>
     );
   }

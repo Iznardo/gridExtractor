@@ -13,10 +13,10 @@ import "./icons.css";
 
 type ImgProps = { src: string; alt: string; title?: string; className?: string; size?: number };
 
-// Imagen con fallback: si falla la carga, se oculta (deja ver el texto al
-// lado). Guardamos el src que falló (no un booleano) para que, al cambiar el
-// src — misma posición de icono renderizando otro campeón al re-filtrar — la
-// imagen vuelva a intentarse en lugar de quedarse en blanco.
+// Image with fallback: if loading fails it hides (showing the text beside it).
+// We store the src that failed (not a boolean) so that when the src changes —
+// same icon position rendering another champion on re-filter — the image is
+// retried instead of staying blank.
 function Img({ src, alt, title, className, size }: ImgProps) {
   const [brokenSrc, setBrokenSrc] = useState<string | null>(null);
   if (brokenSrc === src) return null;
@@ -47,7 +47,7 @@ export function ChampIcon({ id, name, size = 28 }: { id: number; name?: string |
 export function ItemIcon({ id, size = 24 }: { id: number; size?: number }) {
   const { version, items } = useDdragon();
   if (!id) return <span className="item-empty" style={{ width: size, height: size }} />;
-  const name = items.get(id) ?? `ítem ${id}`;
+  const name = items.get(id) ?? `item ${id}`;
   return <Img className="icon-sq" size={size} src={itemIconUrl(version, id)} alt={name} />;
 }
 
@@ -58,8 +58,8 @@ export function SpellIcon({ id, size = 22 }: { id: number; size?: number }) {
   return <Img className="icon-sq" size={size} src={spellIconUrl(version, spell.image)} alt={spell.name} />;
 }
 
-// Runa (perk) por id: keystone o runa menor. Si no está en runesReforged,
-// prueba el mapa de stat shards.
+// Rune (perk) by id: keystone or minor rune. If not in runesReforged, try the
+// stat shards map.
 export function RuneIcon({ id, size = 22 }: { id: number; size?: number }) {
   const { perks } = useDdragon();
   const perk = perks.get(id);
@@ -73,7 +73,7 @@ export function RuneIcon({ id, size = 22 }: { id: number; size?: number }) {
   return <span className="item-empty" style={{ width: size, height: size }} />;
 }
 
-// Icono del árbol de runas (estilo: Domination, Precision...).
+// Rune tree icon (style: Domination, Precision...).
 export function RuneStyleIcon({ id, size = 20 }: { id: number; size?: number }) {
   const { styles } = useDdragon();
   const style = styles.get(id);

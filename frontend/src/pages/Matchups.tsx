@@ -26,14 +26,14 @@ function numParam(v: string | null): number | undefined {
   return Number.isFinite(n) ? n : undefined;
 }
 
-// ---- componentes de fila ----
+// ---- row components ----
 
 function SideBlock({
   side,
   flip,
 }: {
   side: MatchupSide;
-  flip?: boolean; // opponent — layout espejado, icono flanquea el VS por la derecha
+  flip?: boolean; // opponent — mirrored layout, icon flanks the VS on the right
 }) {
   const won = side.result === true;
   const lost = side.result === false;
@@ -64,7 +64,7 @@ function SideBlock({
       {kda !== null ? (
         <span
           className={"mu-kda" + (won ? " won" : lost ? " lost" : "")}
-          title={won ? "Victoria" : lost ? "Derrota" : undefined}
+          title={won ? "Win" : lost ? "Loss" : undefined}
         >
           {kda}
           {side.result !== null && (
@@ -87,7 +87,7 @@ function SideBlock({
   );
 
   if (flip) {
-    // Oponente (derecha): [Icono flanqueando VS] [Stats] [Nombre]
+    // Opponent (right): [Icon flanking VS] [Stats] [Name]
     return (
       <div className="mu-side opponent">
         {icon}
@@ -97,7 +97,7 @@ function SideBlock({
     );
   }
 
-  // Focal (izquierda): [Nombre] [Stats] [Icono flanqueando VS]
+  // Focal (left): [Name] [Stats] [Icon flanking VS]
   return (
     <div className="mu-side focal">
       {champBlock}
@@ -107,7 +107,7 @@ function SideBlock({
   );
 }
 
-// Un lado puede ser un solo pick (1v1) o un dúo apilado (2v2).
+// A side can be a single pick (1v1) or a stacked duo (2v2).
 function SideStack({
   primary,
   secondary,
@@ -120,12 +120,12 @@ function SideStack({
   if (!primary) {
     return (
       <div className={"mu-side " + (flip ? "opponent" : "focal")}>
-        <span className="mu-no-opponent">sin rival en datos</span>
+        <span className="mu-no-opponent">no opponent in data</span>
       </div>
     );
   }
   if (secondary === undefined) {
-    // modo 1v1: un solo bloque
+    // 1v1 mode: a single block
     return <SideBlock side={primary} flip={flip} />;
   }
   return (
@@ -135,7 +135,7 @@ function SideStack({
         <SideBlock side={secondary} flip={flip} />
       ) : (
         <div className={"mu-side " + (flip ? "opponent" : "focal")}>
-          <span className="mu-no-opponent">sin rival en datos</span>
+          <span className="mu-no-opponent">no opponent in data</span>
         </div>
       )}
     </div>
@@ -150,7 +150,7 @@ function BuildCol({ side }: { side: MatchupSide }) {
         <span>{side.player?.name ?? side.champion.name}</span>
         {side.side && <span className={"pill " + side.side}>{side.side}</span>}
       </div>
-      {side.stats ? <BuildCard stats={side.stats} /> : <div className="mu-no-data">Sin datos del rival</div>}
+      {side.stats ? <BuildCard stats={side.stats} /> : <div className="mu-no-data">No opponent data</div>}
     </div>
   );
 }
@@ -160,7 +160,7 @@ function MatchupRow({ m }: { m: Matchup }) {
   const { pick, opponent, pick_ally, opponent_ally, role, date, version, tournament, game_type } = m;
   const is2v2 = pick_ally != null;
 
-  // Builds del detalle: focal (+ aliado en 2v2) | rivales con stats.
+  // Detail builds: focal (+ ally in 2v2) | opponents with stats.
   const buildSides: MatchupSide[] = [pick];
   if (pick_ally) buildSides.push(pick_ally);
   if (opponent) buildSides.push(opponent);
@@ -240,11 +240,11 @@ function MatchupSkeleton() {
   );
 }
 
-// ---- página ----
+// ---- page ----
 
 const LIMIT_DEFAULT = 50;
 const ROLES = ["TOP", "JUNGLE", "MID", "ADC", "SUPPORT"];
-const ROLE_OPTIONS = [{ value: "", label: "Todos" }, ...ROLES.map((r) => ({ value: r, label: r }))];
+const ROLE_OPTIONS = [{ value: "", label: "All" }, ...ROLES.map((r) => ({ value: r, label: r }))];
 
 export function Matchups() {
   const { byName, list: champList } = useChampMaps();
@@ -305,28 +305,28 @@ export function Matchups() {
     setFormError("");
 
     if (badChamp(focal)) {
-      setFormError(`Campeón no reconocido: "${focal}".`);
+      setFormError(`Unrecognized champion: "${focal}".`);
       focalRef.current?.focus();
       return;
     }
     if (badChamp(rival)) {
-      setFormError(`Campeón no reconocido: "${rival}".`);
+      setFormError(`Unrecognized champion: "${rival}".`);
       rivalRef.current?.focus();
       return;
     }
     if (mode === "2v2") {
       if (badChamp(allyB)) {
-        setFormError(`Campeón no reconocido: "${allyB}".`);
+        setFormError(`Unrecognized champion: "${allyB}".`);
         allyBRef.current?.focus();
         return;
       }
       if (badChamp(rivalB)) {
-        setFormError(`Campeón no reconocido: "${rivalB}".`);
+        setFormError(`Unrecognized champion: "${rivalB}".`);
         rivalBRef.current?.focus();
         return;
       }
       if (!focal.trim() || !allyB.trim()) {
-        setFormError("En 2v2 indica los dos campeones aliados (Aliado 1 y Aliado 2).");
+        setFormError("In 2v2, specify both ally champions (Ally 1 and Ally 2).");
         (focal.trim() ? allyBRef : focalRef).current?.focus();
         return;
       }
@@ -344,7 +344,7 @@ export function Matchups() {
     if (tournament) next.tournament = tournament;
     if (patch) next.patch = patch;
     if (gameType) next.type = gameType;
-    // limit se resetea al aplicar nuevos filtros
+    // limit resets when applying new filters
     setSearchParams(next);
   }
 
@@ -360,7 +360,7 @@ export function Matchups() {
     setRole(""); setRoleB(""); setRelation("");
     setTournament(""); setPatch(""); setGameType("");
     setFormError("");
-    // se conserva el modo activo (1v1/2v2), solo se limpian filtros
+    // keep the active mode (1v1/2v2), only filters are cleared
     setSearchParams(mode === "2v2" ? { mode: "2v2" } : {});
   }
 
@@ -368,7 +368,7 @@ export function Matchups() {
     if (next === mode) return;
     setMode(next);
     setFormError("");
-    // re-aplica con el modo nuevo, conservando lo que tenga sentido
+    // re-apply with the new mode, keeping whatever still makes sense
     const params = new URLSearchParams(searchParams);
     if (next === "2v2") {
       params.set("mode", "2v2");
@@ -381,18 +381,18 @@ export function Matchups() {
     setSearchParams(params);
   }
 
-  // Chips de filtros activos
+  // Active filter chips
   const is2v2 = searchParams.get("mode") === "2v2";
   const activeChips = [
-    searchParams.get("champ") && { key: "champ", label: `${is2v2 ? "Aliado 1" : "Campeón"}: ${searchParams.get("champ")}` },
+    searchParams.get("champ") && { key: "champ", label: `${is2v2 ? "Ally 1" : "Champion"}: ${searchParams.get("champ")}` },
     searchParams.get("champ2") && { key: "champ2", label: `vs: ${searchParams.get("champ2")}` },
-    is2v2 && searchParams.get("champ_b") && { key: "champ_b", label: `Aliado 2: ${searchParams.get("champ_b")}` },
+    is2v2 && searchParams.get("champ_b") && { key: "champ_b", label: `Ally 2: ${searchParams.get("champ_b")}` },
     is2v2 && searchParams.get("champ2_b") && { key: "champ2_b", label: `vs2: ${searchParams.get("champ2_b")}` },
-    searchParams.get("role") && { key: "role", label: `Rol: ${searchParams.get("role")}` },
-    is2v2 && searchParams.get("role_b") && { key: "role_b", label: `Rol 2: ${searchParams.get("role_b")}` },
+    searchParams.get("role") && { key: "role", label: `Role: ${searchParams.get("role")}` },
+    is2v2 && searchParams.get("role_b") && { key: "role_b", label: `Role 2: ${searchParams.get("role_b")}` },
     !is2v2 && searchParams.get("relation") && { key: "relation", label: searchParams.get("relation")! },
     searchParams.get("tournament") && { key: "tournament", label: searchParams.get("tournament")! },
-    searchParams.get("patch") && { key: "patch", label: `Parche ${searchParams.get("patch")}` },
+    searchParams.get("patch") && { key: "patch", label: `Patch ${searchParams.get("patch")}` },
     searchParams.get("type") && { key: "type", label: searchParams.get("type")! },
   ].filter(Boolean) as { key: string; label: string }[];
 
@@ -422,10 +422,10 @@ export function Matchups() {
   return (
     <div className="page matchups-page">
       <FilterBar onSubmit={() => submit()}>
-        {/* Modo de búsqueda: primer control, alineado con los filtros */}
+        {/* Search mode: first control, aligned with the filters */}
         <div className="field">
-          <span className="field-label">Modo</span>
-          <div className="mu-mode-seg" role="group" aria-label="Modo de búsqueda">
+          <span className="field-label">Mode</span>
+          <div className="mu-mode-seg" role="group" aria-label="Search mode">
             <button
               type="button"
               className={"mu-mode-btn" + (mode === "1v1" ? " active" : "")}
@@ -447,51 +447,51 @@ export function Matchups() {
 
         <div className="filter-divider" aria-hidden="true" />
 
-        {/* Grupo primario: campeones, roles, rivales */}
+        {/* Primary group: champions, roles, opponents */}
         {mode === "2v2" ? (
           <>
-            <Field label="Campeón 1">
+            <Field label="Champion 1">
               <ChampionPicker
                 value={focal}
                 onChange={setFocal}
                 champions={champList}
-                placeholder="ej. Aatrox"
+                placeholder="e.g. Aatrox"
                 hasError={formError.includes(`"${focal}"`) && focal.trim() !== ""}
                 inputRef={focalRef}
               />
             </Field>
-            <Field label="Campeón 2">
+            <Field label="Champion 2">
               <ChampionPicker
                 value={allyB}
                 onChange={setAllyB}
                 champions={champList}
-                placeholder="ej. Thresh"
+                placeholder="e.g. Thresh"
                 hasError={formError.includes(`"${allyB}"`) && allyB.trim() !== ""}
                 inputRef={allyBRef}
               />
             </Field>
-            <Field label="Rol 1">
-              <Select value={role} onChange={setRole} options={ROLE_OPTIONS} minWidth={110} ariaLabel="Rol 1" />
+            <Field label="Role 1">
+              <Select value={role} onChange={setRole} options={ROLE_OPTIONS} minWidth={110} ariaLabel="Role 1" />
             </Field>
-            <Field label="Rol 2">
-              <Select value={roleB} onChange={setRoleB} options={ROLE_OPTIONS} minWidth={110} ariaLabel="Rol 2" />
+            <Field label="Role 2">
+              <Select value={roleB} onChange={setRoleB} options={ROLE_OPTIONS} minWidth={110} ariaLabel="Role 2" />
             </Field>
-            <Field label="Rival 1">
+            <Field label="Opponent 1">
               <ChampionPicker
                 value={rival}
                 onChange={setRival}
                 champions={champList}
-                placeholder="cualquiera"
+                placeholder="any"
                 hasError={formError.includes(`"${rival}"`) && rival.trim() !== ""}
                 inputRef={rivalRef}
               />
             </Field>
-            <Field label="Rival 2">
+            <Field label="Opponent 2">
               <ChampionPicker
                 value={rivalB}
                 onChange={setRivalB}
                 champions={champList}
-                placeholder="cualquiera"
+                placeholder="any"
                 hasError={formError.includes(`"${rivalB}"`) && rivalB.trim() !== ""}
                 inputRef={rivalBRef}
               />
@@ -499,35 +499,35 @@ export function Matchups() {
           </>
         ) : (
           <>
-            <Field label="Campeón focal">
+            <Field label="Focal champion">
               <ChampionPicker
                 value={focal}
                 onChange={setFocal}
                 champions={champList}
-                placeholder="ej. Aatrox"
+                placeholder="e.g. Aatrox"
                 hasError={formError.includes(`"${focal}"`) && focal.trim() !== ""}
                 inputRef={focalRef}
               />
             </Field>
-            <Field label="vs Rival">
+            <Field label="vs Opponent">
               <ChampionPicker
                 value={rival}
                 onChange={setRival}
                 champions={champList}
-                placeholder="cualquiera"
+                placeholder="any"
                 hasError={formError.includes(`"${rival}"`) && rival.trim() !== ""}
                 inputRef={rivalRef}
               />
             </Field>
-            <Field label="Rol">
-              <Select value={role} onChange={setRole} options={ROLE_OPTIONS} minWidth={110} ariaLabel="Rol" />
+            <Field label="Role">
+              <Select value={role} onChange={setRole} options={ROLE_OPTIONS} minWidth={110} ariaLabel="Role" />
             </Field>
           </>
         )}
 
         <div className="filter-divider" aria-hidden="true" />
 
-        {/* Grupo secundario: tipo de pick, contexto */}
+        {/* Secondary group: pick type, context */}
         {mode !== "2v2" && (
           <Field label="Blind / Counter">
             <Select
@@ -536,44 +536,44 @@ export function Matchups() {
               minWidth={110}
               ariaLabel="Blind / Counter"
               options={[
-                { value: "", label: "Cualquiera" },
-                { value: "blind", label: "Blind", title: "Pickado antes que el rival de carril" },
-                { value: "counter", label: "Counter", title: "Pickado después que el rival de carril" },
+                { value: "", label: "Any" },
+                { value: "blind", label: "Blind", title: "Picked before the lane opponent" },
+                { value: "counter", label: "Counter", title: "Picked after the lane opponent" },
               ]}
             />
           </Field>
         )}
-        <Field label="Torneo">
+        <Field label="Tournament">
           <TournamentPicker value={tournament} onChange={setTournament} tournaments={tournaments ?? []} />
         </Field>
-        <Field label="Parche">
+        <Field label="Patch">
           <Select
             value={patch}
             onChange={setPatch}
             minWidth={100}
-            ariaLabel="Parche"
-            options={[{ value: "", label: "Todos" }, ...(patches ?? []).map((p) => ({ value: p, label: p }))]}
+            ariaLabel="Patch"
+            options={[{ value: "", label: "All" }, ...(patches ?? []).map((p) => ({ value: p, label: p }))]}
           />
         </Field>
-        <Field label="Tipo">
+        <Field label="Type">
           <Select
             value={gameType}
             onChange={setGameType}
             minWidth={100}
-            ariaLabel="Tipo"
+            ariaLabel="Type"
             options={[
-              { value: "", label: "Todos" },
-              { value: "OFFICIAL", label: "Oficial" },
+              { value: "", label: "All" },
+              { value: "OFFICIAL", label: "Official" },
               { value: "SCRIM", label: "Scrim" },
               { value: "SOLOQ", label: "SoloQ" },
             ]}
           />
         </Field>
 
-        <button type="submit" className="btn-primary">Buscar</button>
+        <button type="submit" className="btn-primary">Search</button>
         {hasFilters && (
           <button type="button" className="btn-ghost" onClick={clearFilters}>
-            Limpiar
+            Clear
           </button>
         )}
       </FilterBar>
@@ -588,7 +588,7 @@ export function Matchups() {
               <button
                 type="button"
                 className="filter-chip-clear"
-                aria-label={`Quitar filtro ${label}`}
+                aria-label={`Remove filter ${label}`}
                 onClick={() => removeChip(key)}
               >
                 ×
@@ -596,7 +596,7 @@ export function Matchups() {
             </span>
           ))}
           <button type="button" className="btn-ghost btn-ghost-sm" onClick={clearFilters}>
-            × limpiar
+            × clear
           </button>
         </div>
       )}
@@ -610,7 +610,7 @@ export function Matchups() {
           </span>
           {atLimit && (
             <button type="button" className="btn-ghost btn-ghost-sm" onClick={loadMore}>
-              Ver más
+              Load more
             </button>
           )}
         </div>
@@ -622,10 +622,10 @@ export function Matchups() {
         ) : error ? (
           <div className="empty">
             <AlertTriangle className="empty-icon" size={36} />
-            <p className="empty-title">Error al cargar</p>
+            <p className="empty-title">Failed to load</p>
             <p className="empty-sub">{(error as Error).message}</p>
             <button type="button" className="btn-ghost" onClick={() => refetch()}>
-              Reintentar
+              Retry
             </button>
           </div>
         ) : matchups && matchups.length === 0 ? (
@@ -633,17 +633,17 @@ export function Matchups() {
             {hasFilters ? (
               <>
                 <SearchX className="empty-icon" size={36} />
-                <p className="empty-title">Sin resultados</p>
-                <p className="empty-sub">Ningún pick coincide con los filtros aplicados.</p>
+                <p className="empty-title">No results</p>
+                <p className="empty-sub">No pick matches the applied filters.</p>
                 <button type="button" className="btn-ghost" onClick={clearFilters}>
-                  Limpiar filtros
+                  Clear filters
                 </button>
               </>
             ) : (
               <>
                 <SearchX className="empty-icon" size={36} />
-                <p className="empty-title">Sin datos</p>
-                <p className="empty-sub">No hay picks en la base de datos todavía.</p>
+                <p className="empty-title">No data</p>
+                <p className="empty-sub">There are no picks in the database yet.</p>
               </>
             )}
           </div>

@@ -11,8 +11,8 @@ import "./champion-presence.css";
 
 const SKELETON_COUNT = 15;
 
-// Celda <td> con tooltip propio (sustituye al `title` nativo). A nivel de módulo
-// para no recrear el componente en cada render (regla react-hooks).
+// <td> cell with a custom tooltip (replaces the native `title`). At module level
+// so the component is not recreated on every render (react-hooks rule).
 function TipTd({
   content,
   className,
@@ -46,7 +46,7 @@ type SortCol =
 
 type SortDir = "desc" | "asc";
 
-// Clase de heatmap en 5 escalones relativos al máximo del dataset.
+// Heatmap class in 5 steps relative to the dataset's max.
 function heatClass(value: number, max: number): string {
   if (max === 0 || value === 0) return "";
   const ratio = value / max;
@@ -64,8 +64,8 @@ function wrClass(wr: number | null): string {
   return "cp-wr-neutral";
 }
 
-// Glifo no-cromático para el WR: la dirección (▲/▼) codifica bueno/malo sin
-// depender solo del verde/rojo (daltonismo — PRODUCT.md, DESIGN.md).
+// Non-color glyph for WR: the direction (▲/▼) encodes good/bad without relying
+// on green/red alone (color blindness).
 function wrArrow(wr: number | null): string {
   if (wr == null) return "";
   if (wr >= 55) return "▲";
@@ -73,26 +73,26 @@ function wrArrow(wr: number | null): string {
   return "";
 }
 
-// Un 0 real (pickeado 0 veces, 0 wins…) se muestra como 0 atenuado, nunca como
-// «—»: el guion se reserva para la ausencia genuina de dato (PRODUCT.md:
-// «nunca presentar un hueco como un cero» — y a la inversa).
+// A real 0 (picked 0 times, 0 wins…) shows as a dimmed 0, never as «—»: the dash
+// is reserved for a genuine absence of data (never present a gap as a zero — and
+// vice versa).
 function numCell(v: number) {
   return v === 0 ? <span className="cp-zero">0</span> : v;
 }
 
 function gnPct(picks: number, total: number): string {
-  if (total === 0) return "—"; // sin partidas en esta posición = ausencia real
-  return `${((picks / total) * 100).toFixed(0)}%`; // picks=0 → «0%», dato real
+  if (total === 0) return "—"; // no games in this position = real absence
+  return `${((picks / total) * 100).toFixed(0)}%`; // picks=0 -> «0%», real datum
 }
 
 function gnTooltip(
   picks: number, wins: number, total: number, n: number,
   by?: number, vs?: number,
 ): string {
-  if (total === 0) return `G${n}: sin partidas en esta posición de serie`;
-  if (picks === 0) return `G${n}: no pickeado (de ${total} partidas)`;
+  if (total === 0) return `G${n}: no games in this series position`;
+  if (picks === 0) return `G${n}: not picked (of ${total} games)`;
   const losses = picks - wins;
-  const base = `G${n}: ${picks}g · ${wins}W / ${losses}L (de ${total} partidas)`;
+  const base = `G${n}: ${picks}g · ${wins}W / ${losses}L (of ${total} games)`;
   if (by == null || vs == null) return base;
   return `${base}\nBy: ${by}g · Vs: ${vs}g`;
 }
@@ -126,8 +126,8 @@ function Skeleton({ cols }: { cols: number }) {
 
 const TABLE_INITIAL_LIMIT = 50;
 
-// Cabecera de columna sortable. A nivel de módulo (no dentro del componente)
-// para no recrearla en cada render; el estado de orden llega por props.
+// Sortable column header. At module level (not inside the component) so it is
+// not recreated on every render; the sort state arrives by props.
 function ColHead({
   col,
   label,
@@ -161,13 +161,13 @@ function ColHead({
   );
 }
 
-// Cabecera estática no sortable (game number).
+// Static non-sortable header (game number).
 function GnHead({ n }: { n: number }) {
   return (
     <th className="cp-gn-head">
       G{n}%
       <span className="cp-gn-hint" aria-hidden="true"> (G{n})</span>
-      <span className="sr-only">Porcentaje de veces que se pickeó en el game {n} de la serie</span>
+      <span className="sr-only">Percentage of times picked in game {n} of the series</span>
     </th>
   );
 }
@@ -205,10 +205,10 @@ export function ChampionPresence({
     [data],
   );
 
-  // Columnas de game number activas (las que tienen al menos 1 partida en ese game).
+  // Active game-number columns (those with at least 1 game in that slot).
   const gnCols = useMemo(() => {
     const first = data?.[0];
-    if (!first) return [1, 2, 3]; // fallback razonable mientras carga
+    if (!first) return [1, 2, 3]; // reasonable fallback while loading
     return ([1, 2, 3, 4, 5] as const).filter(
       (n) => (first[`total_g${n}` as keyof ChampionPresenceRow] as number) > 0,
     );
@@ -222,7 +222,7 @@ export function ChampionPresence({
     );
   }
 
-  // Columnas fijas + dinámicas (By/Vs picks y bans con equipo) + game number cols.
+  // Fixed + dynamic columns (By/Vs picks and bans with team) + game-number cols.
   const fixedCols = hasTeam ? 11 : 9;
   const colCount = fixedCols + gnCols.length;
 
@@ -230,10 +230,10 @@ export function ChampionPresence({
     return (
       <div className="empty">
         <AlertTriangle size={22} className="empty-icon" style={{ color: "var(--red)" }} />
-        <p className="empty-title">No se pudieron cargar los datos de presencia.</p>
+        <p className="empty-title">Could not load presence data.</p>
         <p className="empty-sub">{(error as Error).message}</p>
         <button type="button" className="btn-ghost" onClick={() => refetch()}>
-          Reintentar
+          Retry
         </button>
       </div>
     );
@@ -243,9 +243,9 @@ export function ChampionPresence({
     return (
       <div className="empty">
         <SearchX size={22} className="empty-icon" />
-        <p className="empty-title">Sin datos para estos filtros.</p>
+        <p className="empty-title">No data for these filters.</p>
         <p className="empty-sub">
-          No hay drafts que coincidan con la selección actual.
+          No drafts match the current selection.
         </p>
       </div>
     );
@@ -257,30 +257,30 @@ export function ChampionPresence({
     <>
       <p className="status" role="status" aria-live="polite" style={{ padding: "0.5rem 1.2rem" }}>
         {isFetching
-          ? "Cargando…"
+          ? "Loading…"
           : data
-          ? `${data.length} campeones · ${totalGames} partidas`
+          ? `${data.length} champions · ${totalGames} games`
           : ""}
       </p>
-      <div className="cp-legend" aria-label="Leyenda">
-        <span className="cp-legend-heat">Presence: <span className="cp-heat-1">·</span><span className="cp-heat-2">·</span><span className="cp-heat-3">·</span><span className="cp-heat-4">·</span><span className="cp-heat-5">·</span> relativo al máximo</span>
+      <div className="cp-legend" aria-label="Legend">
+        <span className="cp-legend-heat">Presence: <span className="cp-heat-1">·</span><span className="cp-heat-2">·</span><span className="cp-heat-3">·</span><span className="cp-heat-4">·</span><span className="cp-heat-5">·</span> relative to max</span>
         <span className="cp-legend-sep" aria-hidden="true">·</span>
         <span className="cp-legend-wr"><span className="cp-wr-pos">▲ ≥55%</span> <span className="cp-wr-neg">▼ ≤45%</span> WR</span>
         <span className="cp-legend-sep" aria-hidden="true">·</span>
-        <span className="cp-legend-phase">1ª Fase: B1-B3, R1-R2 · 2ª Fase: B4-B5, R3-R5</span>
+        <span className="cp-legend-phase">Phase 1: B1-B3, R1-R2 · Phase 2: B4-B5, R3-R5</span>
         <span className="cp-legend-sep" aria-hidden="true">·</span>
-        <span className="cp-legend-zero">0 atenuado = dato real · — = sin dato</span>
+        <span className="cp-legend-zero">dimmed 0 = real datum · — = no data</span>
       </div>
       <div className="cp-wrap">
         <table className="cp-table">
           <thead>
             <tr>
-              <th style={{ textAlign: "left" }}>Campeón</th>
+              <th style={{ textAlign: "left" }}>Champion</th>
               <ColHead col="presence_pct" label="Presence%" title="(picks + bans) / total" sort={sort} toggleSort={toggleSort} />
               {hasTeam ? (
                 <>
-                  <ColHead col="picked_by" label="By" title="Pickeado por el equipo" sort={sort} toggleSort={toggleSort} />
-                  <ColHead col="picked_vs" label="Vs" title="Pickeado por el rival" sort={sort} toggleSort={toggleSort} />
+                  <ColHead col="picked_by" label="By" title="Picked by the team" sort={sort} toggleSort={toggleSort} />
+                  <ColHead col="picked_vs" label="Vs" title="Picked by the rival" sort={sort} toggleSort={toggleSort} />
                 </>
               ) : (
                 <ColHead col="picks" label="Picked" sort={sort} toggleSort={toggleSort} />
@@ -289,14 +289,14 @@ export function ChampionPresence({
               <ColHead col="win_rate" label="WR%" sort={sort} toggleSort={toggleSort} />
               {hasTeam ? (
                 <>
-                  <ColHead col="banned_by" label="Ban By" title="Baneado por el equipo" sort={sort} toggleSort={toggleSort} />
-                  <ColHead col="banned_vs" label="Ban Vs" title="Baneado por el rival (contra el equipo)" sort={sort} toggleSort={toggleSort} />
+                  <ColHead col="banned_by" label="Ban By" title="Banned by the team" sort={sort} toggleSort={toggleSort} />
+                  <ColHead col="banned_vs" label="Ban Vs" title="Banned by the rival (against the team)" sort={sort} toggleSort={toggleSort} />
                 </>
               ) : (
                 <ColHead col="bans" label="Banned" sort={sort} toggleSort={toggleSort} />
               )}
-              <ColHead col="phase1" label="1ª Fase" title="Picks en la 1ª fase (B1-B3, R1-R2)" sort={sort} toggleSort={toggleSort} />
-              <ColHead col="phase2" label="2ª Fase" title="Picks en la 2ª fase (B4-B5, R3-R5)" sort={sort} toggleSort={toggleSort} />
+              <ColHead col="phase1" label="Phase 1" title="Picks in phase 1 (B1-B3, R1-R2)" sort={sort} toggleSort={toggleSort} />
+              <ColHead col="phase2" label="Phase 2" title="Picks in phase 2 (B4-B5, R3-R5)" sort={sort} toggleSort={toggleSort} />
               {gnCols.map((n) => <GnHead key={n} n={n} />)}
             </tr>
           </thead>
@@ -379,7 +379,7 @@ export function ChampionPresence({
             className="cp-show-more"
             onClick={() => setShowAllRows(true)}
           >
-            Mostrar {sorted.length - TABLE_INITIAL_LIMIT} campeones más
+            Show {sorted.length - TABLE_INITIAL_LIMIT} more champions
           </button>
         )}
       </div>

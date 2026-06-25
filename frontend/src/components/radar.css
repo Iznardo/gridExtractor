@@ -6,7 +6,7 @@
 }
 .radar-svg { display: block; overflow: visible; }
 
-/* rejilla y radios: hairline, sin relleno */
+/* grid and spokes: hairline, no fill */
 .radar-grid {
   fill: none;
   stroke: var(--border);
@@ -17,7 +17,7 @@
   stroke-width: 1;
 }
 
-/* área de cada serie: relleno translúcido + trazo del color de la serie */
+/* each series area: translucent fill + stroke in the series color */
 .radar-area {
   fill-opacity: 0.16;
   stroke-width: 2;

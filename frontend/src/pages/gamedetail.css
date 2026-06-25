@@ -1,6 +1,6 @@
 .game-detail { padding: 0.6rem 0.4rem 1rem; }
 
-/* Botón de replay inline: icono solo, sin wrapper */
+/* Inline replay button: icon only, no wrapper */
 .replay-btn { display: inline-flex; align-items: center; }
 .replay-btn-error { color: var(--red) !important; }
 
@@ -10,8 +10,8 @@
 .gd-msg { padding: 1rem; }
 .gd-msg.error { color: var(--red); }
 
-/* Skeleton del scoreboard (carga) — imita table.grid: cabecera + 5 filas.
-   Reutiliza .sk-line / .sk-chip (shimmer global). */
+/* Scoreboard skeleton (loading) — mimics table.grid: header + 5 rows.
+   Reuses .sk-line / .sk-chip (global shimmer). */
 .gd-sk-table {
   background: var(--panel);
   border: 1px solid var(--border);
@@ -28,7 +28,7 @@
 .gd-sk-row:last-child { border-bottom: none; }
 .gd-sk-name { flex: 1; max-width: 45%; }
 
-/* tablas genéricas reutilizadas (scoreboard) */
+/* generic reused tables (scoreboard) */
 table.grid {
   width: 100%;
   font-size: 0.82rem;
@@ -71,7 +71,7 @@ table.grid th.num { text-align: right; font-variant-numeric: tabular-nums; }
 .gd-pos { color: var(--gd-pos); font-weight: 600; }
 .gd-neg { color: var(--red); font-weight: 600; }
 
-/* runas */
+/* runes */
 .runes-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));

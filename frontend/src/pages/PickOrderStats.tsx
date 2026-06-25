@@ -5,19 +5,19 @@ import type { PickSlotEntry, RoleDistEntry } from "../api/types";
 import { ChampIcon } from "../components/icons";
 import "./pick-order.css";
 
-// ─── constantes ─────────────────────────────────────────────────────────────
+// ─── constants ────────────────────────────────────────────────────────────────
 
 const BLUE_SLOTS = [
-  { key: "b1",   label: "B1",   hint: "1er pick de Blue (primera acción de draft)" },
-  { key: "b2_3", label: "B2-3", hint: "2º y 3er picks de Blue (fase 1)" },
-  { key: "b4_5", label: "B4-5", hint: "4º y 5º picks de Blue (fase 2)" },
+  { key: "b1",   label: "B1",   hint: "Blue 1st pick (first draft action)" },
+  { key: "b2_3", label: "B2-3", hint: "Blue 2nd and 3rd picks (phase 1)" },
+  { key: "b4_5", label: "B4-5", hint: "Blue 4th and 5th picks (phase 2)" },
 ] as const;
 
 const RED_SLOTS = [
-  { key: "r1_2", label: "R1-2", hint: "1er y 2º picks de Red (fase 1)" },
-  { key: "r3",   label: "R3",   hint: "3er pick de Red (giro del snake)" },
-  { key: "r4",   label: "R4",   hint: "4º pick de Red (fase 2)" },
-  { key: "r5",   label: "R5",   hint: "5º pick de Red (cierre del draft)" },
+  { key: "r1_2", label: "R1-2", hint: "Red 1st and 2nd picks (phase 1)" },
+  { key: "r3",   label: "R3",   hint: "Red 3rd pick (snake turn)" },
+  { key: "r4",   label: "R4",   hint: "Red 4th pick (phase 2)" },
+  { key: "r5",   label: "R5",   hint: "Red 5th pick (draft close)" },
 ] as const;
 
 const ROLES = ["TOP", "JUNGLE", "MID", "ADC", "SUPPORT"] as const;
@@ -40,7 +40,7 @@ function wrColor(wr: number | null): string {
   return "";
 }
 
-// Glifo direccional: el WR no se apoya solo en verde/rojo (daltonismo).
+// Directional glyph: WR is not conveyed by green/red alone (color blindness).
 function wrArrow(wr: number | null): string {
   if (wr == null) return "";
   if (wr >= 55) return "▲";
@@ -48,7 +48,7 @@ function wrArrow(wr: number | null): string {
   return "";
 }
 
-// ─── sub-componentes ─────────────────────────────────────────────────────────
+// ─── sub-components ───────────────────────────────────────────────────────────
 
 function SlotColumn({
   slotKey,
@@ -114,12 +114,12 @@ function RoleTable({
   return (
     <div className="rd-section">
       <div className={`rd-title ${side}`}>
-        {side === "blue" ? "Blue Side" : "Red Side"} — distribución por rol
+        {side === "blue" ? "Blue Side" : "Red Side"} — distribution per role
       </div>
       <table className={`rd-table ${side}`}>
         <thead>
           <tr>
-            <th>Rol</th>
+            <th>Role</th>
             {slots.map((s) => (
               <th key={s.key}>{s.label}</th>
             ))}
@@ -151,7 +151,7 @@ function RoleTable({
   );
 }
 
-// ─── componente principal ─────────────────────────────────────────────────────
+// ─── main component ───────────────────────────────────────────────────────────
 
 export function PickOrderStats({ filters }: { filters: StatsFilters }) {
   const { data, isFetching, error, refetch } = usePickOrderStats(filters, true);
@@ -160,10 +160,10 @@ export function PickOrderStats({ filters }: { filters: StatsFilters }) {
     return (
       <div className="empty">
         <AlertTriangle size={22} className="empty-icon" style={{ color: "var(--red)" }} />
-        <p className="empty-title">No se pudieron cargar los datos de pick order.</p>
+        <p className="empty-title">Could not load pick order data.</p>
         <p className="empty-sub">{(error as Error).message}</p>
         <button type="button" className="btn-ghost" onClick={() => refetch()}>
-          Reintentar
+          Retry
         </button>
       </div>
     );
@@ -173,8 +173,8 @@ export function PickOrderStats({ filters }: { filters: StatsFilters }) {
     return (
       <div className="empty">
         <SearchX size={22} className="empty-icon" />
-        <p className="empty-title">Sin datos para estos filtros.</p>
-        <p className="empty-sub">No hay drafts que coincidan con la selección actual.</p>
+        <p className="empty-title">No data for these filters.</p>
+        <p className="empty-sub">No drafts match the current selection.</p>
       </div>
     );
   }
@@ -194,11 +194,11 @@ export function PickOrderStats({ filters }: { filters: StatsFilters }) {
   return (
     <>
       <p className="status" role="status" aria-live="polite" style={{ padding: "0.5rem 1.2rem" }}>
-        {isFetching ? "Cargando…" : data ? `${totalGames} partidas` : ""}
+        {isFetching ? "Loading…" : data ? `${totalGames} games` : ""}
       </p>
 
-      <div className="po-legend" aria-label="Leyenda">
-        <span className="po-legend-wr"><span className="po-wr-pos">▲ ≥55%</span> <span className="po-wr-neg">▼ ≤45%</span> WR · Ng = partidas en ese slot</span>
+      <div className="po-legend" aria-label="Legend">
+        <span className="po-legend-wr"><span className="po-wr-pos">▲ ≥55%</span> <span className="po-wr-neg">▼ ≤45%</span> WR · Ng = games in that slot</span>
       </div>
 
       <div className="po-page">
@@ -238,7 +238,7 @@ export function PickOrderStats({ filters }: { filters: StatsFilters }) {
           </div>
         </section>
 
-        {/* ── Tablas de rol ── */}
+        {/* ── Role tables ── */}
         {!isFetching && roleData.length > 0 && (
           <div className="rd-pair">
             <RoleTable side="blue" slots={BLUE_SLOTS} roleData={roleData} />
