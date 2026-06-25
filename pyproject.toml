@@ -1,4 +1,7 @@
 [tool.pytest.ini_options]
+# Raiz del repo en sys.path para que `import src...` funcione con `pytest` a
+# secas (no solo `python -m pytest`). Necesario para CI.
+pythonpath = ["."]
 # Limita la recoleccion a tests/ — sin esto, `pytest` (sin args) recursa en
 # postgres_data/ (volumen de Docker, propiedad de root) y muere con
 # PermissionError al intentar leer ficheros del contenedor.

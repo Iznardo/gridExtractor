@@ -26,6 +26,22 @@
   letter-spacing: 0.04em;
 }
 
+/* Header de dashboard con enlace a la derecha. Compartido por los dashboards de
+   Scouting (ScoutDashboard) y Scrims; ambos importan scrims.css. */
+.scout-dash-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+.scout-dash-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
 /* Grid de tarjetas (duos/trios) */
 .scr-grid {
   display: grid;

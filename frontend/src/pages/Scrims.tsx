@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { ExternalLink } from "lucide-react";
 
 import {
   usePatches,
@@ -401,9 +402,19 @@ export function Scrims() {
   const dashboard = (
     <div className="scr-dashboard">
       <section className="scr-section">
-        <h3 className="scr-h3">
-          Top picks por jugador · último parche {dashPatch ? `(${dashPatch})` : ""}
-        </h3>
+        <div className="scout-dash-head">
+          <h3 className="scr-h3">
+            Top picks por jugador · último parche {dashPatch ? `(${dashPatch})` : ""}
+          </h3>
+          <a
+            className="btn-ghost btn-ghost-sm scout-dash-link"
+            href={`/drafts?team=${appliedTeamId}&type=SCRIM`}
+            target="_blank"
+            rel="noopener"
+          >
+            <ExternalLink size={14} aria-hidden="true" /> Abrir drafts
+          </a>
+        </div>
         {poolPatch ? <MediumBox players={poolPatch.by_medium.scrim} /> : <ScoutingSkeleton />}
       </section>
       <section className="scr-section">

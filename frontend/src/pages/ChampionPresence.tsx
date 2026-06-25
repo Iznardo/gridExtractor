@@ -126,6 +126,52 @@ function Skeleton({ cols }: { cols: number }) {
 
 const TABLE_INITIAL_LIMIT = 50;
 
+// Cabecera de columna sortable. A nivel de módulo (no dentro del componente)
+// para no recrearla en cada render; el estado de orden llega por props.
+function ColHead({
+  col,
+  label,
+  title,
+  sort,
+  toggleSort,
+}: {
+  col: SortCol;
+  label: string;
+  title?: string;
+  sort: { col: SortCol; dir: SortDir };
+  toggleSort: (col: SortCol) => void;
+}) {
+  const active = sort.col === col;
+  const { anchorProps, tip } = useTooltip(title);
+  return (
+    <th
+      className={active ? "cp-sorted" : undefined}
+      onClick={() => toggleSort(col)}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleSort(col); } }}
+      tabIndex={0}
+      aria-sort={active ? (sort.dir === "desc" ? "descending" : "ascending") : "none"}
+      {...anchorProps}
+    >
+      {label}
+      <span className="cp-sort-arrow" aria-hidden="true">
+        {active ? (sort.dir === "desc" ? "▼" : "▲") : "⇅"}
+      </span>
+      {tip}
+    </th>
+  );
+}
+
+// Cabecera estática no sortable (game number).
+function GnHead({ n }: { n: number }) {
+  return (
+    <th className="cp-gn-head">
+      G{n}%
+      <span className="cp-gn-hint" aria-hidden="true"> (G{n})</span>
+      <span className="sr-only">Porcentaje de veces que se pickeó en el game {n} de la serie</span>
+    </th>
+  );
+}
+
 export function ChampionPresence({
   filters,
   teamId,
@@ -173,46 +219,6 @@ export function ChampionPresence({
       prev.col === col
         ? { col, dir: prev.dir === "desc" ? "asc" : "desc" }
         : { col, dir: "desc" },
-    );
-  }
-
-  function ColHead({
-    col,
-    label,
-    title,
-  }: {
-    col: SortCol;
-    label: string;
-    title?: string;
-  }) {
-    const active = sort.col === col;
-    const { anchorProps, tip } = useTooltip(title);
-    return (
-      <th
-        className={active ? "cp-sorted" : undefined}
-        onClick={() => toggleSort(col)}
-        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleSort(col); } }}
-        tabIndex={0}
-        aria-sort={active ? (sort.dir === "desc" ? "descending" : "ascending") : "none"}
-        {...anchorProps}
-      >
-        {label}
-        <span className="cp-sort-arrow" aria-hidden="true">
-          {active ? (sort.dir === "desc" ? "▼" : "▲") : "⇅"}
-        </span>
-        {tip}
-      </th>
-    );
-  }
-
-  // Cabecera estática no sortable (game number).
-  function GnHead({ n }: { n: number }) {
-    return (
-      <th className="cp-gn-head">
-        G{n}%
-        <span className="cp-gn-hint" aria-hidden="true"> (G{n})</span>
-        <span className="sr-only">Porcentaje de veces que se pickeó en el game {n} de la serie</span>
-      </th>
     );
   }
 
@@ -270,27 +276,27 @@ export function ChampionPresence({
           <thead>
             <tr>
               <th style={{ textAlign: "left" }}>Campeón</th>
-              <ColHead col="presence_pct" label="Presence%" title="(picks + bans) / total" />
+              <ColHead col="presence_pct" label="Presence%" title="(picks + bans) / total" sort={sort} toggleSort={toggleSort} />
               {hasTeam ? (
                 <>
-                  <ColHead col="picked_by" label="By" title="Pickeado por el equipo" />
-                  <ColHead col="picked_vs" label="Vs" title="Pickeado por el rival" />
+                  <ColHead col="picked_by" label="By" title="Pickeado por el equipo" sort={sort} toggleSort={toggleSort} />
+                  <ColHead col="picked_vs" label="Vs" title="Pickeado por el rival" sort={sort} toggleSort={toggleSort} />
                 </>
               ) : (
-                <ColHead col="picks" label="Picked" />
+                <ColHead col="picks" label="Picked" sort={sort} toggleSort={toggleSort} />
               )}
-              <ColHead col="wins" label="Wins" />
-              <ColHead col="win_rate" label="WR%" />
+              <ColHead col="wins" label="Wins" sort={sort} toggleSort={toggleSort} />
+              <ColHead col="win_rate" label="WR%" sort={sort} toggleSort={toggleSort} />
               {hasTeam ? (
                 <>
-                  <ColHead col="banned_by" label="Ban By" title="Baneado por el equipo" />
-                  <ColHead col="banned_vs" label="Ban Vs" title="Baneado por el rival (contra el equipo)" />
+                  <ColHead col="banned_by" label="Ban By" title="Baneado por el equipo" sort={sort} toggleSort={toggleSort} />
+                  <ColHead col="banned_vs" label="Ban Vs" title="Baneado por el rival (contra el equipo)" sort={sort} toggleSort={toggleSort} />
                 </>
               ) : (
-                <ColHead col="bans" label="Banned" />
+                <ColHead col="bans" label="Banned" sort={sort} toggleSort={toggleSort} />
               )}
-              <ColHead col="phase1" label="1ª Fase" title="Picks en la 1ª fase (B1-B3, R1-R2)" />
-              <ColHead col="phase2" label="2ª Fase" title="Picks en la 2ª fase (B4-B5, R3-R5)" />
+              <ColHead col="phase1" label="1ª Fase" title="Picks en la 1ª fase (B1-B3, R1-R2)" sort={sort} toggleSort={toggleSort} />
+              <ColHead col="phase2" label="2ª Fase" title="Picks en la 2ª fase (B4-B5, R3-R5)" sort={sort} toggleSort={toggleSort} />
               {gnCols.map((n) => <GnHead key={n} n={n} />)}
             </tr>
           </thead>

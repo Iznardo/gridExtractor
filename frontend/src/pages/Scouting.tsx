@@ -25,8 +25,7 @@ const MEDIUM_LABELS: Record<Medium, string> = {
 };
 
 // Sub-pestañas del pool de campeones (dentro de la ventana "Pool").
-const TAB_IDS = ["oficial", "scrim", "soloq", "agregado"] as const;
-type TabId = (typeof TAB_IDS)[number];
+type TabId = "oficial" | "scrim" | "soloq" | "agregado";
 
 // Ventanas de primer nivel de Scouting (?view=). "dashboard" es la inicial.
 const VIEW_IDS = ["dashboard", "pool", "matchups", "blindcounter"] as const;
@@ -158,7 +157,7 @@ export function Scouting() {
   function toggleSource(m: Medium) {
     if (activeSources.has(m) && activeSources.size === 1) return;
     const next = new Set(activeSources);
-    next.has(m) ? next.delete(m) : next.add(m);
+    if (next.has(m)) next.delete(m); else next.add(m);
     const nextParams = new URLSearchParams(params);
     if (next.size === ALL_MEDIUMS.length) {
       nextParams.delete("sources"); // estado por defecto, no ensuciar URL
@@ -171,7 +170,7 @@ export function Scouting() {
   function toggleDraftSource(m: Medium) {
     if (draftSources.has(m) && draftSources.size === 1) return;
     const next = new Set(draftSources);
-    next.has(m) ? next.delete(m) : next.add(m);
+    if (next.has(m)) next.delete(m); else next.add(m);
     const nextParams = new URLSearchParams(params);
     if (next.size === DRAFT_MEDIUMS.length) {
       nextParams.delete("dsources"); // estado por defecto, no ensuciar URL

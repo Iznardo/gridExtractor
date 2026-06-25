@@ -259,20 +259,8 @@
   .sk-bar, .sk-icon { animation: none; }
 }
 
-/* ---- Dashboard de equipo ---- */
-.scout-dash-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.6rem;
-}
-.scout-dash-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  white-space: nowrap;
-  text-decoration: none;
-}
+/* Header de dashboard con enlace (.scout-dash-head / .scout-dash-link) vive en
+   scrims.css: es la base compartida por ambos dashboards (Scouting y Scrims). */
 
 /* ---- Dashboard Fase 2: bans, counter%, radar ---- */
 .scout-dash-grid {

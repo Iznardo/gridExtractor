@@ -7,6 +7,9 @@
 # Datos persistentes de Postgres (montaje del contenedor)
 postgres_data/
 
+# Logs de ejecución (locales, no van al repo)
+logs/
+
 # Cache de respuestas crudas de la Riot API (fase 1 de soloq)
 data/
 

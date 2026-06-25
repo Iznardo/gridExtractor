@@ -109,7 +109,7 @@ function RecentSeries({ teamId }: { teamId: number }) {
   function toggle(k: string) {
     setOpen((prev) => {
       const n = new Set(prev);
-      n.has(k) ? n.delete(k) : n.add(k);
+      if (n.has(k)) n.delete(k); else n.add(k);
       return n;
     });
   }
