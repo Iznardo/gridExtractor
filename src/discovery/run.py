@@ -2,10 +2,13 @@
 
 Flow:
 
-  config/tournaments.yaml  -> names
+  config/tournaments.yaml  -> names or numeric ids
        │
        ▼
-  tournaments(filter:{name:{contains}})  -> resolve tournamentId
+  id  -> tournament(id:)                  (direct lookup)
+  name -> tournaments(filter:{name:{contains}})  -> exact match
+       │
+       ▼  tournamentId
        │
        ▼
   allSeries(filter:{tournament:{id, includeChildren:true}, types:[ESPORTS]}) paginated
@@ -40,7 +43,12 @@ from src.db.upsert import ensure_player, ensure_team
 from src.common.graphql import paginate
 from src.common.roles import normalize_role
 
-from .queries import PLAYERS_BY_TEAM, SERIES_BY_TOURNAMENTS, TOURNAMENTS_BY_NAME
+from .queries import (
+    PLAYERS_BY_TEAM,
+    SERIES_BY_TOURNAMENTS,
+    TOURNAMENT_BY_ID,
+    TOURNAMENTS_BY_NAME,
+)
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -49,15 +57,31 @@ CONFIG_PATH = REPO_ROOT / "config" / "tournaments.yaml"
 log = logging.getLogger("discovery")
 
 
-def load_tournament_names() -> list[str]:
+def load_tournament_entries() -> list[str]:
+    """Load tournament entries from the yaml.
+
+    Each entry is either an exact tournament *name* (e.g. ``"LEC Spring 2026"``)
+    or a numeric GRID tournament *id* (e.g. ``757825`` or ``"757825"``). Ids are
+    returned as plain digit strings; classification (id vs name) happens at
+    resolve time via ``str.isdigit()``. Booleans (YAML ``true``/``false``, which
+    are ``int`` subclasses) are ignored.
+    """
     with CONFIG_PATH.open("r", encoding="utf-8") as f:
         data = yaml.safe_load(f) or {}
-    names = data.get("tournaments") or []
-    if not isinstance(names, list):
+    entries = data.get("tournaments") or []
+    if not isinstance(entries, list):
         raise ValueError(
             f"{CONFIG_PATH}: the `tournaments` field must be a YAML list."
         )
-    return [n for n in names if isinstance(n, str) and n.strip()]
+    out: list[str] = []
+    for e in entries:
+        if isinstance(e, bool):
+            continue
+        if isinstance(e, int):
+            out.append(str(e))
+        elif isinstance(e, str) and e.strip():
+            out.append(e.strip())
+    return out
 
 
 def build_client() -> GridGraphQLClient:
@@ -68,7 +92,40 @@ def build_client() -> GridGraphQLClient:
     return GridGraphQLClient(api_key=api_key)
 
 
-def resolve_tournament_id(
+def resolve_tournament(
+    client: GridGraphQLClient,
+    entry: str,
+) -> str | None:
+    """Resolve a yaml entry to a GRID tournament id (or None to skip).
+
+    Numeric entries are treated as ids and looked up directly; everything else
+    goes through exact-name matching. Prefer ids for umbrella tournaments like
+    LCK/LPL/LCS: the name search is capped at 50 results and their exact match
+    sits past the first page, so name resolution silently misses them.
+    """
+    if entry.isdigit():
+        return resolve_tournament_by_id(client, entry)
+    return resolve_tournament_by_name(client, entry)
+
+
+def resolve_tournament_by_id(
+    client: GridGraphQLClient,
+    tid: str,
+) -> str | None:
+    """Validate a tournament id exists and return it (logs its name).
+
+    A null `tournament` (unknown id) is a skip, not an error.
+    """
+    data = client.query_central(TOURNAMENT_BY_ID, variables={"id": tid})
+    node = data.get("tournament")
+    if not node:
+        log.warning("Tournament id %s: not found in GRID, skipping.", tid)
+        return None
+    log.info("Tournament id %s resolved to %r.", tid, node.get("name"))
+    return str(node.get("id"))
+
+
+def resolve_tournament_by_name(
     client: GridGraphQLClient,
     name: str,
 ) -> str | None:
@@ -84,7 +141,9 @@ def resolve_tournament_id(
     exact = [n for n in candidates if n.get("name") == name]
     if not exact:
         log.warning(
-            "Tournament %r: no exact match. Candidates (contains): %s",
+            "Tournament %r: no exact match. Candidates (contains): %s. "
+            "If this is an umbrella league (LCK/LPL/LCS...), use its numeric "
+            "id in the yaml instead — name search is capped at 50 results.",
             name,
             [c.get("name") for c in candidates] or "[]",
         )
@@ -198,33 +257,33 @@ def main() -> int:
     )
     load_dotenv(dotenv_path=REPO_ROOT / ".env")
 
-    names = load_tournament_names()
-    if not names:
+    entries = load_tournament_entries()
+    if not entries:
         log.info("config/tournaments.yaml has no tournaments. Add some and rerun.")
         return 0
 
-    log.info("Tournaments to process: %s", names)
+    log.info("Tournaments to process: %s", entries)
     client = build_client()
 
     teams_by_grid: dict[int, dict[str, Any]] = {}
     players_by_grid: dict[int, dict[str, Any]] = {}
 
-    for name in names:
+    for entry in entries:
         try:
-            tid = resolve_tournament_id(client, name)
+            tid = resolve_tournament(client, entry)
         except GridError as e:
-            log.error("GraphQL error resolving tournament %r: %s", name, e)
+            log.error("GraphQL error resolving tournament %r: %s", entry, e)
             continue
         if not tid:
             continue
-        log.info("Tournament %r -> id %s. Discovering teams...", name, tid)
+        log.info("Tournament %r -> id %s. Discovering teams...", entry, tid)
         try:
             accumulate_teams(
                 paginate(client, SERIES_BY_TOURNAMENTS, "allSeries", {"tid": tid}),
                 teams_by_grid,
             )
         except GridError as e:
-            log.error("GraphQL error paginating series of %r: %s", name, e)
+            log.error("GraphQL error paginating series of %r: %s", entry, e)
             continue
 
     log.info("Teams accumulated (deduplicated): %d", len(teams_by_grid))

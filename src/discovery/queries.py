@@ -27,6 +27,21 @@ query TournamentsByName($name: String!) {
 """
 
 
+# Direct lookup by tournament id. Used when the yaml entry is numeric: it
+# bypasses the name search entirely, which `first: 50` truncates — umbrella
+# tournaments like LCK/LPL/LCS exist with an exact name but sit past the first
+# page of `contains` matches, so name resolution never sees them. A null
+# `tournament` means the id is unknown (treated as a skip, not an error).
+TOURNAMENT_BY_ID = """
+query TournamentById($id: ID!) {
+  tournament(id: $id) {
+    id
+    name
+  }
+}
+"""
+
+
 # Paginate a tournament's series including its whole child hierarchy.
 # `SeriesTournamentFilter.includeChildren: { equals: true }` makes the API
 # return series of sub-tournaments (stages, weeks...) without enumerating them.

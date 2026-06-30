@@ -1,23 +1,28 @@
-# Lista de torneos de interes para el discovery.
-# Anadir los nombres exactos tal como aparecen en GRID. La resolucion por
-# nombre se hace con `name contains` y luego se filtra en cliente por
-# igualdad exacta — si hay 0 o varios matches, se avisa por log y se salta.
+# Tournaments of interest for the discovery / extraction steps.
 #
-# Ejemplos (descomentar y editar):
+# Each entry is either:
+#   - An exact tournament NAME as it appears in GRID. Resolution uses
+#     `name contains` (capped at 50 results) plus client-side exact equality —
+#     if there are 0 or several matches, it logs a warning and skips.
+#   - A numeric GRID tournament ID (recommended for umbrella leagues). Resolved
+#     directly via `tournament(id:)`, with no name search.
+#
+# Why IDs for some leagues: the name search is capped at 50 results. Leagues
+# like LCK/LPL/LCS have hundreds of editions containing the acronym, and the
+# umbrella tournament (whose name is exactly "LCK", etc.) sits past position 50,
+# so name matching never sees it. The ID resolves it unambiguously. IDs are
+# visible in the GRID portal URL (.../match-history-viewer?tournaments=<ID>).
+#
+# Examples:
 #   - "LEC Spring 2026"
-#   - "LVP SuperLiga Spring 2026"
+#   - 757825            # LCK (umbrella)
 
-tournaments: 
-- "LEC - LEC Versus 2026"
-- "LCS - Split 1 2026"
-- "LCK - LCK Cup 2026"
-- "LES - Kickoff 2026"
-- "LPL - Split 1 2026"
-- "EMEA Masters - Winter 2026"
-- "LEC - Spring 2026"
-- "LPL - Split 2 2026"
-- "LCS - Split 2 2026"
-- "LCK - Split 2 2026"
+tournaments:
+- "LEC"
+- 757828              # LPL
+- 757843              # LCS
+- 757825              # LCK
 - "LES"
-- "EMEA Masters - Spring 2026"
-- "First Stand - 2026"
+- "EMEA Masters"
+- "First Stand"
+- "MSI"

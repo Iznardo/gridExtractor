@@ -22,7 +22,7 @@ from grid_minion import GridError, GridRestClient
 from src.common.champions import build_lookup, ensure_loaded, refresh_champions
 from src.db.conn import get_conn
 from src.discovery.run import build_client as build_graphql_client
-from src.discovery.run import load_tournament_names, resolve_tournament_id
+from src.discovery.run import load_tournament_entries, resolve_tournament
 
 from ._persistence import RoleCache, RunStats
 from .official import iter_official_series, process_series
@@ -51,12 +51,12 @@ def main() -> int:
     args = parser.parse_args()
     since_iso = f"{args.since}T00:00:00Z" if args.since else None
 
-    names = load_tournament_names()
-    if not names:
+    entries = load_tournament_entries()
+    if not entries:
         log.info("config/tournaments.yaml has no tournaments. Add some and rerun.")
         return 0
 
-    log.info("Tournaments to process: %s", names)
+    log.info("Tournaments to process: %s", entries)
 
     api_key = os.environ.get("GRID_API_KEY")
     if not api_key:
@@ -67,17 +67,17 @@ def main() -> int:
     client_rest = GridRestClient(api_key=api_key)
 
     tournament_ids: list[str] = []
-    for name in names:
+    for entry in entries:
         try:
-            tid = resolve_tournament_id(client_gql, name)
+            tid = resolve_tournament(client_gql, entry)
         except GridError as e:
-            log.error("Error resolving tournament %r: %s", name, e)
+            log.error("Error resolving tournament %r: %s", entry, e)
             continue
         if tid:
             tournament_ids.append(tid)
 
     if not tournament_ids:
-        log.error("No tournament resolved. Check the names in tournaments.yaml.")
+        log.error("No tournament resolved. Check the entries in tournaments.yaml.")
         return 1
 
     totals = RunStats()
