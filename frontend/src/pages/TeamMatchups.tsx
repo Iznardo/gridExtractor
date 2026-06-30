@@ -299,6 +299,7 @@ export function TeamMatchups({ filters }: { filters: StatsFilters }) {
     game_types: filters.game_types,
     patch: filters.patch,
     tournament: filters.tournament,
+    date_from: filters.date_from,
   };
 
   if (error) {

@@ -68,11 +68,13 @@ const MEDIUM_TO_GAME_TYPE: Record<Medium, string> = {
 
 function DraftTab({
   teamId,
+  dateFrom,
   sources,
   onToggle,
   children,
 }: {
   teamId: number;
+  dateFrom?: string;
   sources: Set<Medium>;
   onToggle: (m: Medium) => void;
   children: (filters: StatsFilters) => ReactNode;
@@ -82,6 +84,7 @@ function DraftTab({
     game_types: DRAFT_MEDIUMS.filter((m) => sources.has(m))
       .map((m) => MEDIUM_TO_GAME_TYPE[m])
       .join(","),
+    date_from: dateFrom,
   };
   return (
     <>
@@ -228,7 +231,7 @@ export function Scouting() {
       id: "matchups",
       label: "Matchups",
       content: appliedTeamId != null ? (
-        <DraftTab teamId={appliedTeamId} sources={draftSources} onToggle={toggleDraftSource}>
+        <DraftTab teamId={appliedTeamId} dateFrom={appliedDateFrom} sources={draftSources} onToggle={toggleDraftSource}>
           {(filters) => <TeamMatchups filters={filters} />}
         </DraftTab>
       ) : null,
@@ -237,7 +240,7 @@ export function Scouting() {
       id: "blindcounter",
       label: "Blind/Counter",
       content: appliedTeamId != null ? (
-        <DraftTab teamId={appliedTeamId} sources={draftSources} onToggle={toggleDraftSource}>
+        <DraftTab teamId={appliedTeamId} dateFrom={appliedDateFrom} sources={draftSources} onToggle={toggleDraftSource}>
           {(filters) => (
             <>
               <RolePickSection type="blind" filters={filters} initialLimit={10} />

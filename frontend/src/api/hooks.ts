@@ -132,6 +132,7 @@ export type StatsFilters = {
   pick_phase?: "first" | "second";
   patch?: string;
   tournament?: string;
+  date_from?: string; // "YYYY-MM-DD": only games from this date onward
 };
 
 export function useChampionPresence(filters: StatsFilters, enabled = true) {
@@ -204,7 +205,12 @@ export function useTeamMatchups(filters: StatsFilters, enabled = true) {
 export type LaneMatchupOthers = { games: number; wins: number; win_rate: number | null };
 
 // Context filters only (Pick<> would clash with the imported LoL Pick type).
-export type LaneMatchupCtx = { game_types?: string; patch?: string; tournament?: string };
+export type LaneMatchupCtx = {
+  game_types?: string;
+  patch?: string;
+  tournament?: string;
+  date_from?: string;
+};
 
 export function useLaneMatchupOthers(
   args: { team_id?: number; role: string; our: number; opp: number },
