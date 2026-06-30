@@ -1,0 +1,15 @@
+# Keep the build context small/fast (the api build uses context `.`).
+.venv/
+postgres_data/
+data/
+logs/
+__pycache__/
+**/__pycache__/
+*.py[cod]
+.pytest_cache/
+.git/
+node_modules/
+frontend/node_modules/
+frontend/dist/
+*.jsonl
+.env
