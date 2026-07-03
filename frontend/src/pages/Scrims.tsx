@@ -450,6 +450,7 @@ export function Scrims() {
     team_id: appliedTeamId ?? undefined,
     game_types: "SCRIM",
     patch: appliedPatch,
+    date_from: appliedDateFrom,
   };
 
   const windowTabs = [
