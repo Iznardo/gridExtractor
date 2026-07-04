@@ -12,6 +12,7 @@ import { MediumBox, ROLE_LABELS, ScoutingSkeleton, type Role } from "../componen
 import { ChampIcon } from "../components/icons";
 import { Radar } from "../components/Radar";
 import { daysAgoISO } from "../lib/date";
+import { GameDetail } from "./GameDetail";
 import { aggAsScoutPlayers, buildAggregate, seriesBlocks, type Series } from "./scouting/aggregate";
 import "./scrims.css"; // reuses card/table/collapsible-block styles
 import "./scouting.css";
@@ -57,23 +58,60 @@ function ChampRow({
 }
 
 function SeriesTable({ s }: { s: Series }) {
+  const [open, setOpen] = useState<Set<number>>(new Set());
+
+  function toggle(gameId: number) {
+    setOpen((prev) => {
+      const n = new Set(prev);
+      if (n.has(gameId)) n.delete(gameId); else n.add(gameId);
+      return n;
+    });
+  }
+
   return (
     <table className="scr-table scr-block-table">
       <thead>
         <tr>
+          <th aria-label="expand" />
           <th>G</th><th>Side</th><th>Res</th><th>Our comp</th><th>Rival</th>
         </tr>
       </thead>
       <tbody>
-        {s.games.map((g) => (
-          <tr key={g.game.game_id}>
-            <td>{g.game.game_number ?? "—"}</td>
-            <td><span className={"pill " + g.our_side}>{g.our_side}</span></td>
-            <td><span className={g.won ? "scr-wr-pos" : "scr-wr-neg"}>{g.won ? "W" : "L"}</span></td>
-            <td><ChampRow champs={g.our_champs} /></td>
-            <td><ChampRow champs={g.rival_champs} size={20} /></td>
-          </tr>
-        ))}
+        {s.games.map((g) => {
+          const isOpen = open.has(g.game.game_id);
+          return (
+            <Fragment key={g.game.game_id}>
+              <tr
+                className="scr-block-row"
+                onClick={() => toggle(g.game.game_id)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(g.game.game_id); }
+                }}
+                tabIndex={0}
+                role="button"
+                aria-expanded={isOpen}
+              >
+                <td className="scr-caret" aria-hidden="true">{isOpen ? "▾" : "▸"}</td>
+                <td>{g.game.game_number ?? "—"}</td>
+                <td><span className={"pill " + g.our_side}>{g.our_side}</span></td>
+                <td><span className={g.won ? "scr-wr-pos" : "scr-wr-neg"}>{g.won ? "W" : "L"}</span></td>
+                <td><ChampRow champs={g.our_champs} /></td>
+                <td><ChampRow champs={g.rival_champs} size={20} /></td>
+              </tr>
+              {isOpen && (
+                <tr className="scr-block-detail-row">
+                  <td colSpan={6}>
+                    <GameDetail
+                      gameId={g.game.game_id}
+                      team1={g.game.team1 ?? undefined}
+                      team2={g.game.team2 ?? undefined}
+                    />
+                  </td>
+                </tr>
+              )}
+            </Fragment>
+          );
+        })}
       </tbody>
     </table>
   );

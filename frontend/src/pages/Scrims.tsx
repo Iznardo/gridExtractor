@@ -10,7 +10,7 @@ import {
   type ScrimGamesFilters,
   type StatsFilters,
 } from "../api/hooks";
-import type { ScrimGame, ScrimRole } from "../api/types";
+import type { ScrimGame, ScrimRole, TeamRef } from "../api/types";
 import {
   MediumBox,
   ROLE_LABELS,
@@ -22,6 +22,7 @@ import { Select } from "../components/Select";
 import { ChampIcon } from "../components/icons";
 import { Tabs } from "../components/Tabs";
 import { TeamPicker } from "../components/TeamPicker";
+import { GameDetail } from "./GameDetail";
 import { TeamMatchups } from "./TeamMatchups";
 import { useChampMaps } from "../lib/champs";
 import { daysAgoISO } from "../lib/date";
@@ -103,36 +104,81 @@ function BlockSummaryLine({ block }: { block: BlockSummary }) {
   );
 }
 
-function BlockGamesTable({ block, byId }: { block: BlockSummary; byId: ById }) {
+function BlockGamesTable({
+  block, byId, ourTeam,
+}: {
+  block: BlockSummary;
+  byId: ById;
+  ourTeam: TeamRef;
+}) {
+  const [open, setOpen] = useState<Set<number>>(new Set());
+
+  function toggle(gameId: number) {
+    setOpen((prev) => {
+      const n = new Set(prev);
+      if (n.has(gameId)) n.delete(gameId); else n.add(gameId);
+      return n;
+    });
+  }
+
   return (
     <table className="scr-table scr-block-table">
       <thead>
         <tr>
+          <th aria-label="expand" />
           <th>G</th><th>Side</th><th>Res</th><th>Our draft</th><th>Rival</th>
         </tr>
       </thead>
       <tbody>
-        {block.games.map((g) => (
-          <tr key={g.game_id}>
-            <td>{g.block_game_number}</td>
-            <td><span className={"pill " + g.our_side}>{g.our_side}</span></td>
-            <td>
-              <span className={g.won ? "scr-wr-pos" : "scr-wr-neg"}>{g.won ? "W" : "L"}</span>
-            </td>
-            <td>
-              <div className="scr-champ-row">
-                {(["TOP", "JUNGLE", "MID", "ADC", "SUPPORT"] as ScrimRole[]).map((r) => (
-                  <Champ key={r} id={g.lineup[r]} byId={byId} size={22} />
-                ))}
-              </div>
-            </td>
-            <td>
-              <div className="scr-champ-row">
-                {g.rival_champs.map((c, i) => <Champ key={i} id={c} byId={byId} size={20} />)}
-              </div>
-            </td>
-          </tr>
-        ))}
+        {block.games.map((g) => {
+          const isOpen = open.has(g.game_id);
+          const team1 = g.our_side === "BLUE" ? ourTeam : block.rival;
+          const team2 = g.our_side === "BLUE" ? block.rival : ourTeam;
+          return (
+            <Fragment key={g.game_id}>
+              <tr
+                className="scr-block-row"
+                onClick={() => toggle(g.game_id)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(g.game_id); }
+                }}
+                tabIndex={0}
+                role="button"
+                aria-expanded={isOpen}
+              >
+                <td className="scr-caret" aria-hidden="true">{isOpen ? "▾" : "▸"}</td>
+                <td>{g.block_game_number}</td>
+                <td><span className={"pill " + g.our_side}>{g.our_side}</span></td>
+                <td>
+                  <span className={g.won ? "scr-wr-pos" : "scr-wr-neg"}>{g.won ? "W" : "L"}</span>
+                </td>
+                <td>
+                  <div className="scr-champ-row">
+                    {(["TOP", "JUNGLE", "MID", "ADC", "SUPPORT"] as ScrimRole[]).map((r) => (
+                      <Champ key={r} id={g.lineup[r]} byId={byId} size={22} />
+                    ))}
+                  </div>
+                </td>
+                <td>
+                  <div className="scr-champ-row">
+                    {g.rival_champs.map((c, i) => <Champ key={i} id={c} byId={byId} size={20} />)}
+                  </div>
+                </td>
+              </tr>
+              {isOpen && (
+                <tr className="scr-block-detail-row">
+                  <td colSpan={6}>
+                    <GameDetail
+                      gameId={g.game_id}
+                      team1={team1 ?? undefined}
+                      team2={team2 ?? undefined}
+                    />
+                  </td>
+                </tr>
+              )}
+            </Fragment>
+          );
+        })}
       </tbody>
     </table>
   );
@@ -140,7 +186,13 @@ function BlockGamesTable({ block, byId }: { block: BlockSummary; byId: ById }) {
 
 // ---- #3 Latest block (dashboard) ----
 
-function LastBlockCard({ rows, byId }: { rows: ScrimGame[]; byId: ById }) {
+function LastBlockCard({
+  rows, byId, ourTeam,
+}: {
+  rows: ScrimGame[];
+  byId: ById;
+  ourTeam: TeamRef;
+}) {
   const block = useMemo(() => lastBlock(rows), [rows]);
   if (!block) return <p className="scr-empty muted">No scrims for this team.</p>;
   return (
@@ -151,14 +203,20 @@ function LastBlockCard({ rows, byId }: { rows: ScrimGame[]; byId: ById }) {
         </span>
         <BlockSummaryLine block={block} />
       </div>
-      <BlockGamesTable block={block} byId={byId} />
+      <BlockGamesTable block={block} byId={byId} ourTeam={ourTeam} />
     </div>
   );
 }
 
 // ---- Blocks tab: list of all blocks, expandable ----
 
-function BlocksView({ rows, byId }: { rows: ScrimGame[]; byId: ById }) {
+function BlocksView({
+  rows, byId, ourTeam,
+}: {
+  rows: ScrimGame[];
+  byId: ById;
+  ourTeam: TeamRef;
+}) {
   const all = useMemo(() => blocks(rows), [rows]);
   const [open, setOpen] = useState<Set<string>>(new Set());
 
@@ -205,7 +263,7 @@ function BlocksView({ rows, byId }: { rows: ScrimGame[]; byId: ById }) {
                 {isOpen && (
                   <tr className="scr-block-detail-row">
                     <td colSpan={5}>
-                      <BlockGamesTable block={b} byId={byId} />
+                      <BlockGamesTable block={b} byId={byId} ourTeam={ourTeam} />
                     </td>
                   </tr>
                 )}
@@ -365,6 +423,11 @@ export function Scrims() {
   const appliedDateFrom = params.get("dateFrom") || undefined;
   const appliedPatch = params.get("patch") || undefined;
 
+  const ourTeam: TeamRef = useMemo(
+    () => (appliedTeamId != null ? teams?.find((t) => t.id === appliedTeamId) ?? null : null),
+    [teams, appliedTeamId],
+  );
+
   // Single scrims download; views aggregate client-side. The global filter
   // (patch / date) narrows everything except the two fixed dashboard pools.
   const scrimFilters: ScrimGamesFilters = {
@@ -423,7 +486,7 @@ export function Scrims() {
       </section>
       <section className="scr-section">
         <h3 className="scr-h3">Latest block summary</h3>
-        <LastBlockCard rows={rows ?? []} byId={byId} />
+        <LastBlockCard rows={rows ?? []} byId={byId} ourTeam={ourTeam} />
       </section>
     </div>
   );
@@ -455,7 +518,7 @@ export function Scrims() {
 
   const windowTabs = [
     { id: "dashboard", label: "Dashboard", content: dashboard },
-    { id: "blocks", label: "Blocks", content: <BlocksView rows={rows ?? []} byId={byId} /> },
+    { id: "blocks", label: "Blocks", content: <BlocksView rows={rows ?? []} byId={byId} ourTeam={ourTeam} /> },
     { id: "matchups", label: "Matchups", content: <TeamMatchups filters={matchupFilters} /> },
     { id: "duos", label: "Duos", content: duosView },
     { id: "trios", label: "Trios", content: triosView },
