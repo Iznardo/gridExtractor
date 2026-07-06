@@ -52,17 +52,16 @@ ORDER BY g.date DESC, g.id DESC
 LIMIT %(limit)s OFFSET %(offset)s
 """
 
-# Compositions for the games page in a single query (avoids N+1). Ordered by the
-# player's role (players.role) so each side comes out TOP to SUPPORT — in
-# official/scrims `picks` has no position, but `players` does.
+# Compositions for the games page in a single query (avoids N+1). Ordered by
+# the role played in that game (picks.role) so each side comes out TOP to
+# SUPPORT; NULL roles (tripwired/incomplete sides) fall back to pick_order.
 # (Soloq does not go through here: its composition comes from stats.participants.)
 _PICKS_SQL = """
 SELECT pk.game_id, pk.side, pk.champ_id
 FROM picks pk
-LEFT JOIN players pl ON pl.id = pk.player_id
 WHERE pk.game_id = ANY(%(ids)s)
 ORDER BY pk.game_id, pk.side,
-  CASE pl.role WHEN 'TOP' THEN 0 WHEN 'JUNGLE' THEN 1 WHEN 'MID' THEN 2
+  CASE pk.role WHEN 'TOP' THEN 0 WHEN 'JUNGLE' THEN 1 WHEN 'MID' THEN 2
                WHEN 'ADC' THEN 3 WHEN 'SUPPORT' THEN 4 ELSE 9 END,
   pk.pick_order NULLS LAST, pk.champ_id
 """

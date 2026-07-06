@@ -25,6 +25,7 @@ SELECT
     (g.stats->>'game_duration_s')::float
   ) AS game_duration_s,
   pl.id AS player_id, pl.name AS player_name, pl.role AS player_role,
+  pk.role,
   c.id  AS champ_id,  c.name  AS champ_name
 FROM picks pk
 JOIN games g     ON g.id  = pk.game_id
@@ -51,6 +52,7 @@ def _shape(row: dict) -> dict:
         "side": row["side"],
         "result": row["result"],
         "pick_order": row["pick_order"],
+        "role": row["role"],  # role played in this game (player.role = roster)
         "game_duration_s": row["game_duration_s"],
         "player": {"id": row["player_id"], "name": row["player_name"], "role": row["player_role"]},
         "champion": {"id": row["champ_id"], "name": row["champ_name"]},

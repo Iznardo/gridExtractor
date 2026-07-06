@@ -23,6 +23,7 @@ from datetime import datetime, timezone
 import psycopg
 
 from src.common.champions import refresh_champions
+from src.common.roles import normalize_team_position
 from src.riot.client import RiotClient
 from src.riot.endpoints import get_match, get_match_timeline
 from src.riot.extract import extract_match, is_remake
@@ -155,12 +156,13 @@ def insert_soloq_picks(
                 """
                 INSERT INTO picks
                     (player_id, account_id, game_id, champ_id,
-                     side, result, pick_order, stats)
-                VALUES (%s, %s, %s, %s, %s, %s, NULL, %s)
+                     side, result, pick_order, role, stats)
+                VALUES (%s, %s, %s, %s, %s, %s, NULL, %s, %s)
                 """,
                 (
                     account.player_id, account.account_id, game_id, champ_id,
                     player.get("team_side"), bool(player.get("win")),
+                    normalize_team_position(player.get("team_position")),
                     json.dumps(pick_stats_from_player(player)),
                 ),
             )

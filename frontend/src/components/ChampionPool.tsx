@@ -78,48 +78,68 @@ export function ScoutingSkeleton() {
 
 // ---- PoolColumn ----
 
-export function PoolColumn({
-  role,
+function PoolChamps({
   player,
   sectionExpanded,
 }: {
-  role: Role;
-  player: ScoutPlayer | null;
+  player: ScoutPlayer;
   sectionExpanded: boolean;
 }) {
-  const champs = player?.champions ?? [];
+  const champs = player.champions ?? [];
   const visible = sectionExpanded ? champs : champs.slice(0, CHAMP_LIMIT);
+  return (
+    <div className="pool-champs">
+      {visible.map((ch) => {
+        const color = wrColor(ch.games, ch.wins);
+        return (
+          <div
+            key={ch.champion.id}
+            className="pool-champ"
+            style={color ? { background: `color-mix(in srgb, ${color} 9%, transparent)` } : undefined}
+          >
+            <ChampIcon id={ch.champion.id} name={ch.champion.name} size={20} />
+            <span className="pool-cn">{ch.champion.name}</span>
+            <WrBar games={ch.games} wins={ch.wins} />
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
+export function PoolColumn({
+  role,
+  players,
+  sectionExpanded,
+}: {
+  role: Role;
+  players: ScoutPlayer[];
+  sectionExpanded: boolean;
+}) {
+  if (players.length === 0) {
+    return (
+      <div className="pool-col">
+        <div className="pool-col-head">
+          <span className="pool-role">{ROLE_LABELS[role]}</span>
+          <span className="pool-player muted">—</span>
+        </div>
+        <p className="pool-empty muted">No games</p>
+      </div>
+    );
+  }
+  // Several players can share a role bucket (role played per game): a reroll
+  // or a sub shows as a second block stacked in the same column.
   return (
     <div className="pool-col">
-      <div className="pool-col-head">
-        <span className="pool-role">{ROLE_LABELS[role]}</span>
-        {player ? (
-          <span className="pool-player">{player.player.name}</span>
-        ) : (
-          <span className="pool-player muted">—</span>
-        )}
-      </div>
-      {player ? (
-        <div className="pool-champs">
-          {visible.map((ch) => {
-            const color = wrColor(ch.games, ch.wins);
-            return (
-              <div
-                key={ch.champion.id}
-                className="pool-champ"
-                style={color ? { background: `color-mix(in srgb, ${color} 9%, transparent)` } : undefined}
-              >
-                <ChampIcon id={ch.champion.id} name={ch.champion.name} size={20} />
-                <span className="pool-cn">{ch.champion.name}</span>
-                <WrBar games={ch.games} wins={ch.wins} />
-              </div>
-            );
-          })}
+      {players.map((player, i) => (
+        <div key={player.player.id}>
+          <div className="pool-col-head">
+            <span className="pool-role">{i === 0 ? ROLE_LABELS[role] : " "}</span>
+            <span className="pool-player">{player.player.name}</span>
+          </div>
+          <PoolChamps player={player} sectionExpanded={sectionExpanded} />
         </div>
-      ) : (
-        <p className="pool-empty muted">No games</p>
-      )}
+      ))}
     </div>
   );
 }
@@ -130,8 +150,14 @@ export function MediumBox({ players }: { players: ScoutPlayer[] }) {
   const [expanded, setExpanded] = useState(false);
   const hasMore = players.some((p) => (p.champions?.length ?? 0) > CHAMP_LIMIT);
 
-  function playerForRole(role: string): ScoutPlayer | null {
-    return players.find((p) => p.player.role === role) ?? null;
+  function playersForRole(role: string): ScoutPlayer[] {
+    // player.role = role played in those games; sort so the main player of
+    // the role (most games) comes first.
+    return players
+      .filter((p) => p.player.role === role)
+      .sort((a, b) =>
+        (b.champions ?? []).reduce((n, c) => n + c.games, 0) -
+        (a.champions ?? []).reduce((n, c) => n + c.games, 0));
   }
 
   return (
@@ -141,7 +167,7 @@ export function MediumBox({ players }: { players: ScoutPlayer[] }) {
           <PoolColumn
             key={role}
             role={role}
-            player={playerForRole(role)}
+            players={playersForRole(role)}
             sectionExpanded={expanded}
           />
         ))}

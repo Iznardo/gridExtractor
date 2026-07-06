@@ -98,6 +98,8 @@ export type Pick = {
   side: Side;
   result: boolean;
   pick_order: number | null;
+  /** Role played in THIS game (player.role = current roster role). */
+  role: string | null;
   game_duration_s: number | null;
   player: { id: number; name: string; role: string | null };
   champion: { id: number; name: string };

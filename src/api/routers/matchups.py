@@ -5,15 +5,13 @@
      the two rivals derived by role from the opposing side. Activated when
      `champ_id_b` is provided.
 
-Lane source:
-  OFFICIAL/SCRIM  -> players.role  (self-join by role on picks).
-  SOLOQ           -> picks.stats->>'team_position'  (cross-referenced with
-                    games.stats->'participants', which holds all 10).
+Lane source: picks.role — the role played IN THAT GAME (riot_id ordering
+convention for OFFICIAL/SCRIM, team_position for SOLOQ; normalized at insert
+time). Never players.role, which is the *current* roster role and would
+misattribute historical games after a reroll.
 
 blind/counter: OFFICIAL/SCRIM only (derived from pick_order relative to the
 rival), 1v1 only.
-SoloQ roles are normalized to the internal vocabulary: MIDDLE->MID, BOTTOM->ADC,
-UTILITY->SUPPORT.
 Games with no lane opponent are returned with opponent=null.
 """
 
@@ -28,23 +26,7 @@ from src.api.pagination import Pagination, pagination
 router = APIRouter(tags=["matchups"])
 
 
-def _role_expr(pl_alias: str, pk_alias: str) -> str:
-    """CASE normalizing the role to the MID/ADC/SUPPORT vocabulary for a
-    (players, picks) pair given by their SQL aliases."""
-    return f"""
-  CASE
-    WHEN g.game_type != 'SOLOQ' THEN {pl_alias}.role
-    WHEN {pk_alias}.stats->>'team_position' = 'MIDDLE'  THEN 'MID'
-    WHEN {pk_alias}.stats->>'team_position' = 'BOTTOM'  THEN 'ADC'
-    WHEN {pk_alias}.stats->>'team_position' = 'UTILITY' THEN 'SUPPORT'
-    ELSE {pk_alias}.stats->>'team_position'
-  END"""
-
-
-_ROLE = _role_expr("pl", "pk")
-_ROLE_ALLY = _role_expr("ally_pl", "ally")
-
-_SQL = f"""
+_SQL = """
 SELECT
   g.id         AS game_id,
   g.date,
@@ -64,7 +46,7 @@ SELECT
   pl.name        AS player_name,
   c.id           AS champ_id,
   c.name         AS champ_name,
-  ({_ROLE})      AS role,
+  pk.role,
   -- GRID opponent of Ally 1 (OFFICIAL/SCRIM) via LATERAL
   grid_op.opp_pick_id,
   grid_op.opp_side,
@@ -123,12 +105,13 @@ LEFT JOIN LATERAL (
     opp_c.id       AS opp_champ_id,
     opp_c.name     AS opp_champ_name
   FROM picks op
-  JOIN players   opp_pl ON opp_pl.id = op.player_id AND opp_pl.role = pl.role
+  JOIN players   opp_pl ON opp_pl.id = op.player_id
   JOIN champions opp_c  ON opp_c.id  = op.champ_id
   WHERE op.game_id = pk.game_id
     AND op.side   != pk.side
+    AND op.role    = pk.role
   LIMIT 1
-) grid_op ON g.game_type != 'SOLOQ' AND pl.role IS NOT NULL
+) grid_op ON g.game_type != 'SOLOQ' AND pk.role IS NOT NULL
 -- SoloQ opponent of Ally 1: same lane (team_position), opposite side, from participants
 LEFT JOIN LATERAL (
   SELECT
@@ -153,10 +136,9 @@ LEFT JOIN LATERAL (
     ally.stats       AS ally_stats,
     ally_pl.id       AS ally_player_id,
     ally_pl.name     AS ally_player_name,
-    ally_pl.role     AS ally_player_role,
     ally_c.id        AS ally_champ_id,
     ally_c.name      AS ally_champ_name,
-    ({_ROLE_ALLY})   AS ally_role
+    ally.role        AS ally_role
   FROM picks ally
   JOIN players   ally_pl ON ally_pl.id = ally.player_id
   JOIN champions ally_c  ON ally_c.id  = ally.champ_id
@@ -164,7 +146,7 @@ LEFT JOIN LATERAL (
     AND ally.side    = pk.side
     AND ally.id     != pk.id
     AND ally.champ_id = %(champ_id_b)s
-    AND (%(role_b)s::text IS NULL OR ({_ROLE_ALLY}) = %(role_b)s)
+    AND (%(role_b)s::text IS NULL OR ally.role = %(role_b)s)
   LIMIT 1
 ) ally2 ON %(champ_id_b)s::int IS NOT NULL
 -- GRID opponent of Ally 2: opposite side, same role as Ally 2
@@ -180,12 +162,13 @@ LEFT JOIN LATERAL (
     opp_c.id       AS opp_champ_id,
     opp_c.name     AS opp_champ_name
   FROM picks op
-  JOIN players   opp_pl ON opp_pl.id = op.player_id AND opp_pl.role = ally2.ally_player_role
+  JOIN players   opp_pl ON opp_pl.id = op.player_id
   JOIN champions opp_c  ON opp_c.id  = op.champ_id
   WHERE op.game_id = pk.game_id
     AND op.side   != pk.side
+    AND op.role    = ally2.ally_role
   LIMIT 1
-) grid_op_b ON g.game_type != 'SOLOQ' AND ally2.ally_player_role IS NOT NULL
+) grid_op_b ON g.game_type != 'SOLOQ' AND ally2.ally_role IS NOT NULL
 -- SoloQ opponent of Ally 2: same lane as Ally 2, opposite side, from participants
 LEFT JOIN LATERAL (
   SELECT
@@ -202,10 +185,7 @@ LEFT JOIN LATERAL (
                 AND ally2.ally_stats->>'team_position' != ''
 WHERE
   -- picks with a known role only
-  (  (g.game_type != 'SOLOQ' AND pl.role IS NOT NULL)
-  OR (g.game_type  = 'SOLOQ'
-      AND pk.stats->>'team_position' IS NOT NULL
-      AND pk.stats->>'team_position' != ''))
+  pk.role IS NOT NULL
   -- GRID dedup without a focal champ_id: show BLUE side only (avoids duplicating each lane)
   AND (%(champ_id)s::int IS NOT NULL OR g.game_type = 'SOLOQ' OR pk.side = 'BLUE')
   -- 2v2: Ally 2 must exist in the game
@@ -215,7 +195,7 @@ WHERE
   AND (%(patch)s::text      IS NULL OR g.version    = %(patch)s)
   AND (%(tournament)s::text IS NULL OR g.tournament = %(tournament)s)
   AND (%(champ_id)s::int    IS NULL OR pk.champ_id  = %(champ_id)s)
-  AND (%(role)s::text       IS NULL OR ({_ROLE})     = %(role)s)
+  AND (%(role)s::text       IS NULL OR pk.role      = %(role)s)
   -- rival 1 (champ_id2): in 1v1 = focal's opponent; in 2v2 = member of the rival duo
   AND (%(champ_id2)s::int IS NULL
        OR (%(champ_id_b)s::int IS NULL

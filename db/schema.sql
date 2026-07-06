@@ -97,6 +97,10 @@ CREATE TABLE picks (
     side        VARCHAR(5) NOT NULL CHECK (side IN ('BLUE','RED')),
     result      BOOLEAN NOT NULL,
     pick_order  INTEGER,
+    -- Role played IN THIS GAME (players.role = current roster role). Source:
+    -- riot_id ordering convention in GRID games, team_position in soloq.
+    -- NULL when the source is unreliable (Smite tripwire) or absent.
+    role        VARCHAR(8) CHECK (role IN ('TOP','JUNGLE','MID','ADC','SUPPORT')),
     stats       JSONB
 );
 

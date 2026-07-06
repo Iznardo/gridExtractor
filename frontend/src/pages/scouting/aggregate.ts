@@ -17,15 +17,18 @@ type AggChamp = {
 };
 export type AggPlayer = { player: ScoutPlayer["player"]; champions: AggChamp[] };
 
-/** Merges the pool of several mediums into a single list per player. */
+/** Merges the pool of several mediums into a single list per (player, role).
+ *  player.role = role played in those games, so a rerolled player keeps one
+ *  entry per role instead of being collapsed into one. */
 export function buildAggregate(pool: ScoutingPool, sources: Medium[] = ALL_MEDIUMS): AggPlayer[] {
   const players = new Map<
-    number,
+    string,
     { player: ScoutPlayer["player"]; champs: Map<number, AggChamp> }
   >();
   for (const medium of sources) {
     for (const p of pool.by_medium[medium]) {
-      const entry = players.get(p.player.id) ?? {
+      const key = `${p.player.id}|${p.player.role ?? ""}`;
+      const entry = players.get(key) ?? {
         player: p.player,
         champs: new Map<number, AggChamp>(),
       };
@@ -38,7 +41,7 @@ export function buildAggregate(pool: ScoutingPool, sources: Medium[] = ALL_MEDIU
         c.total.wins += ch.wins;
         entry.champs.set(ch.champion.id, c);
       }
-      players.set(p.player.id, entry);
+      players.set(key, entry);
     }
   }
   return Array.from(players.values()).map((e) => ({

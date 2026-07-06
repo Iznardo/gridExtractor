@@ -243,6 +243,42 @@ def resolve_champ(champ_name: str | None,
     return cid
 
 
+SMITE_ID = 11
+
+
+def smite_suspect_sides(participants: list,
+                        players_stats: dict) -> set[str]:
+    """Sides whose riot_id ordering looks broken (picks.role tripwire).
+
+    The role persisted per pick comes from the riot_id ordering convention
+    (1/6=TOP .. 5/10=SUPPORT). Cheap internal signal to detect a shuffled
+    order: the participant derived as JUNGLE must carry Smite. A side is
+    suspect when its derived jungler verifiably does NOT carry Smite while
+    another participant of the same side does. Without spell data (broken
+    scrim with no summary) there is no signal — the convention is trusted.
+    """
+    by_side: dict[str, list] = {}
+    for p in participants:
+        by_side.setdefault(p.team_side, []).append(p)
+
+    suspects: set[str] = set()
+    for side, plist in by_side.items():
+        has_smite: dict[int, bool] = {}
+        for p in plist:
+            spells = (players_stats.get(p.riot_id) or {}).get("summoner_spells")
+            if spells:
+                has_smite[p.riot_id] = SMITE_ID in spells
+        jungler = next((p for p in plist
+                        if role_from_riot_id(p.riot_id) == "JUNGLE"), None)
+        if jungler is None or jungler.riot_id not in has_smite:
+            continue
+        others_with_smite = any(v for rid, v in has_smite.items()
+                                if rid != jungler.riot_id)
+        if not has_smite[jungler.riot_id] and others_with_smite:
+            suspects.add(side)
+    return suspects
+
+
 # ---------------------------------------------------------------------------
 # Persistence: draft, game, picks
 # ---------------------------------------------------------------------------
@@ -397,16 +433,30 @@ def insert_picks(
     draft_data: dict,
     builds_data: dict[int, dict] | None = None,
     midgame_data: dict[int, dict] | None = None,
+    series_id: str = "?",
+    game_number: int = 0,
 ) -> None:
     """Insert 10 picks rows (one per participant).
 
     `builds_data`: output of `BuildObserver.get_builds()` — `{pid: {build_path, skill_order}}`.
     `midgame_data`: output of `MidGameStatsObserver.get_mid_game_stats()` — `{pid: {marks: {7: {...}, 14: {...}}}}`.
     Both may be None/empty when there was no riot_livestats.
+    `series_id`/`game_number` are only for log context (Smite tripwire).
+
+    `picks.role` = role played in THIS game, from the riot_id ordering
+    convention. On a side flagged by the Smite tripwire the 5 picks go in with
+    role NULL (we prefer a missing role over a false one).
     """
     players_stats = game_stats.get("players") or {}
     builds_data   = builds_data or {}
     midgame_data  = midgame_data or {}
+
+    suspect_sides = smite_suspect_sides(participants, players_stats)
+    for side in sorted(suspect_sides):
+        log.warning("Series %s game %d side %s: derived JUNGLE has no Smite "
+                    "but a teammate does — participant order suspect, "
+                    "inserting the side with role=NULL.",
+                    series_id, game_number, side)
 
     with conn.cursor() as cur:
         for p in participants:
@@ -430,6 +480,10 @@ def insert_picks(
             result     = (side == winner)
             p_pick_ord = pick_order_for(p.champion_name, draft_data,
                                         p.grid_team_id, champ_lookup)
+            # Per-game role from the riot_id convention — NOT RoleCache, which
+            # prefers GRID's *current* declared role (staleness on rerolls).
+            p_role     = (None if side in suspect_sides
+                          else role_from_riot_id(p.riot_id))
 
             p_stats = players_stats.get(p.riot_id) or {}
             b_stats = builds_data.get(p.riot_id) or {}
@@ -459,12 +513,12 @@ def insert_picks(
                 """
                 INSERT INTO picks
                     (player_id, account_id, game_id, champ_id,
-                     side, result, pick_order, stats)
-                VALUES (%s, NULL, %s, %s, %s, %s, %s, %s)
+                     side, result, pick_order, role, stats)
+                VALUES (%s, NULL, %s, %s, %s, %s, %s, %s, %s)
                 """,
                 (
                     player_local, game_id, champ_id,
-                    side, result, p_pick_ord,
+                    side, result, p_pick_ord, p_role,
                     json.dumps(stats_json),
                 ),
             )
@@ -737,6 +791,8 @@ def process_one_game(
         draft_data=draft_data,
         builds_data=builds.get_builds(),
         midgame_data=midgame.get_mid_game_stats(),
+        series_id=series_id,
+        game_number=game_number,
     )
     return True
 

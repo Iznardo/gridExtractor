@@ -16,9 +16,10 @@ const ROLE_RANK: Record<string, number> = {
 };
 
 function sortPlayers(picks: Pick[]): Pick[] {
+  // Role played in this game; fall back to the roster role for old rows.
   return [...picks].sort((a, b) => {
-    const ra = ROLE_RANK[a.player.role ?? ""] ?? 9;
-    const rb = ROLE_RANK[b.player.role ?? ""] ?? 9;
+    const ra = ROLE_RANK[a.role ?? a.player.role ?? ""] ?? 9;
+    const rb = ROLE_RANK[b.role ?? b.player.role ?? ""] ?? 9;
     return ra !== rb ? ra - rb : (a.pick_order ?? 0) - (b.pick_order ?? 0);
   });
 }

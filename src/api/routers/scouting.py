@@ -23,7 +23,7 @@ router = APIRouter(tags=["scouting"])
 
 
 _SQL = """
-SELECT pl.id AS player_id, pl.name AS player_name, pl.role,
+SELECT pl.id AS player_id, pl.name AS player_name, pk.role,
        c.id AS champ_id, c.name AS champ_name, g.game_type,
        count(*) AS games,
        sum(CASE WHEN pk.result THEN 1 ELSE 0 END) AS wins
@@ -34,7 +34,7 @@ JOIN champions c ON c.id  = pk.champ_id
 WHERE pl.team_id = %(team_id)s
   AND (%(date_from)s::date IS NULL OR g.date >= %(date_from)s)
   AND (%(patch)s::text     IS NULL OR g.version = %(patch)s)
-GROUP BY pl.id, pl.name, pl.role, c.id, c.name, g.game_type
+GROUP BY pl.id, pl.name, pk.role, c.id, c.name, g.game_type
 """
 
 # Usual roster order; NULL/unknown roles go last.
@@ -53,8 +53,10 @@ def champion_pool(
         cur.execute(_SQL, {"team_id": team_id, "date_from": date_from, "patch": patch})
         rows = cur.fetchall()
 
-    # by_medium[medium][player_id] = {player, champions: {champ_id: {...}}}
-    by_medium: dict[str, dict[int, dict]] = {"official": {}, "scrim": {}, "soloq": {}}
+    # by_medium[medium][(player_id, role)] = {player, champions: [...]}.
+    # Keyed by (player, role played): a rerolled player gets one entry per
+    # role, so what they played in each role stays separate.
+    by_medium: dict[str, dict[tuple, dict]] = {"official": {}, "scrim": {}, "soloq": {}}
 
     for r in rows:
         medium = _MEDIUMS.get(r["game_type"])
@@ -63,9 +65,9 @@ def champion_pool(
         games = int(r["games"])
         wins = int(r["wins"] or 0)
 
-        # --- per-player breakdown within the medium ---
+        # --- per-(player, role) breakdown within the medium ---
         bucket = by_medium[medium]
-        player = bucket.setdefault(r["player_id"], {
+        player = bucket.setdefault((r["player_id"], r["role"]), {
             "player": {
                 "id": r["player_id"],
                 "name": r["player_name"],
@@ -79,7 +81,7 @@ def champion_pool(
             "wins": wins,
         })
 
-    def _players_sorted(bucket: dict[int, dict]) -> list[dict]:
+    def _players_sorted(bucket: dict[tuple, dict]) -> list[dict]:
         rows_out = list(bucket.values())
         for p in rows_out:
             p["champions"].sort(key=lambda ch: (-ch["games"], ch["champion"]["name"]))
@@ -117,7 +119,9 @@ WITH team_games AS (
     AND (%(date_from)s::date  IS NULL OR g.date   >= %(date_from)s)
 ),
 our_picks AS (
-  SELECT tg.id AS game_id, pl.role,
+  -- pk.role = role played in that game (players.role is the current roster
+  -- role and would misattribute historical games after a reroll).
+  SELECT tg.id AS game_id, pk.role,
     pl.name AS player_name,
     (pk.stats->>'gold')::numeric         AS gold,
     (pk.stats->>'damage_dealt')::numeric AS dmg
@@ -125,7 +129,7 @@ our_picks AS (
   JOIN picks   pk ON pk.game_id = tg.id AND pk.side = tg.our_side
   JOIN players pl ON pl.id = pk.player_id
   WHERE pk.stats ? 'gold' AND pk.stats ? 'damage_dealt'
-    AND pl.role IS NOT NULL
+    AND pk.role IS NOT NULL
 ),
 per_game AS (
   SELECT game_id, SUM(gold) AS tg, SUM(dmg) AS td

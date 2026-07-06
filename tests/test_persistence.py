@@ -10,8 +10,10 @@ from __future__ import annotations
 from datetime import date
 from types import SimpleNamespace
 
+from src.common.roles import normalize_team_position
 from src.extraction._persistence import (
     FP_PICK_ORDER,
+    SMITE_ID,
     SP_PICK_ORDER,
     RunStats,
     SeriesResult,
@@ -20,6 +22,7 @@ from src.extraction._persistence import (
     parse_date,
     pick_order_for,
     resolve_champ,
+    smite_suspect_sides,
 )
 
 
@@ -119,6 +122,67 @@ def test_assign_blue_red():
 def test_assign_blue_red_missing_side():
     parts = [_participant(100, "BLUE")]
     assert _assign_blue_red(parts, {100: 1}) == (1, None)
+
+
+# ------------------------------------------------------- smite_suspect_sides
+
+def _side_participants(side: str):
+    """5 participants of one side in riot_id order (BLUE=1..5, RED=6..10)."""
+    base = 0 if side == "BLUE" else 5
+    return [SimpleNamespace(riot_id=base + i, team_side=side)
+            for i in range(1, 6)]
+
+
+def _spells(spells_by_riot_id: dict[int, list[int]]) -> dict:
+    return {rid: {"summoner_spells": sp}
+            for rid, sp in spells_by_riot_id.items()}
+
+
+def test_smite_on_derived_jungler_is_clean():
+    parts = _side_participants("BLUE")
+    stats = _spells({1: [4, 12], 2: [SMITE_ID, 4], 3: [4, 14], 4: [7, 4], 5: [14, 4]})
+    assert smite_suspect_sides(parts, stats) == set()
+
+
+def test_smite_elsewhere_flags_side():
+    # Derived jungler (riot_id 2) has no Smite but the "TOP" does -> shuffled.
+    parts = _side_participants("BLUE")
+    stats = _spells({1: [SMITE_ID, 4], 2: [4, 12], 3: [4, 14], 4: [7, 4], 5: [14, 4]})
+    assert smite_suspect_sides(parts, stats) == {"BLUE"}
+
+
+def test_no_spell_data_trusts_convention():
+    parts = _side_participants("RED")
+    assert smite_suspect_sides(parts, {}) == set()
+
+
+def test_jungler_without_spell_data_is_not_flagged():
+    # Only partial data and none for the jungler: no verifiable signal.
+    parts = _side_participants("RED")
+    stats = _spells({6: [SMITE_ID, 4], 8: [4, 14]})
+    assert smite_suspect_sides(parts, stats) == set()
+
+
+def test_sides_evaluated_independently():
+    parts = _side_participants("BLUE") + _side_participants("RED")
+    stats = _spells({
+        1: [4, 12], 2: [SMITE_ID, 4], 3: [4, 14], 4: [7, 4], 5: [14, 4],   # clean
+        6: [SMITE_ID, 4], 7: [4, 12], 8: [4, 14], 9: [7, 4], 10: [14, 4],  # shuffled
+    })
+    assert smite_suspect_sides(parts, stats) == {"RED"}
+
+
+# --------------------------------------------------- normalize_team_position
+
+def test_normalize_team_position():
+    assert normalize_team_position("TOP") == "TOP"
+    assert normalize_team_position("JUNGLE") == "JUNGLE"
+    assert normalize_team_position("MIDDLE") == "MID"
+    assert normalize_team_position("BOTTOM") == "ADC"
+    assert normalize_team_position("UTILITY") == "SUPPORT"
+    assert normalize_team_position("") is None
+    assert normalize_team_position(None) is None
+    assert normalize_team_position("AFK") is None  # tournament-code garbage
 
 
 # ------------------------------------------------------------------- RunStats

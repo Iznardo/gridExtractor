@@ -26,6 +26,16 @@ _ROLE_BY_RIOT_ID: dict[int, str] = {
     6: "TOP", 7: "JUNGLE", 8: "MID", 9: "ADC", 10: "SUPPORT",
 }
 
+# Riot Match-V5 teamPosition values mapped to the table format. Only reliable
+# in soloq (in tournament-code customs Riot fills it with garbage).
+_TEAM_POSITION_MAP: dict[str, str] = {
+    "TOP": "TOP",
+    "JUNGLE": "JUNGLE",
+    "MIDDLE": "MID",
+    "BOTTOM": "ADC",
+    "UTILITY": "SUPPORT",
+}
+
 
 def normalize_role(raw: str | None) -> str | None:
     """Map a GRID role name to the table format.
@@ -49,3 +59,13 @@ def role_from_riot_id(riot_id: int) -> str | None:
     6-10 = RED likewise).
     """
     return _ROLE_BY_RIOT_ID.get(riot_id)
+
+
+def normalize_team_position(raw: str | None) -> str | None:
+    """Map a Riot Match-V5 teamPosition to the table format (soloq only).
+
+    Returns None for empty/unknown values (e.g. "" in remake-ish data).
+    """
+    if not raw:
+        return None
+    return _TEAM_POSITION_MAP.get(raw.strip().upper())

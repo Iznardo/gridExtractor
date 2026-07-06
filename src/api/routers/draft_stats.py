@@ -251,7 +251,9 @@ WITH base_ids AS (
   """ + _BASE_FROM + """
 ),
 rp AS (
-  SELECT pl.role,
+  -- p.role = role played in that game (not players.role, the current roster
+  -- role, which misattributes historical picks after a reroll).
+  SELECT p.role,
     CASE p.pick_order
       WHEN 1  THEN 'b1'
       WHEN 4  THEN 'b2_3' WHEN 5  THEN 'b2_3'
@@ -265,10 +267,9 @@ rp AS (
     p.result AS won
   FROM picks p
   JOIN base_ids g ON g.id = p.game_id
-  JOIN players pl ON pl.id = p.player_id
   WHERE p.pick_order IS NOT NULL
     AND p.pick_order BETWEEN 1 AND 10
-    AND pl.role IS NOT NULL
+    AND p.role IS NOT NULL
     AND (%(team_id)s::int IS NULL
          OR (g.team1_id = %(team_id)s::int AND p.side = 'BLUE')
          OR (g.team2_id = %(team_id)s::int AND p.side = 'RED'))
@@ -403,21 +404,20 @@ WITH base_ids AS (
          (%(pick_phase)s = 'second' AND d.first_pick_team_id <> %(team_id)s))
 ),
 role_matchups AS (
+  -- Lane pairing by picks.role (role played in that game).
   SELECT
     p1.champ_id AS blind_champ,
     p2.champ_id AS counter_champ,
-    pl1.role,
+    p1.role,
     p1.result   AS blind_won,
     p2.result   AS counter_won
   FROM picks p1
   JOIN picks p2  ON p2.game_id = p1.game_id AND p2.side != p1.side
   JOIN base_ids g ON g.id = p1.game_id
-  JOIN players pl1 ON pl1.id = p1.player_id
-  JOIN players pl2 ON pl2.id = p2.player_id
-  WHERE pl1.role = pl2.role
+  WHERE p1.role = p2.role
     AND p1.pick_order IS NOT NULL AND p1.pick_order BETWEEN 1 AND 10
     AND p2.pick_order IS NOT NULL AND p2.pick_order BETWEEN 1 AND 10
-    AND pl1.role IS NOT NULL
+    AND p1.role IS NOT NULL
     AND p1.pick_order < p2.pick_order
 """
 
@@ -456,7 +456,7 @@ def _build_role_matchup_sql(pick_type: str) -> str:
         + "         OR (g.team1_id = %(team_id)s::int AND " + our + ".side = 'BLUE')\n"
         + "         OR (g.team2_id = %(team_id)s::int AND " + our + ".side = 'RED'))\n"
         + "    AND " + filter_pick + ".champ_id = %(champ_id)s::int\n"
-        + "    AND pl1.role = %(role)s::text\n"
+        + "    AND p1.role = %(role)s::text\n"
         + ")\n"
         + "SELECT " + agg + " AS champ_id,\n"
         + "  COUNT(*) AS games,\n"
@@ -629,7 +629,8 @@ WITH base_ids AS (
 # of both sides to compute per-matchup lane diffs.
 _TEAM_LANE_PAIRS_CTE = _TEAM_MATCHUP_BASE + """,
 lane_pairs AS (
-  SELECT pl.role AS role, our.champ_id AS our_champ,
+  -- Lane pairing by picks.role (role played in that game).
+  SELECT our.role AS role, our.champ_id AS our_champ,
          opp.opp_champ, our.result AS won,
          (our.stats->'midgame'->'7'->>'cs')::numeric     AS our_cs7,
          (our.stats->'midgame'->'7'->>'gold')::numeric   AS our_gold7,
@@ -638,18 +639,17 @@ lane_pairs AS (
          opp.opp_cs7, opp.opp_gold7, opp.opp_cs14, opp.opp_gold14
   FROM picks our
   JOIN base_ids g ON g.id = our.game_id
-  JOIN players pl ON pl.id = our.player_id
   JOIN LATERAL (
     SELECT o.champ_id AS opp_champ,
            (o.stats->'midgame'->'7'->>'cs')::numeric     AS opp_cs7,
            (o.stats->'midgame'->'7'->>'gold')::numeric   AS opp_gold7,
            (o.stats->'midgame'->'14'->>'cs')::numeric    AS opp_cs14,
            (o.stats->'midgame'->'14'->>'gold')::numeric  AS opp_gold14
-    FROM picks o JOIN players plo ON plo.id = o.player_id AND plo.role = pl.role
-    WHERE o.game_id = our.game_id AND o.side <> our.side
+    FROM picks o
+    WHERE o.game_id = our.game_id AND o.side <> our.side AND o.role = our.role
     LIMIT 1
   ) opp ON true
-  WHERE pl.role IS NOT NULL
+  WHERE our.role IS NOT NULL
     AND ((g.team1_id = %(team_id)s AND our.side = 'BLUE')
       OR (g.team2_id = %(team_id)s AND our.side = 'RED'))
 )
@@ -762,18 +762,19 @@ WITH all_ids AS (
     AND (%(date_from)s::date  IS NULL OR g.date >= %(date_from)s)
 ),
 pairs AS (
+  -- Lane pairing by picks.role (role played in that game).
   SELECT a.result AS won,
          CASE WHEN a.side = 'BLUE' THEN g.team1_id ELSE g.team2_id END AS team_id
   FROM picks a
   JOIN all_ids g ON g.id = a.game_id
-  JOIN players pl ON pl.id = a.player_id AND pl.role = %(role)s
   JOIN LATERAL (
     SELECT 1
-    FROM picks o JOIN players plo ON plo.id = o.player_id AND plo.role = pl.role
-    WHERE o.game_id = a.game_id AND o.side <> a.side AND o.champ_id = %(opp)s
+    FROM picks o
+    WHERE o.game_id = a.game_id AND o.side <> a.side
+      AND o.role = a.role AND o.champ_id = %(opp)s
     LIMIT 1
   ) opp ON true
-  WHERE a.champ_id = %(our)s
+  WHERE a.champ_id = %(our)s AND a.role = %(role)s
 )
 SELECT COUNT(*) AS games, COUNT(*) FILTER (WHERE won) AS wins
 FROM pairs

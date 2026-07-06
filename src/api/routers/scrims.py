@@ -50,24 +50,25 @@ numbered AS (
   FROM base b
 ),
 our_lineup AS (
+  -- p.role = role played in that game (picks.role), not the current roster
+  -- role — rerolled/fill players land in the slot they actually played.
   SELECT n.id AS game_id,
-    max(p.champ_id) FILTER (WHERE pl.role = 'TOP')     AS top,
-    max(p.champ_id) FILTER (WHERE pl.role = 'JUNGLE')  AS jungle,
-    max(p.champ_id) FILTER (WHERE pl.role = 'MID')     AS mid,
-    max(p.champ_id) FILTER (WHERE pl.role = 'ADC')     AS adc,
-    max(p.champ_id) FILTER (WHERE pl.role = 'SUPPORT') AS support
+    max(p.champ_id) FILTER (WHERE p.role = 'TOP')     AS top,
+    max(p.champ_id) FILTER (WHERE p.role = 'JUNGLE')  AS jungle,
+    max(p.champ_id) FILTER (WHERE p.role = 'MID')     AS mid,
+    max(p.champ_id) FILTER (WHERE p.role = 'ADC')     AS adc,
+    max(p.champ_id) FILTER (WHERE p.role = 'SUPPORT') AS support
   FROM numbered n
   JOIN picks   p  ON p.game_id = n.id AND p.side = n.our_side
-  JOIN players pl ON pl.id = p.player_id
   GROUP BY n.id
 ),
 rival_picks AS (
-  -- Ordered by ROLE (TOP->SUPPORT) so the rival draft lines up with ours. Not
-  -- pivoted to columns: that way we do not lose picks when scrims have
-  -- duplicated/dirty roles; champ_id breaks ties for unknown roles.
+  -- Ordered by ROLE played (TOP->SUPPORT) so the rival draft lines up with
+  -- ours. Not pivoted to columns: that way we do not lose picks on sides with
+  -- role=NULL (tripwired/incomplete); champ_id breaks ties for unknown roles.
   SELECT n.id AS game_id,
     array_agg(p.champ_id ORDER BY
-      CASE pl.role
+      CASE p.role
         WHEN 'TOP' THEN 1 WHEN 'JUNGLE' THEN 2 WHEN 'MID' THEN 3
         WHEN 'ADC' THEN 4 WHEN 'SUPPORT' THEN 5 ELSE 9
       END,
@@ -75,7 +76,6 @@ rival_picks AS (
     ) AS champs
   FROM numbered n
   JOIN picks   p  ON p.game_id = n.id AND p.side <> n.our_side
-  JOIN players pl ON pl.id = p.player_id
   GROUP BY n.id
 )
 SELECT
