@@ -34,7 +34,7 @@ WITH base AS (
     CASE WHEN g.team1_id = %(team_id)s THEN 'BLUE' ELSE 'RED' END AS our_side,
     CASE WHEN g.team1_id = %(team_id)s THEN g.team2_id ELSE g.team1_id END AS rival_id
   FROM games g
-  JOIN drafts d ON d.id = g.draft_id
+  LEFT JOIN drafts d ON d.id = g.draft_id
   WHERE g.game_type = 'SCRIM'
     AND g.result IN ('BLUE','RED')
     AND (g.team1_id = %(team_id)s OR g.team2_id = %(team_id)s)

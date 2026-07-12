@@ -277,7 +277,7 @@ export type ScrimGame = {
   version: string | null;
   our_side: Side;
   won: boolean;
-  first_pick: boolean;
+  first_pick: boolean | null; // null: no usable draft (e.g. blind pick)
   block_game_number: number; // position within the block vs that rival
   rival: { id: number; name: string; tag: string | null } | null;
   lineup: Record<ScrimRole, number | null>; // champ_id per role (our side)

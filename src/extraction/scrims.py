@@ -23,6 +23,9 @@ expressed through GameProcessingConfig:
 - reconcile=False: scrims never touch team_id/role/starter/last_update.
 - discover_teams_from_draft=True: recovers teams from the draft when there are
   no played participants (unplayed remake).
+- allow_missing_draft=True: a game with a valid winner but no usable draft
+  (blind pick, or a dodged draft that doesn't match what was played) is still
+  inserted, with draft_id=NULL and stats.meta.draft_missing_reason set.
 - game_type='SCRIM', tournament='SCRIM' fixed.
 """
 
@@ -74,6 +77,7 @@ def _scrim_cfg(series_node: dict) -> GameProcessingConfig:
         require_participants=False,
         discover_teams_from_draft=True,
         pass_tencent=False,
+        allow_missing_draft=True,
     )
 
 
