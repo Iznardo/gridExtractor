@@ -117,7 +117,11 @@ export function vsTeams(rows: ScrimGame[]): VsTeam[] {
         byGame: new Map<number, Count>(),
       };
     bump(entry.total, r.won);
-    bump(r.first_pick ? entry.firstPick : entry.secondPick, r.won);
+    // r.first_pick is null when the game has no usable draft (blind pick) —
+    // it counts toward the total above but not toward either FP/SP bucket.
+    if (r.first_pick != null) {
+      bump(r.first_pick ? entry.firstPick : entry.secondPick, r.won);
+    }
     const gn = entry.byGame.get(r.block_game_number) ?? { games: 0, wins: 0 };
     bump(gn, r.won);
     entry.byGame.set(r.block_game_number, gn);

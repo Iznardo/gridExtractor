@@ -243,6 +243,58 @@ def resolve_champ(champ_name: str | None,
     return cid
 
 
+# Draft placeholder used when a scrim's recorded draft cannot be trusted for
+# the game actually played (blind pick, or a dodged draft left orphaned).
+EMPTY_DRAFT: dict = {"fp": {}, "sp": {}}
+
+
+def draft_champ_ids(draft_data: dict) -> set[int]:
+    """Champion ids picked in the draft (fp+sp), ignoring gaps."""
+    return {
+        p["id"]
+        for side in ("fp", "sp")
+        for p in (draft_data.get(side) or {}).get("picks") or []
+        if p and p.get("id") is not None
+    }
+
+
+def played_champ_ids(participants: list,
+                     champ_lookup: dict[str, int]) -> set[int]:
+    """Champion ids actually played, per participants (resolved by id)."""
+    ids = {
+        resolve_champ(p.champion_name, champ_lookup)
+        for p in participants if p.champion_name
+    }
+    ids.discard(None)
+    return ids
+
+
+def draft_missing_reason_for(
+    draft_data: dict,
+    participants: list,
+    champ_lookup: dict[str, int],
+) -> str | None:
+    """Whether the recorded draft is unusable for the game actually played.
+
+    None means the draft is trustworthy (or there isn't enough evidence from
+    participants to distinguish it from a real one). Only called when
+    draft_found is already True — the no_draft_events case is handled by the
+    caller before this.
+    """
+    known = [p for p in participants if p.champion_name]
+    if len(known) != 10:
+        # Not enough resolved champions to compare against — behave as
+        # before (accept the recorded draft).
+        return None
+    drafted = draft_champ_ids(draft_data)
+    if len(drafted) < 10:
+        return "draft_partial"
+    played = played_champ_ids(participants, champ_lookup)
+    if drafted != played:
+        return "draft_mismatch"
+    return None
+
+
 SMITE_ID = 11
 
 
@@ -364,7 +416,7 @@ def insert_game(
     version: str | None,
     team1_local: int | None,
     team2_local: int | None,
-    draft_id: int,
+    draft_id: int | None,
     game_stats: dict,
     objs_data: dict,
     wards_data: list,
@@ -552,6 +604,9 @@ class GameProcessingConfig:
     require_participants: bool        # skip if no participants (official)
     discover_teams_from_draft: bool   # derive teams from the draft if missing (scrims)
     pass_tencent: bool                # include tencent_details in the bundle
+    allow_missing_draft: bool = False # SCRIM: insert game+picks with draft_id
+                                      # NULL when there is no usable draft
+                                      # (blind pick or a dodged/orphaned one)
 
 
 def _extract_duration_s(
@@ -652,12 +707,16 @@ def process_one_game(
         riot_livestats=riot_livestats,
     )
 
-    # No draft events means there is nothing to insert.
+    # No draft events: either a real skip (official, or scrims that don't
+    # allow it), or a blind-pick scrim — decided below, once we know cfg.
     draft_data = draft.get_draft()
+    draft_missing_reason: str | None = None
     if not draft_data["draft_found"]:
-        log.warning("%s %s game %d: empty draft (no draft events), skip.",
-                    cfg.label, series_id, game_number)
-        return False
+        if not cfg.allow_missing_draft:
+            log.warning("%s %s game %d: empty draft (no draft events), skip.",
+                        cfg.label, series_id, game_number)
+            return False
+        draft_missing_reason = "no_draft_events"
 
     game_stats = stats.get_game_stats(teams)
     winner = game_stats["meta"].get("winner")
@@ -679,6 +738,20 @@ def process_one_game(
         log.warning("%s %s game %d: no participants, skip.",
                     cfg.label, series_id, game_number)
         return False
+
+    # Blind pick can also happen after a dodged draft: the feed keeps an
+    # orphaned draft that does not match what was actually played. Only
+    # checked when we can compare against all 10 played champions — with
+    # fewer known there isn't enough evidence to distrust the recorded draft.
+    if cfg.allow_missing_draft and draft_missing_reason is None:
+        draft_missing_reason = draft_missing_reason_for(
+            draft_data, participants, champ_lookup)
+    if draft_missing_reason:
+        log.warning("%s %s game %d: draft not usable (%s), inserting with "
+                    "draft_id=NULL and pick_order=NULL.",
+                    cfg.label, series_id, game_number, draft_missing_reason)
+        game_stats["meta"]["draft_missing_reason"] = draft_missing_reason
+        draft_data = EMPTY_DRAFT
 
     # --- Auto-discovery: teams ---
     series_teams_by_grid = {
@@ -751,8 +824,9 @@ def process_one_game(
             )
 
     # --- INSERT draft / game / picks ---
-    draft_id = insert_draft(conn, draft_data, grid_team_id_to_local,
-                            champ_lookup)
+    draft_id = (None if draft_missing_reason
+                else insert_draft(conn, draft_data, grid_team_id_to_local,
+                                  champ_lookup))
 
     game_id = insert_game(
         conn,

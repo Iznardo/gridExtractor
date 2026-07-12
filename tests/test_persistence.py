@@ -19,8 +19,11 @@ from src.extraction._persistence import (
     SeriesResult,
     _assign_blue_red,
     _extract_duration_s,
+    draft_champ_ids,
+    draft_missing_reason_for,
     parse_date,
     pick_order_for,
+    played_champ_ids,
     resolve_champ,
     smite_suspect_sides,
 )
@@ -199,3 +202,69 @@ def test_run_stats_aggregates_series_outcomes():
     assert totals.games_new == 2
     assert totals.games_skipped == 1
     assert totals.errors == 1
+
+
+# ------------------------------------------------ blind-pick scrims (no draft)
+
+def _played(*champion_names: str | None):
+    """Participants with only the champion_name attribute the helpers read."""
+    return [SimpleNamespace(champion_name=name) for name in champion_names]
+
+
+def test_draft_champ_ids_ignores_gaps():
+    draft = {"fp": {"picks": [{"id": 1}, None, {"id": 3}]},
+             "sp": {"picks": [{"id": 4}]}}
+    assert draft_champ_ids(draft) == {1, 3, 4}
+
+
+def test_draft_champ_ids_empty_draft():
+    assert draft_champ_ids({"fp": {}, "sp": {}}) == set()
+
+
+def test_played_champ_ids_resolves_by_id_and_skips_unknown():
+    parts = _played("C1", "C2", "Unknown", None)
+    assert played_champ_ids(parts, _LOOKUP) == {1, 2}
+
+
+def _full_draft(ids: tuple[int, ...]) -> dict:
+    picks = [{"id": i} for i in ids]
+    return {"fp": {"picks": picks[:5]}, "sp": {"picks": picks[5:10]}}
+
+
+def test_missing_reason_none_with_fewer_than_ten_known_champions():
+    # Only 8 resolved champions: not enough evidence to distrust the draft.
+    parts = _played(*[f"C{i}" for i in range(1, 9)])
+    reason = draft_missing_reason_for(_full_draft(tuple(range(1, 11))),
+                                      parts, _LOOKUP)
+    assert reason is None
+
+
+def test_missing_reason_draft_partial_when_ten_played_but_draft_short():
+    parts = _played(*[f"C{i}" for i in range(1, 11)])
+    short_draft = {"fp": {"picks": [{"id": i} for i in (1, 2, 3)]}, "sp": {}}
+    assert draft_missing_reason_for(short_draft, parts, _LOOKUP) == "draft_partial"
+
+
+def test_missing_reason_draft_mismatch_when_champions_differ():
+    # Played 1..10, but the recorded draft is a different set of 10 champs —
+    # a dodged draft left orphaned behind a blind-pick game.
+    parts = _played(*[f"C{i}" for i in range(1, 11)])
+    other_lookup = {f"D{i}": 100 + i for i in range(1, 11)}
+    combined_lookup = {**_LOOKUP, **other_lookup}
+    mismatched_draft = _full_draft(tuple(101 + i for i in range(10)))
+    reason = draft_missing_reason_for(mismatched_draft, parts, combined_lookup)
+    assert reason == "draft_mismatch"
+
+
+def test_missing_reason_none_when_draft_matches_played():
+    parts = _played(*[f"C{i}" for i in range(1, 11)])
+    matching_draft = _full_draft(tuple(range(1, 11)))
+    assert draft_missing_reason_for(matching_draft, parts, _LOOKUP) is None
+
+
+def test_missing_reason_mismatch_on_mirror_pick():
+    # 10 participants with a known champion, but only 9 unique ids (mirror) —
+    # a real 10-pick draft never has duplicates, so it cannot match.
+    parts = _played(*(["C1"] * 2 + [f"C{i}" for i in range(2, 10)]))
+    drafted = _full_draft(tuple(range(1, 11)))
+    assert draft_missing_reason_for(drafted, parts, _LOOKUP) == "draft_mismatch"
