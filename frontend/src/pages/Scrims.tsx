@@ -25,7 +25,7 @@ import { TeamPicker } from "../components/TeamPicker";
 import { GameDetail } from "./GameDetail";
 import { TeamMatchups } from "./TeamMatchups";
 import { useChampMaps } from "../lib/champs";
-import { daysAgoISO } from "../lib/date";
+import { effectiveSince } from "../lib/date";
 import {
   blocks,
   combosByRoles,
@@ -408,6 +408,7 @@ export function Scrims() {
 
   const [teamId, setTeamId] = useState(() => appliedTeam);
   const [dateFrom, setDateFrom] = useState(() => params.get("dateFrom") ?? "");
+  const [dateTo, setDateTo] = useState(() => params.get("dateTo") ?? "");
   const [patch, setPatch] = useState(() => params.get("patch") ?? "");
 
   const viewParam = params.get("view");
@@ -421,6 +422,7 @@ export function Scrims() {
   }, [appliedTeam]);
 
   const appliedDateFrom = params.get("dateFrom") || undefined;
+  const appliedDateTo = params.get("dateTo") || undefined;
   const appliedPatch = params.get("patch") || undefined;
 
   const ourTeam: TeamRef = useMemo(
@@ -429,20 +431,29 @@ export function Scrims() {
   );
 
   // Single scrims download; views aggregate client-side. The global filter
-  // (patch / date) narrows everything except the two fixed dashboard pools.
+  // (patch / date) narrows everything except the "latest patch" pool below,
+  // which stays scoped to its own patch regardless of dateFrom.
   const scrimFilters: ScrimGamesFilters = {
     team_id: appliedTeamId,
     date_from: appliedDateFrom,
+    date_to: appliedDateTo,
     patch: appliedPatch,
   };
   const { data: rows, isFetching, error, refetch } = useScrimGames(scrimFilters);
 
   // Dashboard pools. "Latest patch" = the most recent patch WITH scrims for
   // this team (not the global one: a team may not have played scrims on the
-  // latest patch). Derived from the already-loaded dataset (rows are date DESC).
-  const dashPatch = (rows && rows.length > 0 ? rows[0].version : null) ?? patches?.[0];
-  const { data: poolPatch } = useScouting(appliedTeamId, { patch: dashPatch });
-  const { data: pool7 } = useScouting(appliedTeamId, { dateFrom: daysAgoISO(7) });
+  // latest patch). Derived from the already-loaded dataset (rows are date DESC);
+  // guarded against version='Unknown', which would query the pool with a
+  // literal "Unknown" patch and come back empty.
+  const latestVersion = rows && rows.length > 0 ? rows[0].version : null;
+  const dashPatch = (latestVersion && latestVersion !== "Unknown" ? latestVersion : null)
+    ?? patches?.[0];
+  const { data: poolPatch } = useScouting(appliedTeamId, { patch: dashPatch, dateTo: appliedDateTo });
+  const { data: pool7 } = useScouting(appliedTeamId, {
+    dateFrom: effectiveSince(appliedDateFrom, 7),
+    dateTo: appliedDateTo,
+  });
 
   function submit() {
     const next = new URLSearchParams(params);
@@ -450,6 +461,8 @@ export function Scrims() {
     else next.delete("team");
     if (dateFrom) next.set("dateFrom", dateFrom);
     else next.delete("dateFrom");
+    if (dateTo) next.set("dateTo", dateTo);
+    else next.delete("dateTo");
     if (patch) next.set("patch", patch);
     else next.delete("patch");
     setParams(next);
@@ -514,6 +527,7 @@ export function Scrims() {
     game_types: "SCRIM",
     patch: appliedPatch,
     date_from: appliedDateFrom,
+    date_to: appliedDateTo,
   };
 
   const windowTabs = [
@@ -542,6 +556,9 @@ export function Scrims() {
         </Field>
         <Field label="From date">
           <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
+        </Field>
+        <Field label="To date">
+          <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
         </Field>
         <button type="submit" className="btn-primary" disabled={!teamId}>
           Track

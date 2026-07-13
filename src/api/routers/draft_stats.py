@@ -40,6 +40,7 @@ WHERE g.draft_id IS NOT NULL
   AND (%(game_types)s::text[] IS NULL OR g.game_type = ANY(%(game_types)s))
   AND (%(tournament)s::text IS NULL OR g.tournament = %(tournament)s)
   AND (%(date_from)s::date  IS NULL OR g.date >= %(date_from)s)
+  AND (%(date_to)s::date    IS NULL OR g.date <= %(date_to)s)
   AND (%(pick_phase)s::text IS NULL OR
        (%(pick_phase)s = 'first'  AND d.first_pick_team_id =  %(team_id)s) OR
        (%(pick_phase)s = 'second' AND d.first_pick_team_id <> %(team_id)s))
@@ -310,6 +311,7 @@ def _base_params(
     tournament: str | None,
     game_types: list[str] | None = None,
     date_from: date | None = None,
+    date_to: date | None = None,
 ) -> dict:
     return {
         "team_id": team_id,
@@ -320,6 +322,7 @@ def _base_params(
         "game_types": game_types,
         "tournament": tournament,
         "date_from": date_from,
+        "date_to": date_to,
     }
 
 
@@ -341,6 +344,7 @@ def champion_presence(
     game_types: str | None = Query(None, description="CSV: OFFICIAL,SCRIM"),
     tournament: str | None = None,
     date_from: date | None = Query(None, description="Only games from this date"),
+    date_to: date | None = Query(None, description="Only games up to this date"),
     conn: psycopg.Connection = Depends(db_conn),
     champ_map: dict[int, str] = Depends(get_champ_map),
 ):
@@ -349,7 +353,7 @@ def champion_presence(
 
     params = _base_params(
         team_id, rival_id, patch, pick_phase, game_type, tournament,
-        _parse_game_types(game_types), date_from=date_from,
+        _parse_game_types(game_types), date_from=date_from, date_to=date_to,
     )
     with conn.cursor() as cur:
         cur.execute(_PRESENCE_SQL, params)
@@ -411,6 +415,7 @@ WITH base_ids AS (
     AND (%(game_types)s::text[] IS NULL OR g.game_type = ANY(%(game_types)s))
     AND (%(tournament)s::text IS NULL OR g.tournament = %(tournament)s)
     AND (%(date_from)s::date  IS NULL OR g.date >= %(date_from)s)
+    AND (%(date_to)s::date    IS NULL OR g.date <= %(date_to)s)
     AND (%(pick_phase)s::text IS NULL OR
          (%(pick_phase)s = 'first'  AND d.first_pick_team_id =  %(team_id)s) OR
          (%(pick_phase)s = 'second' AND d.first_pick_team_id <> %(team_id)s))
@@ -497,6 +502,7 @@ def role_picks(
     game_types: str | None = Query(None, description="CSV: OFFICIAL,SCRIM"),
     tournament: str | None = None,
     date_from: date | None = Query(None, description="Only games from this date"),
+    date_to: date | None = Query(None, description="Only games up to this date"),
     conn: psycopg.Connection = Depends(db_conn),
     champ_map: dict[int, str] = Depends(get_champ_map),
 ):
@@ -506,7 +512,7 @@ def role_picks(
     sql = _build_role_picks_sql(pick_type)
     params = _base_params(
         team_id, rival_id, patch, pick_phase, game_type, tournament,
-        _parse_game_types(game_types), date_from=date_from,
+        _parse_game_types(game_types), date_from=date_from, date_to=date_to,
     )
     with conn.cursor() as cur:
         cur.execute(sql, params)
@@ -539,6 +545,7 @@ def role_pick_matchups(
     game_types: str | None = Query(None, description="CSV: OFFICIAL,SCRIM"),
     tournament: str | None = None,
     date_from: date | None = Query(None, description="Only games from this date"),
+    date_to: date | None = Query(None, description="Only games up to this date"),
     conn: psycopg.Connection = Depends(db_conn),
     champ_map: dict[int, str] = Depends(get_champ_map),
 ):
@@ -549,7 +556,7 @@ def role_pick_matchups(
     params = {
         **_base_params(
             team_id, rival_id, patch, pick_phase, game_type, tournament,
-            _parse_game_types(game_types), date_from=date_from,
+            _parse_game_types(game_types), date_from=date_from, date_to=date_to,
         ),
         "champ_id": champ_id,
         "role": role,
@@ -580,6 +587,7 @@ def pick_order(
     game_types: str | None = Query(None, description="CSV: OFFICIAL,SCRIM"),
     tournament: str | None = None,
     date_from: date | None = Query(None, description="Only games from this date"),
+    date_to: date | None = Query(None, description="Only games up to this date"),
     conn: psycopg.Connection = Depends(db_conn),
     champ_map: dict[int, str] = Depends(get_champ_map),
 ):
@@ -588,7 +596,7 @@ def pick_order(
 
     params = _base_params(
         team_id, rival_id, patch, pick_phase, game_type, tournament,
-        _parse_game_types(game_types), date_from=date_from,
+        _parse_game_types(game_types), date_from=date_from, date_to=date_to,
     )
     with conn.cursor() as cur:
         cur.execute(_SLOTS_SQL, params)
@@ -640,6 +648,7 @@ WITH base_ids AS (
     AND (%(patch)s::text      IS NULL OR g.version    = %(patch)s)
     AND (%(tournament)s::text IS NULL OR g.tournament = %(tournament)s)
     AND (%(date_from)s::date  IS NULL OR g.date >= %(date_from)s)
+    AND (%(date_to)s::date    IS NULL OR g.date <= %(date_to)s)
 )
 """
 
@@ -713,6 +722,7 @@ def team_matchups(
     patch: str | None = Query(None),
     tournament: str | None = None,
     date_from: date | None = Query(None, description="Only games from this date"),
+    date_to: date | None = Query(None, description="Only games up to this date"),
     conn: psycopg.Connection = Depends(db_conn),
     champ_map: dict[int, str] = Depends(get_champ_map),
 ):
@@ -722,6 +732,7 @@ def team_matchups(
         "patch": patch,
         "tournament": tournament,
         "date_from": date_from,
+        "date_to": date_to,
     }
     with conn.cursor() as cur:
         cur.execute(_TEAM_MATCHUP_SQL, params)
@@ -780,6 +791,7 @@ WITH all_ids AS (
     AND (%(patch)s::text      IS NULL OR g.version    = %(patch)s)
     AND (%(tournament)s::text IS NULL OR g.tournament = %(tournament)s)
     AND (%(date_from)s::date  IS NULL OR g.date >= %(date_from)s)
+    AND (%(date_to)s::date    IS NULL OR g.date <= %(date_to)s)
 ),
 pairs AS (
   -- Lane pairing by picks.role (role played in that game).
@@ -812,6 +824,7 @@ def lane_matchup(
     patch: str | None = Query(None),
     tournament: str | None = None,
     date_from: date | None = Query(None, description="Only games from this date"),
+    date_to: date | None = Query(None, description="Only games up to this date"),
     conn: psycopg.Connection = Depends(db_conn),
 ):
     """WR of `our` vs `opp` in `role` as played by ALL teams except `team_id`.
@@ -829,6 +842,7 @@ def lane_matchup(
         "patch": patch,
         "tournament": tournament,
         "date_from": date_from,
+        "date_to": date_to,
     }
     with conn.cursor() as cur:
         cur.execute(_LANE_MATCHUP_SQL, params)

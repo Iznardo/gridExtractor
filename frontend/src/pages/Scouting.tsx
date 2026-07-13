@@ -69,12 +69,14 @@ const MEDIUM_TO_GAME_TYPE: Record<Medium, string> = {
 function DraftTab({
   teamId,
   dateFrom,
+  dateTo,
   sources,
   onToggle,
   children,
 }: {
   teamId: number;
   dateFrom?: string;
+  dateTo?: string;
   sources: Set<Medium>;
   onToggle: (m: Medium) => void;
   children: (filters: StatsFilters) => ReactNode;
@@ -85,6 +87,7 @@ function DraftTab({
       .map((m) => MEDIUM_TO_GAME_TYPE[m])
       .join(","),
     date_from: dateFrom,
+    date_to: dateTo,
   };
   return (
     <>
@@ -106,6 +109,7 @@ export function Scouting() {
 
   const [teamId, setTeamId] = useState(() => params.get("team") ?? "");
   const [dateFrom, setDateFrom] = useState(() => params.get("dateFrom") ?? "");
+  const [dateTo, setDateTo] = useState(() => params.get("dateTo") ?? "");
   const [submitError, setSubmitError] = useState("");
 
   const activeTab = (params.get("tab") as TabId) ?? "official";
@@ -115,6 +119,7 @@ export function Scouting() {
     : "dashboard";
   const appliedTeamId = params.get("team") ? Number(params.get("team")) : null;
   const appliedDateFrom = params.get("dateFrom") || undefined;
+  const appliedDateTo = params.get("dateTo") || undefined;
 
   // Aggregate sources persisted in the URL (?sources=official,scrim,soloq)
   const sourcesParam = params.get("sources");
@@ -128,7 +133,10 @@ export function Scouting() {
     ? new Set(dsourcesParam.split(",").filter((s): s is Medium => (DRAFT_MEDIUMS as string[]).includes(s)))
     : new Set(DRAFT_MEDIUMS);
 
-  const { data: pool, isFetching, error, refetch } = useScouting(appliedTeamId, { dateFrom: appliedDateFrom });
+  const { data: pool, isFetching, error, refetch } = useScouting(appliedTeamId, {
+    dateFrom: appliedDateFrom,
+    dateTo: appliedDateTo,
+  });
 
   function submit() {
     if (!teamId) {
@@ -141,6 +149,8 @@ export function Scouting() {
     next.set("tab", activeTab);
     if (dateFrom) next.set("dateFrom", dateFrom);
     else next.delete("dateFrom");
+    if (dateTo) next.set("dateTo", dateTo);
+    else next.delete("dateTo");
     setParams(next);
   }
 
@@ -224,14 +234,22 @@ export function Scouting() {
     {
       id: "dashboard",
       label: "Dashboard",
-      content: appliedTeamId != null ? <ScoutDashboard teamId={appliedTeamId} /> : null,
+      content: appliedTeamId != null ? (
+        <ScoutDashboard teamId={appliedTeamId} dateFrom={appliedDateFrom} dateTo={appliedDateTo} />
+      ) : null,
     },
     { id: "pool", label: "Champion pool", content: poolWindow },
     {
       id: "matchups",
       label: "Matchups",
       content: appliedTeamId != null ? (
-        <DraftTab teamId={appliedTeamId} dateFrom={appliedDateFrom} sources={draftSources} onToggle={toggleDraftSource}>
+        <DraftTab
+          teamId={appliedTeamId}
+          dateFrom={appliedDateFrom}
+          dateTo={appliedDateTo}
+          sources={draftSources}
+          onToggle={toggleDraftSource}
+        >
           {(filters) => <TeamMatchups filters={filters} />}
         </DraftTab>
       ) : null,
@@ -240,7 +258,13 @@ export function Scouting() {
       id: "blindcounter",
       label: "Blind/Counter",
       content: appliedTeamId != null ? (
-        <DraftTab teamId={appliedTeamId} dateFrom={appliedDateFrom} sources={draftSources} onToggle={toggleDraftSource}>
+        <DraftTab
+          teamId={appliedTeamId}
+          dateFrom={appliedDateFrom}
+          dateTo={appliedDateTo}
+          sources={draftSources}
+          onToggle={toggleDraftSource}
+        >
           {(filters) => (
             <>
               <RolePickSection type="blind" filters={filters} initialLimit={10} />
@@ -260,6 +284,9 @@ export function Scouting() {
         </Field>
         <Field label="From date">
           <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
+        </Field>
+        <Field label="To date">
+          <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
         </Field>
         <button
           type="submit"
