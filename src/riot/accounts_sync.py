@@ -9,7 +9,9 @@ For each YAML entry (riot_id, player, region):
 - Resolve the PUUID via Account-V1. The riot_id is used only to resolve: in the
   DB the only identity is the puuid (Riot IDs change).
 - Region null -> autodetect by probing Match-V5, with a warning.
-- Idempotent INSERT by puuid (ON CONFLICT DO NOTHING).
+- The YAML is the source of truth for an existing puuid too: if `player` or
+  `region` were edited since the last sync, the DB row is updated (and
+  reported as `updated`), not silently left stale.
 """
 
 from __future__ import annotations
@@ -75,23 +77,43 @@ def player_id_by_name(conn, name: str) -> int | None:
         return None
 
 
-def insert_account(conn, player_id: int, region: str, puuid: str) -> bool:
-    """True if the account is new; False if the puuid already existed."""
+def sync_account_row(conn, player_id: int, region: str, puuid: str) -> str:
+    """Insert the account, or update it if the YAML's player/region changed.
+
+    Returns 'new' / 'updated' / 'existing'.
+    """
     with conn.cursor() as cur:
         cur.execute(
-            """
-            INSERT INTO accounts (player_id, region, puuid)
-            VALUES (%s, %s, %s)
-            ON CONFLICT (puuid) DO NOTHING
-            RETURNING id
-            """,
+            "SELECT player_id, region FROM accounts WHERE puuid = %s",
+            (puuid,),
+        )
+        row = cur.fetchone()
+        if row is None:
+            cur.execute(
+                "INSERT INTO accounts (player_id, region, puuid) "
+                "VALUES (%s, %s, %s)",
+                (player_id, region, puuid),
+            )
+            return "new"
+
+        old_player_id, old_region = row
+        if (old_player_id, old_region) == (player_id, region):
+            return "existing"
+
+        cur.execute(
+            "UPDATE accounts SET player_id = %s, region = %s WHERE puuid = %s",
             (player_id, region, puuid),
         )
-        return cur.fetchone() is not None
+        log.warning(
+            "puuid %s...: updated from the YAML (player_id %s -> %s, "
+            "region %s -> %s).",
+            puuid[:12], old_player_id, player_id, old_region, region,
+        )
+        return "updated"
 
 
 def sync_account(client: RiotClient, conn, entry: dict) -> str:
-    """Process one YAML entry. Returns 'new'/'existing'/'skipped'."""
+    """Process one YAML entry. Returns 'new'/'updated'/'existing'/'skipped'."""
     riot_id = entry.get("riot_id")
     player_name = entry.get("player")
     if not player_name:
@@ -123,11 +145,11 @@ def sync_account(client: RiotClient, conn, entry: dict) -> str:
         log.warning("%s: region autodetected '%s' — set it in %s.",
                     riot_id, region, CONFIG_PATH.name)
 
-    is_new = insert_account(conn, player_id, region, puuid)
+    status = sync_account_row(conn, player_id, region, puuid)
     log.info("%s -> player %r (id=%d), region=%s, puuid=%s... [%s]",
              riot_id, player_name, player_id, region, puuid[:12],
-             "NEW" if is_new else "existing")
-    return "new" if is_new else "existing"
+             status.upper())
+    return status
 
 
 def main() -> int:
@@ -144,7 +166,7 @@ def main() -> int:
         return 1
 
     client = RiotClient()
-    results = {"new": 0, "existing": 0, "skipped": 0}
+    results = {"new": 0, "updated": 0, "existing": 0, "skipped": 0}
     with get_conn() as conn:
         for entry in accounts:
             try:
@@ -154,8 +176,9 @@ def main() -> int:
                 results["skipped"] += 1
         conn.commit()
 
-    log.info("Sync complete: %d new, %d existing, %d skipped.",
-             results["new"], results["existing"], results["skipped"])
+    log.info("Sync complete: %d new, %d updated, %d existing, %d skipped.",
+             results["new"], results["updated"], results["existing"],
+             results["skipped"])
     return 0
 
 

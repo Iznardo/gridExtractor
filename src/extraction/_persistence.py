@@ -56,7 +56,8 @@ class SeriesResult:
     skipped: bool = False
     no_events: bool = False
     games_new: int = 0
-    games_skipped: int = 0
+    games_skipped: int = 0     # already in DB (idempotency, not an issue)
+    games_discarded: int = 0   # bad data: empty draft, no winner, no participants
     errors: int = 0
 
 
@@ -67,6 +68,7 @@ class RunStats:
     series_processed: int = 0
     games_new: int = 0
     games_skipped: int = 0
+    games_discarded: int = 0
     errors: int = 0
 
     def add(self, r: SeriesResult) -> None:
@@ -78,6 +80,7 @@ class RunStats:
             self.series_processed += 1
         self.games_new += r.games_new
         self.games_skipped += r.games_skipped
+        self.games_discarded += r.games_discarded
         self.errors += r.errors
 
     def __str__(self) -> str:
@@ -86,7 +89,8 @@ class RunStats:
             f"{self.series_skipped} skipped (already in DB), "
             f"{self.series_no_events} without data | "
             f"games: {self.games_new} new, "
-            f"{self.games_skipped} skipped, "
+            f"{self.games_skipped} skipped (already in DB), "
+            f"{self.games_discarded} discarded (bad data), "
             f"{self.errors} errors"
         )
 
@@ -491,17 +495,17 @@ def insert_picks(
     game_stats: dict,
     champ_lookup: dict[str, int],
     draft_data: dict,
+    suspect_sides: set[str],
     builds_data: dict[int, dict] | None = None,
     midgame_data: dict[int, dict] | None = None,
-    series_id: str = "?",
-    game_number: int = 0,
 ) -> None:
     """Insert 10 picks rows (one per participant).
 
     `builds_data`: output of `BuildObserver.get_builds()` — `{pid: {build_path, skill_order}}`.
     `midgame_data`: output of `MidGameStatsObserver.get_mid_game_stats()` — `{pid: {marks: {7: {...}, 14: {...}}}}`.
     Both may be None/empty when there was no riot_livestats.
-    `series_id`/`game_number` are only for log context (Smite tripwire).
+    `suspect_sides`: from `smite_suspect_sides`, computed once by the caller
+    (also used for roster reconciliation, so both stay consistent).
 
     `picks.role` = role played in THIS game, from the riot_id ordering
     convention. On a side flagged by the Smite tripwire the 5 picks go in with
@@ -510,13 +514,6 @@ def insert_picks(
     players_stats = game_stats.get("players") or {}
     builds_data   = builds_data or {}
     midgame_data  = midgame_data or {}
-
-    suspect_sides = smite_suspect_sides(participants, players_stats)
-    for side in sorted(suspect_sides):
-        log.warning("Series %s game %d side %s: derived JUNGLE has no Smite "
-                    "but a teammate does — participant order suspect, "
-                    "inserting the side with role=NULL.",
-                    series_id, game_number, side)
 
     with conn.cursor() as cur:
         for p in participants:
@@ -796,6 +793,20 @@ def process_one_game(
     team1_local, team2_local = _assign_blue_red(participants,
                                                 grid_team_id_to_local)
 
+    # Per-game role from the riot_id ordering convention — the same evidence
+    # persisted as picks.role, and (since 2026-07-13) also what reconciliation
+    # uses. NOT RoleCache/Central Data, which is GRID's *currently* declared
+    # role: a snapshot of today that would leak into old games processed out
+    # of order and isn't protected by the chronological order that guards
+    # team_id/starter (see F9, full_audit_2026-07-13.md). RoleCache is kept
+    # only for ensure_player's metadata on newly discovered players.
+    suspect_sides = smite_suspect_sides(participants, game_stats.get("players") or {})
+    for side in sorted(suspect_sides):
+        log.warning("%s %s game %d side %s: derived JUNGLE has no Smite "
+                    "but a teammate does — participant order suspect, "
+                    "role=NULL for that side (roster and picks alike).",
+                    cfg.label, series_id, game_number, side)
+
     # --- Auto-discovery: players (+ reconciliation for official games only) ---
     game_date = parse_date(series_node["startTimeScheduled"])
     player_grid_to_local: dict[int, int] = {}
@@ -811,6 +822,8 @@ def process_one_game(
         team_local = (grid_team_id_to_local.get(int(p.grid_team_id))
                       if p.grid_team_id else None)
         role_obs = role_cache.role_for(grid_pid, p.riot_id)
+        role_game = (None if p.team_side in suspect_sides
+                     else role_from_riot_id(p.riot_id))
         nickname = p.summoner_name or f"Player_{grid_pid}"
 
         local_id, is_new = ensure_player(
@@ -825,10 +838,10 @@ def process_one_game(
                         team_local, role_obs)
         player_grid_to_local[grid_pid] = local_id
 
-        if cfg.reconcile and role_obs and team_local:
+        if cfg.reconcile and role_game and team_local:
             reconcile_player_roster(
                 conn, player_local_id=local_id, team_local_id=team_local,
-                role_observed=role_obs, game_date=game_date,
+                role_observed=role_game, game_date=game_date,
             )
 
     # --- INSERT draft / game / picks ---
@@ -871,10 +884,9 @@ def process_one_game(
         game_stats=game_stats,
         champ_lookup=champ_lookup,
         draft_data=draft_data,
+        suspect_sides=suspect_sides,
         builds_data=builds.get_builds(),
         midgame_data=midgame.get_mid_game_stats(),
-        series_id=series_id,
-        game_number=game_number,
     )
     return True
 
@@ -979,7 +991,9 @@ def run_series(
                 log.info("%s %s game %d: inserted.",
                          label, series_id, game_number)
             else:
-                result.games_skipped += 1
+                # process_one_game returned False: bad data (empty draft, no
+                # winner, no participants), not an idempotency skip.
+                result.games_discarded += 1
 
         except GameAlreadyInDB as e:
             log.info("%s", e)

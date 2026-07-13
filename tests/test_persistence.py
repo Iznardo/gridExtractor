@@ -206,13 +206,14 @@ def test_run_stats_aggregates_series_outcomes():
     totals = RunStats()
     totals.add(SeriesResult(skipped=True))
     totals.add(SeriesResult(no_events=True))
-    totals.add(SeriesResult(games_new=2, games_skipped=1, errors=1))
+    totals.add(SeriesResult(games_new=2, games_skipped=1, games_discarded=3, errors=1))
 
     assert totals.series_skipped == 1
     assert totals.series_no_events == 1
     assert totals.series_processed == 1
     assert totals.games_new == 2
     assert totals.games_skipped == 1
+    assert totals.games_discarded == 3
     assert totals.errors == 1
 
 

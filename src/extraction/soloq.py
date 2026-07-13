@@ -105,8 +105,13 @@ def game_stats_from_extract(extract: dict) -> dict:
 
 
 def insert_soloq_game(conn: psycopg.Connection, extract: dict) -> int | None:
-    """Insert the games row. Return games.id, or None if it already existed."""
-    creation_ms = extract.get("game_creation") or 0
+    """Insert the games row. Return games.id, or None if it already existed.
+
+    Assumes `extract["game_creation"]` is present — the caller (process_match)
+    skips the match before calling this when it's missing, rather than
+    silently dating the game 1970-01-01.
+    """
+    creation_ms = extract["game_creation"]
     game_date = datetime.fromtimestamp(creation_ms / 1000, tz=timezone.utc).date()
     winner = extract.get("winner")
     result = winner if winner in ("BLUE", "RED") else "NONE"
@@ -207,7 +212,7 @@ def process_match(
     champions: ChampionIds,
 ) -> str:
     """Download, extract and insert one match. Returns a status for stats:
-    'inserted' | 'remake' | 'no_detail' | 'no_tracked' | 'dup'."""
+    'inserted' | 'remake' | 'no_detail' | 'no_tracked' | 'no_date' | 'dup'."""
     match = get_match(client, match_id)
     if match is None:
         log.warning("%s: detail unavailable (404) — skip.", match_id)
@@ -225,6 +230,13 @@ def process_match(
     if extract is None:
         log.warning("%s: no tracked puuid in the match — skip.", match_id)
         return "no_tracked"
+
+    if not extract.get("game_creation"):
+        # Better to skip than to insert a game silently dated 1970-01-01
+        # (same philosophy as the no-winner rule in _persistence.py).
+        log.warning("%s: gameCreation missing — skip (would date the game "
+                    "1970-01-01).", match_id)
+        return "no_date"
 
     # Resolve champions BEFORE opening the inserts: refresh_champions commits
     # internally and must not split the match transaction.
