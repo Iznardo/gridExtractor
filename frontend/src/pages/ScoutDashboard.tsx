@@ -11,7 +11,7 @@ import {
 import { MediumBox, ROLE_LABELS, ScoutingSkeleton, type Role } from "../components/ChampionPool";
 import { ChampIcon } from "../components/icons";
 import { Radar } from "../components/Radar";
-import { daysAgoISO } from "../lib/date";
+import { daysAgoISO, effectiveSince } from "../lib/date";
 import { GameDetail } from "./GameDetail";
 import { aggAsScoutPlayers, buildAggregate, seriesBlocks, type Series } from "./scouting/aggregate";
 import "./scrims.css"; // reuses card/table/collapsible-block styles
@@ -27,15 +27,23 @@ const ROLE_SHORT: Record<Role, string> = {
 
 // ---- #1 Latest picks (2 weeks, aggregate of all sources) ----
 
-function RecentPicks({ teamId }: { teamId: number }) {
-  const { data: pool } = useScouting(teamId, { dateFrom: daysAgoISO(RECENT_DAYS) });
+function RecentPicks({
+  teamId, dateFrom, dateTo,
+}: { teamId: number; dateFrom?: string; dateTo?: string }) {
+  const effectiveFrom = effectiveSince(dateFrom, RECENT_DAYS);
+  const filtered = effectiveFrom !== daysAgoISO(RECENT_DAYS) || dateTo != null;
+  const { data: pool } = useScouting(teamId, { dateFrom: effectiveFrom, dateTo });
   const players = useMemo(
     () => (pool ? aggAsScoutPlayers(buildAggregate(pool)) : []),
     [pool],
   );
   if (!pool) return <ScoutingSkeleton />;
   if (players.length === 0)
-    return <p className="scr-empty muted">No games in the last {RECENT_DAYS} days.</p>;
+    return (
+      <p className="scr-empty muted">
+        No games in {filtered ? "this range." : `the last ${RECENT_DAYS} days.`}
+      </p>
+    );
   return <MediumBox players={players} />;
 }
 
@@ -117,10 +125,14 @@ function SeriesTable({ s }: { s: Series }) {
   );
 }
 
-function RecentSeries({ teamId }: { teamId: number }) {
+function RecentSeries({
+  teamId, dateFrom, dateTo,
+}: { teamId: number; dateFrom?: string; dateTo?: string }) {
   const { data: games, isFetching } = useGames({
     team_id: teamId,
     game_type: "OFFICIAL",
+    date_from: dateFrom,
+    date_to: dateTo,
     limit: GAMES_LIMIT,
   });
   const all = useMemo(
@@ -209,8 +221,12 @@ function RecentSeries({ teamId }: { teamId: number }) {
 
 // ---- #4 Most-banned in phase 1 vs the team (official) ----
 
-function BansFaced({ teamId }: { teamId: number }) {
-  const { data } = useChampionPresence({ team_id: teamId, game_types: OFFICIAL });
+function BansFaced({
+  teamId, dateFrom, dateTo,
+}: { teamId: number; dateFrom?: string; dateTo?: string }) {
+  const { data } = useChampionPresence({
+    team_id: teamId, game_types: OFFICIAL, date_from: dateFrom, date_to: dateTo,
+  });
   const top = useMemo(
     () =>
       (data ?? [])
@@ -235,8 +251,12 @@ function BansFaced({ teamId }: { teamId: number }) {
 
 // ---- #5 % counterpick per role (official) ----
 
-function CounterRate({ teamId }: { teamId: number }) {
-  const filters = { team_id: teamId, game_types: OFFICIAL };
+function CounterRate({
+  teamId, dateFrom, dateTo,
+}: { teamId: number; dateFrom?: string; dateTo?: string }) {
+  const filters = {
+    team_id: teamId, game_types: OFFICIAL, date_from: dateFrom, date_to: dateTo,
+  };
   const { data: blind } = useRolePicks("blind", filters);
   const { data: counter } = useRolePicks("counter", filters);
   const rows = useMemo(() => {
@@ -273,8 +293,10 @@ function CounterRate({ teamId }: { teamId: number }) {
 
 // ---- #6 Radar of gold% / damage% per player (official) ----
 
-function SharesRadar({ teamId }: { teamId: number }) {
-  const { data } = usePlayerShares(teamId, { gameTypes: OFFICIAL });
+function SharesRadar({
+  teamId, dateFrom, dateTo,
+}: { teamId: number; dateFrom?: string; dateTo?: string }) {
+  const { data } = usePlayerShares(teamId, { gameTypes: OFFICIAL, dateFrom, dateTo });
   if (!data) return <ScoutingSkeleton />;
   if (data.length === 0) return <p className="scr-empty muted">No gold/damage data.</p>;
 
@@ -312,12 +334,21 @@ function SharesRadar({ teamId }: { teamId: number }) {
 
 // ---- Dashboard ----
 
-export function ScoutDashboard({ teamId }: { teamId: number }) {
+export function ScoutDashboard({
+  teamId, dateFrom, dateTo,
+}: { teamId: number; dateFrom?: string; dateTo?: string }) {
+  // RecentPicks keeps its own 14-day window (narrowed further by dateFrom if
+  // more restrictive); the other sections just respect whatever range is
+  // applied — "all time" when neither filter is set, same as before.
+  const picksTitle = dateFrom || dateTo
+    ? "Latest picks per player · aggregate"
+    : `Latest picks per player · last ${RECENT_DAYS} days (aggregate)`;
+
   return (
     <div className="scr-dashboard">
       <section className="scr-section">
         <div className="scout-dash-head">
-          <h3 className="scr-h3">Latest picks per player · last {RECENT_DAYS} days (aggregate)</h3>
+          <h3 className="scr-h3">{picksTitle}</h3>
           <a
             className="btn-ghost btn-ghost-sm scout-dash-link"
             href={`/drafts?team=${teamId}`}
@@ -327,27 +358,27 @@ export function ScoutDashboard({ teamId }: { teamId: number }) {
             <ExternalLink size={14} aria-hidden="true" /> Open drafts
           </a>
         </div>
-        <RecentPicks teamId={teamId} />
+        <RecentPicks teamId={teamId} dateFrom={dateFrom} dateTo={dateTo} />
       </section>
 
       <section className="scr-section">
-        <RecentSeries teamId={teamId} />
+        <RecentSeries teamId={teamId} dateFrom={dateFrom} dateTo={dateTo} />
       </section>
 
       <div className="scout-dash-grid">
         <section className="scr-section">
           <h3 className="scr-h3">Most banned in phase 1 · vs this team</h3>
-          <BansFaced teamId={teamId} />
+          <BansFaced teamId={teamId} dateFrom={dateFrom} dateTo={dateTo} />
         </section>
         <section className="scr-section">
           <h3 className="scr-h3">% counterpick per role</h3>
-          <CounterRate teamId={teamId} />
+          <CounterRate teamId={teamId} dateFrom={dateFrom} dateTo={dateTo} />
         </section>
       </div>
 
       <section className="scr-section">
         <h3 className="scr-h3">Gold and damage share per player</h3>
-        <SharesRadar teamId={teamId} />
+        <SharesRadar teamId={teamId} dateFrom={dateFrom} dateTo={dateTo} />
       </section>
     </div>
   );

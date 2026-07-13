@@ -69,6 +69,18 @@ def test_pick_order_champion_not_in_picks():
     assert pick_order_for("C9", _DRAFT, 100, _LOOKUP) is None
 
 
+def test_pick_order_unknown_fp_team_returns_none_for_everyone():
+    # fp.team_id is None (blind pick / orphaned draft): no participant should
+    # be attributed a pick_order, not even the champions listed under "sp"
+    # (decision 2026-07-13 — see F15 in full_audit_2026-07-13.md).
+    draft = {
+        "fp": {"team_id": None, "picks": [{"id": i} for i in (1, 2, 3, 4, 5)]},
+        "sp": {"team_id": "200", "picks": [{"id": i} for i in (6, 7, 8, 9, 10)]},
+    }
+    for i in range(1, 11):
+        assert pick_order_for(f"C{i}", draft, 200, _LOOKUP) is None
+
+
 # --------------------------------------------------------------- resolve_champ
 
 def test_resolve_champ():
@@ -194,13 +206,14 @@ def test_run_stats_aggregates_series_outcomes():
     totals = RunStats()
     totals.add(SeriesResult(skipped=True))
     totals.add(SeriesResult(no_events=True))
-    totals.add(SeriesResult(games_new=2, games_skipped=1, errors=1))
+    totals.add(SeriesResult(games_new=2, games_skipped=1, games_discarded=3, errors=1))
 
     assert totals.series_skipped == 1
     assert totals.series_no_events == 1
     assert totals.series_processed == 1
     assert totals.games_new == 2
     assert totals.games_skipped == 1
+    assert totals.games_discarded == 3
     assert totals.errors == 1
 
 

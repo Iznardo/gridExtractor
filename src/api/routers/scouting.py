@@ -33,6 +33,7 @@ JOIN games g     ON g.id  = pk.game_id
 JOIN champions c ON c.id  = pk.champ_id
 WHERE pl.team_id = %(team_id)s
   AND (%(date_from)s::date IS NULL OR g.date >= %(date_from)s)
+  AND (%(date_to)s::date   IS NULL OR g.date <= %(date_to)s)
   AND (%(patch)s::text     IS NULL OR g.version = %(patch)s)
 GROUP BY pl.id, pl.name, pk.role, c.id, c.name, g.game_type
 """
@@ -46,11 +47,15 @@ _MEDIUMS = {"OFFICIAL": "official", "SCRIM": "scrim", "SOLOQ": "soloq"}
 def champion_pool(
     team_id: int = Query(..., description="Team to scout (required)"),
     date_from: date | None = Query(None, description="Only games from this date"),
+    date_to: date | None = Query(None, description="Only games up to this date"),
     patch: str | None = Query(None, description="games.version, e.g. 14.23"),
     conn: psycopg.Connection = Depends(db_conn),
 ):
     with conn.cursor() as cur:
-        cur.execute(_SQL, {"team_id": team_id, "date_from": date_from, "patch": patch})
+        cur.execute(_SQL, {
+            "team_id": team_id, "date_from": date_from, "date_to": date_to,
+            "patch": patch,
+        })
         rows = cur.fetchall()
 
     # by_medium[medium][(player_id, role)] = {player, champions: [...]}.
@@ -117,6 +122,7 @@ WITH team_games AS (
     AND (%(game_types)s::text[] IS NULL OR g.game_type = ANY(%(game_types)s))
     AND (%(patch)s::text     IS NULL OR g.version = %(patch)s)
     AND (%(date_from)s::date  IS NULL OR g.date   >= %(date_from)s)
+    AND (%(date_to)s::date    IS NULL OR g.date   <= %(date_to)s)
 ),
 our_picks AS (
   -- pk.role = role played in that game (players.role is the current roster
@@ -128,7 +134,10 @@ our_picks AS (
   FROM team_games tg
   JOIN picks   pk ON pk.game_id = tg.id AND pk.side = tg.our_side
   JOIN players pl ON pl.id = pk.player_id
-  WHERE pk.stats ? 'gold' AND pk.stats ? 'damage_dealt'
+  -- jsonb ? key is true even when the value is JSON null; ->> IS NOT NULL
+  -- is the real presence check (a missing gold/damage sample should drop
+  -- the player from that game's team total, not count as a zero share).
+  WHERE pk.stats->>'gold' IS NOT NULL AND pk.stats->>'damage_dealt' IS NOT NULL
     AND pk.role IS NOT NULL
 ),
 per_game AS (
@@ -152,10 +161,14 @@ def player_shares(
     game_types: str | None = Query(None, description="CSV: OFFICIAL,SCRIM"),
     patch: str | None = Query(None, description="games.version, e.g. 14.23"),
     date_from: date | None = Query(None, description="Only games from this date"),
+    date_to: date | None = Query(None, description="Only games up to this date"),
     conn: psycopg.Connection = Depends(db_conn),
 ):
     gts = [s for s in (p.strip() for p in (game_types or "").split(",")) if s] or None
-    params = {"team_id": team_id, "game_types": gts, "patch": patch, "date_from": date_from}
+    params = {
+        "team_id": team_id, "game_types": gts, "patch": patch,
+        "date_from": date_from, "date_to": date_to,
+    }
     with conn.cursor() as cur:
         cur.execute(_SHARES_SQL, params)
         rows = cur.fetchall()

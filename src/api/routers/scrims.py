@@ -39,6 +39,7 @@ WITH base AS (
     AND g.result IN ('BLUE','RED')
     AND (g.team1_id = %(team_id)s OR g.team2_id = %(team_id)s)
     AND (%(date_from)s::date IS NULL OR g.date >= %(date_from)s)
+    AND (%(date_to)s::date   IS NULL OR g.date <= %(date_to)s)
     AND (%(patch)s::text     IS NULL OR g.version = %(patch)s)
 ),
 numbered AS (
@@ -123,10 +124,14 @@ def _shape(row: dict) -> dict:
 def scrim_games(
     team_id: int = Query(..., description="Team to track (required)"),
     date_from: date | None = Query(None, description="Only scrims from this date"),
+    date_to: date | None = Query(None, description="Only scrims up to this date"),
     patch: str | None = Query(None, description="games.version, e.g. 14.23"),
     conn: psycopg.Connection = Depends(db_conn),
 ):
-    params = {"team_id": team_id, "date_from": date_from, "patch": patch}
+    params = {
+        "team_id": team_id, "date_from": date_from, "date_to": date_to,
+        "patch": patch,
+    }
     with conn.cursor() as cur:
         cur.execute(_SQL, params)
         rows = cur.fetchall()

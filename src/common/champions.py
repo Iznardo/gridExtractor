@@ -35,8 +35,9 @@ def _latest_version() -> str:
 def refresh_champions(conn, version: str | None = None) -> int:
     """Download champions from Data Dragon and upsert them into `champions`.
 
-    Uses the latest version when `version` is None. Idempotent
-    (INSERT ... ON CONFLICT (id) DO NOTHING). Returns the count of new rows.
+    Uses the latest version when `version` is None. Idempotent, and updates
+    name/alias on a Riot rename (e.g. Nunu -> "Nunu & Willump") instead of
+    keeping the stale value forever. Returns the count of new rows.
     """
     if version is None:
         version = _latest_version()
@@ -57,12 +58,16 @@ def refresh_champions(conn, version: str | None = None) -> int:
                 """
                 INSERT INTO champions (id, name, alias)
                 VALUES (%s, %s, %s)
-                ON CONFLICT (id) DO NOTHING
-                RETURNING id
+                ON CONFLICT (id) DO UPDATE
+                   SET name = EXCLUDED.name, alias = EXCLUDED.alias
+                 WHERE champions.name  IS DISTINCT FROM EXCLUDED.name
+                    OR champions.alias IS DISTINCT FROM EXCLUDED.alias
+                RETURNING (xmax = 0) AS is_insert
                 """,
                 (champ_id, name, alias),
             )
-            if cur.fetchone():
+            row = cur.fetchone()
+            if row and row[0]:
                 inserted += 1
 
     conn.commit()

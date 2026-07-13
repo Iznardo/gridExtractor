@@ -3,6 +3,11 @@
 These share the same base filter as /drafts (team_id, rival_id, patch,
 game_type, tournament, pick_phase) but without a champion filter or pagination:
 they always return the full set of champions in the filtered drafts.
+
+Games without a usable draft (blind pick, draft_id NULL — see
+draft_missing_reason) count for lane-pairing stats (team-matchups,
+lane-matchup), which only need picks.role, but never for blind/counter
+(role-picks), which is gated on pick_order — a blind-pick game has none.
 """
 
 from __future__ import annotations
@@ -24,6 +29,10 @@ WHERE g.draft_id IS NOT NULL
   -- only games with a winner; a NONE would count as a loss for every pick and
   -- bias the win_rate (and the presence denominator).
   AND g.result IN ('BLUE','RED')
+  -- FP must be attributable to one of the two teams; otherwise the game
+  -- cannot be split into FP/SP stats (decision 2026-07-13: count it for
+  -- neither side, rather than defaulting it into one via ELSE).
+  AND d.first_pick_team_id IN (g.team1_id, g.team2_id)
   AND (%(team_id)s::int    IS NULL OR g.team1_id = %(team_id)s  OR g.team2_id = %(team_id)s)
   AND (%(rival_id)s::int   IS NULL OR g.team1_id = %(rival_id)s OR g.team2_id = %(rival_id)s)
   AND (%(patch)s::text     IS NULL OR g.version   = %(patch)s)
@@ -31,6 +40,7 @@ WHERE g.draft_id IS NOT NULL
   AND (%(game_types)s::text[] IS NULL OR g.game_type = ANY(%(game_types)s))
   AND (%(tournament)s::text IS NULL OR g.tournament = %(tournament)s)
   AND (%(date_from)s::date  IS NULL OR g.date >= %(date_from)s)
+  AND (%(date_to)s::date    IS NULL OR g.date <= %(date_to)s)
   AND (%(pick_phase)s::text IS NULL OR
        (%(pick_phase)s = 'first'  AND d.first_pick_team_id =  %(team_id)s) OR
        (%(pick_phase)s = 'second' AND d.first_pick_team_id <> %(team_id)s))
@@ -87,7 +97,7 @@ picks_raw AS (
       WHEN v.is_fp  AND g.first_pick_team_id = g.team2_id THEN (g.result = 'RED')
       WHEN NOT v.is_fp AND g.first_pick_team_id = g.team1_id THEN (g.result = 'RED')
       WHEN NOT v.is_fp AND g.first_pick_team_id = g.team2_id THEN (g.result = 'BLUE')
-      ELSE false
+      ELSE NULL
     END AS won,
     CASE
       WHEN %(team_id)s::int IS NULL THEN NULL
@@ -98,10 +108,13 @@ picks_raw AS (
   FROM base g
   JOIN effective_gn e ON e.id = g.id
   CROSS JOIN LATERAL (VALUES
+    -- phase: 1 = each team's first 3 picks (FP1-3, SP1-3 = pick8/R3 closes
+    -- phase 1); 2 = the last 2 (FP4-5, SP4-5). Global order:
+    -- FP1 SP1 SP2 FP2 FP3 SP3 | SP4 FP4 FP5 SP5.
     (g.pick1, true,  1),(g.pick2, true,  1),(g.pick3, true,  1),
     (g.pick4, true,  2),(g.pick5, true,  2),
-    (g.pick6, false, 1),(g.pick7, false, 1),
-    (g.pick8, false, 2),(g.pick9, false, 2),(g.pick10, false, 2)
+    (g.pick6, false, 1),(g.pick7, false, 1),(g.pick8, false, 1),
+    (g.pick9, false, 2),(g.pick10, false, 2)
   ) AS v(champ_id, is_fp, phase)
   WHERE v.champ_id IS NOT NULL
 ),
@@ -217,7 +230,7 @@ slots AS (
       WHEN v.is_fp  AND g.first_pick_team_id = g.team2_id THEN (g.result = 'RED')
       WHEN NOT v.is_fp AND g.first_pick_team_id = g.team1_id THEN (g.result = 'RED')
       WHEN NOT v.is_fp AND g.first_pick_team_id = g.team2_id THEN (g.result = 'BLUE')
-      ELSE false
+      ELSE NULL
     END AS won
   FROM base g
   CROSS JOIN LATERAL (VALUES
@@ -298,6 +311,7 @@ def _base_params(
     tournament: str | None,
     game_types: list[str] | None = None,
     date_from: date | None = None,
+    date_to: date | None = None,
 ) -> dict:
     return {
         "team_id": team_id,
@@ -308,6 +322,7 @@ def _base_params(
         "game_types": game_types,
         "tournament": tournament,
         "date_from": date_from,
+        "date_to": date_to,
     }
 
 
@@ -329,6 +344,7 @@ def champion_presence(
     game_types: str | None = Query(None, description="CSV: OFFICIAL,SCRIM"),
     tournament: str | None = None,
     date_from: date | None = Query(None, description="Only games from this date"),
+    date_to: date | None = Query(None, description="Only games up to this date"),
     conn: psycopg.Connection = Depends(db_conn),
     champ_map: dict[int, str] = Depends(get_champ_map),
 ):
@@ -337,7 +353,7 @@ def champion_presence(
 
     params = _base_params(
         team_id, rival_id, patch, pick_phase, game_type, tournament,
-        _parse_game_types(game_types), date_from=date_from,
+        _parse_game_types(game_types), date_from=date_from, date_to=date_to,
     )
     with conn.cursor() as cur:
         cur.execute(_PRESENCE_SQL, params)
@@ -399,12 +415,16 @@ WITH base_ids AS (
     AND (%(game_types)s::text[] IS NULL OR g.game_type = ANY(%(game_types)s))
     AND (%(tournament)s::text IS NULL OR g.tournament = %(tournament)s)
     AND (%(date_from)s::date  IS NULL OR g.date >= %(date_from)s)
+    AND (%(date_to)s::date    IS NULL OR g.date <= %(date_to)s)
     AND (%(pick_phase)s::text IS NULL OR
          (%(pick_phase)s = 'first'  AND d.first_pick_team_id =  %(team_id)s) OR
          (%(pick_phase)s = 'second' AND d.first_pick_team_id <> %(team_id)s))
 ),
 role_matchups AS (
-  -- Lane pairing by picks.role (role played in that game).
+  -- Lane pairing by picks.role (role played in that game). LATERAL ... LIMIT 1
+  -- deduplicates scrims with duplicated roles (same pattern as
+  -- team-matchups/lane-matchup/matchups.py) instead of a plain join, which
+  -- would double-count a dirty side.
   SELECT
     p1.champ_id AS blind_champ,
     p2.champ_id AS counter_champ,
@@ -412,11 +432,15 @@ role_matchups AS (
     p1.result   AS blind_won,
     p2.result   AS counter_won
   FROM picks p1
-  JOIN picks p2  ON p2.game_id = p1.game_id AND p2.side != p1.side
   JOIN base_ids g ON g.id = p1.game_id
-  WHERE p1.role = p2.role
-    AND p1.pick_order IS NOT NULL AND p1.pick_order BETWEEN 1 AND 10
-    AND p2.pick_order IS NOT NULL AND p2.pick_order BETWEEN 1 AND 10
+  JOIN LATERAL (
+    SELECT o.champ_id, o.result, o.pick_order, o.side
+    FROM picks o
+    WHERE o.game_id = p1.game_id AND o.side != p1.side AND o.role = p1.role
+      AND o.pick_order IS NOT NULL AND o.pick_order BETWEEN 1 AND 10
+    LIMIT 1
+  ) p2 ON true
+  WHERE p1.pick_order IS NOT NULL AND p1.pick_order BETWEEN 1 AND 10
     AND p1.role IS NOT NULL
     AND p1.pick_order < p2.pick_order
 """
@@ -478,6 +502,7 @@ def role_picks(
     game_types: str | None = Query(None, description="CSV: OFFICIAL,SCRIM"),
     tournament: str | None = None,
     date_from: date | None = Query(None, description="Only games from this date"),
+    date_to: date | None = Query(None, description="Only games up to this date"),
     conn: psycopg.Connection = Depends(db_conn),
     champ_map: dict[int, str] = Depends(get_champ_map),
 ):
@@ -487,7 +512,7 @@ def role_picks(
     sql = _build_role_picks_sql(pick_type)
     params = _base_params(
         team_id, rival_id, patch, pick_phase, game_type, tournament,
-        _parse_game_types(game_types), date_from=date_from,
+        _parse_game_types(game_types), date_from=date_from, date_to=date_to,
     )
     with conn.cursor() as cur:
         cur.execute(sql, params)
@@ -520,6 +545,7 @@ def role_pick_matchups(
     game_types: str | None = Query(None, description="CSV: OFFICIAL,SCRIM"),
     tournament: str | None = None,
     date_from: date | None = Query(None, description="Only games from this date"),
+    date_to: date | None = Query(None, description="Only games up to this date"),
     conn: psycopg.Connection = Depends(db_conn),
     champ_map: dict[int, str] = Depends(get_champ_map),
 ):
@@ -530,7 +556,7 @@ def role_pick_matchups(
     params = {
         **_base_params(
             team_id, rival_id, patch, pick_phase, game_type, tournament,
-            _parse_game_types(game_types), date_from=date_from,
+            _parse_game_types(game_types), date_from=date_from, date_to=date_to,
         ),
         "champ_id": champ_id,
         "role": role,
@@ -561,6 +587,7 @@ def pick_order(
     game_types: str | None = Query(None, description="CSV: OFFICIAL,SCRIM"),
     tournament: str | None = None,
     date_from: date | None = Query(None, description="Only games from this date"),
+    date_to: date | None = Query(None, description="Only games up to this date"),
     conn: psycopg.Connection = Depends(db_conn),
     champ_map: dict[int, str] = Depends(get_champ_map),
 ):
@@ -569,7 +596,7 @@ def pick_order(
 
     params = _base_params(
         team_id, rival_id, patch, pick_phase, game_type, tournament,
-        _parse_game_types(game_types), date_from=date_from,
+        _parse_game_types(game_types), date_from=date_from, date_to=date_to,
     )
     with conn.cursor() as cur:
         cur.execute(_SLOTS_SQL, params)
@@ -608,17 +635,20 @@ def pick_order(
 
 # Shared CTE: the team's game ids + filters (multi-source). Unlike the rest of
 # the module, this endpoint is always team-centric (team_id required).
+# No join to drafts: lane pairing only needs picks.role, so games without a
+# usable draft (blind pick, draft_id NULL) still count here — they just never
+# reach blind/counter (role-picks), which is gated on pick_order instead.
 _TEAM_MATCHUP_BASE = """
 WITH base_ids AS (
   SELECT g.id, g.team1_id, g.team2_id
-  FROM games g JOIN drafts d ON d.id = g.draft_id
-  WHERE g.draft_id IS NOT NULL
-    AND g.result IN ('BLUE','RED')  -- exclude NONE from the win_rate
+  FROM games g
+  WHERE g.result IN ('BLUE','RED')  -- exclude NONE from the win_rate
     AND (g.team1_id = %(team_id)s OR g.team2_id = %(team_id)s)
     AND (%(game_types)s::text[] IS NULL OR g.game_type = ANY(%(game_types)s))
     AND (%(patch)s::text      IS NULL OR g.version    = %(patch)s)
     AND (%(tournament)s::text IS NULL OR g.tournament = %(tournament)s)
     AND (%(date_from)s::date  IS NULL OR g.date >= %(date_from)s)
+    AND (%(date_to)s::date    IS NULL OR g.date <= %(date_to)s)
 )
 """
 
@@ -692,6 +722,7 @@ def team_matchups(
     patch: str | None = Query(None),
     tournament: str | None = None,
     date_from: date | None = Query(None, description="Only games from this date"),
+    date_to: date | None = Query(None, description="Only games up to this date"),
     conn: psycopg.Connection = Depends(db_conn),
     champ_map: dict[int, str] = Depends(get_champ_map),
 ):
@@ -701,6 +732,7 @@ def team_matchups(
         "patch": patch,
         "tournament": tournament,
         "date_from": date_from,
+        "date_to": date_to,
     }
     with conn.cursor() as cur:
         cur.execute(_TEAM_MATCHUP_SQL, params)
@@ -753,13 +785,13 @@ def team_matchups(
 _LANE_MATCHUP_SQL = """
 WITH all_ids AS (
   SELECT g.id, g.team1_id, g.team2_id
-  FROM games g JOIN drafts d ON d.id = g.draft_id
-  WHERE g.draft_id IS NOT NULL
-    AND g.result IN ('BLUE','RED')
+  FROM games g
+  WHERE g.result IN ('BLUE','RED')
     AND (%(game_types)s::text[] IS NULL OR g.game_type = ANY(%(game_types)s))
     AND (%(patch)s::text      IS NULL OR g.version    = %(patch)s)
     AND (%(tournament)s::text IS NULL OR g.tournament = %(tournament)s)
     AND (%(date_from)s::date  IS NULL OR g.date >= %(date_from)s)
+    AND (%(date_to)s::date    IS NULL OR g.date <= %(date_to)s)
 ),
 pairs AS (
   -- Lane pairing by picks.role (role played in that game).
@@ -792,6 +824,7 @@ def lane_matchup(
     patch: str | None = Query(None),
     tournament: str | None = None,
     date_from: date | None = Query(None, description="Only games from this date"),
+    date_to: date | None = Query(None, description="Only games up to this date"),
     conn: psycopg.Connection = Depends(db_conn),
 ):
     """WR of `our` vs `opp` in `role` as played by ALL teams except `team_id`.
@@ -809,6 +842,7 @@ def lane_matchup(
         "patch": patch,
         "tournament": tournament,
         "date_from": date_from,
+        "date_to": date_to,
     }
     with conn.cursor() as cur:
         cur.execute(_LANE_MATCHUP_SQL, params)

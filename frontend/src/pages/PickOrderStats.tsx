@@ -199,6 +199,8 @@ export function PickOrderStats({ filters }: { filters: StatsFilters }) {
 
       <div className="po-legend" aria-label="Legend">
         <span className="po-legend-wr"><span className="po-wr-pos">▲ ≥55%</span> <span className="po-wr-neg">▼ ≤45%</span> WR · Ng = games in that slot</span>
+        <span className="po-legend-sep" aria-hidden="true"> · </span>
+        <span className="po-legend-note">B/R = draft notation (first/second pick team) — independent of map side</span>
       </div>
 
       <div className="po-page">

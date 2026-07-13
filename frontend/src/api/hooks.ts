@@ -133,6 +133,7 @@ export type StatsFilters = {
   patch?: string;
   tournament?: string;
   date_from?: string; // "YYYY-MM-DD": only games from this date onward
+  date_to?: string; // "YYYY-MM-DD": only games up to this date
 };
 
 export function useChampionPresence(filters: StatsFilters, enabled = true) {
@@ -210,6 +211,7 @@ export type LaneMatchupCtx = {
   patch?: string;
   tournament?: string;
   date_from?: string;
+  date_to?: string;
 };
 
 export function useLaneMatchupOthers(
@@ -231,15 +233,15 @@ export function useLaneMatchupOthers(
 
 export function useScouting(
   teamId: number | null,
-  opts: { dateFrom?: string; patch?: string } = {},
+  opts: { dateFrom?: string; dateTo?: string; patch?: string } = {},
 ) {
-  const { dateFrom, patch } = opts;
+  const { dateFrom, dateTo, patch } = opts;
   return useQuery({
-    queryKey: ["scouting", teamId, dateFrom, patch],
+    queryKey: ["scouting", teamId, dateFrom, dateTo, patch],
     queryFn: () =>
       getJSON<ScoutingPool>(
         "/scouting/champion-pool" +
-          buildQuery({ team_id: teamId, date_from: dateFrom, patch }),
+          buildQuery({ team_id: teamId, date_from: dateFrom, date_to: dateTo, patch }),
       ),
     enabled: teamId != null,
   });
@@ -247,15 +249,18 @@ export function useScouting(
 
 export function usePlayerShares(
   teamId: number | null,
-  opts: { gameTypes?: string; patch?: string; dateFrom?: string } = {},
+  opts: { gameTypes?: string; patch?: string; dateFrom?: string; dateTo?: string } = {},
 ) {
-  const { gameTypes, patch, dateFrom } = opts;
+  const { gameTypes, patch, dateFrom, dateTo } = opts;
   return useQuery({
-    queryKey: ["player-shares", teamId, gameTypes, patch, dateFrom],
+    queryKey: ["player-shares", teamId, gameTypes, patch, dateFrom, dateTo],
     queryFn: () =>
       getJSON<PlayerShare[]>(
         "/scouting/player-shares" +
-          buildQuery({ team_id: teamId, game_types: gameTypes, patch, date_from: dateFrom }),
+          buildQuery({
+            team_id: teamId, game_types: gameTypes, patch,
+            date_from: dateFrom, date_to: dateTo,
+          }),
       ),
     enabled: teamId != null,
   });
@@ -264,6 +269,7 @@ export function usePlayerShares(
 export type ScrimGamesFilters = {
   team_id: number | null;
   date_from?: string;
+  date_to?: string;
   patch?: string;
 };
 

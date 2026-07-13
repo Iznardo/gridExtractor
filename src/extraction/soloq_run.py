@@ -111,10 +111,11 @@ def main() -> int:
                 raise
 
     log.info("SoloQ extraction complete. inserted=%d remakes=%d "
-             "already_in_db=%d no_detail=%d no_tracked=%d dup=%d errors=%d",
+             "already_in_db=%d no_detail=%d no_tracked=%d no_date=%d dup=%d "
+             "errors=%d",
              stats["inserted"], stats["remake"], stats["already_in_db"],
-             stats["no_detail"], stats["no_tracked"], stats["dup"],
-             stats["errors"])
+             stats["no_detail"], stats["no_tracked"], stats["no_date"],
+             stats["dup"], stats["errors"])
     return 0
 
 

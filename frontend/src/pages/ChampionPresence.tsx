@@ -267,7 +267,7 @@ export function ChampionPresence({
         <span className="cp-legend-sep" aria-hidden="true">·</span>
         <span className="cp-legend-wr"><span className="cp-wr-pos">▲ ≥55%</span> <span className="cp-wr-neg">▼ ≤45%</span> WR</span>
         <span className="cp-legend-sep" aria-hidden="true">·</span>
-        <span className="cp-legend-phase">Phase 1: B1-B3, R1-R2 · Phase 2: B4-B5, R3-R5</span>
+        <span className="cp-legend-phase">Phase 1: B1-B3, R1-R3 · Phase 2: B4-B5, R4-R5</span>
         <span className="cp-legend-sep" aria-hidden="true">·</span>
         <span className="cp-legend-zero">dimmed 0 = real datum · — = no data</span>
       </div>
@@ -295,8 +295,8 @@ export function ChampionPresence({
               ) : (
                 <ColHead col="bans" label="Banned" sort={sort} toggleSort={toggleSort} />
               )}
-              <ColHead col="phase1" label="Phase 1" title="Picks in phase 1 (B1-B3, R1-R2)" sort={sort} toggleSort={toggleSort} />
-              <ColHead col="phase2" label="Phase 2" title="Picks in phase 2 (B4-B5, R3-R5)" sort={sort} toggleSort={toggleSort} />
+              <ColHead col="phase1" label="Phase 1" title="Picks in phase 1 (B1-B3, R1-R3)" sort={sort} toggleSort={toggleSort} />
+              <ColHead col="phase2" label="Phase 2" title="Picks in phase 2 (B4-B5, R4-R5)" sort={sort} toggleSort={toggleSort} />
               {gnCols.map((n) => <GnHead key={n} n={n} />)}
             </tr>
           </thead>

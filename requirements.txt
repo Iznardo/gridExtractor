@@ -1,9 +1,9 @@
 grid-minion>=0.4.4
 psycopg[binary]>=3.1
-psycopg_pool>=3.2     # pool de conexiones para la API read-only (src/api/)
+psycopg_pool>=3.2     # connection pool for the read-only API (src/api/)
 python-dotenv>=1.0
 PyYAML>=6.0
 requests>=2.31
-fastapi>=0.110       # API read-only sobre loldata (src/api/)
+fastapi>=0.110       # read-only API over loldata (src/api/)
 uvicorn[standard]>=0.29
-pytest>=8.0          # dev: tests offline contra fixtures de docs/riot
+pytest>=8.0          # dev: offline tests against fixtures in tests/fixtures
