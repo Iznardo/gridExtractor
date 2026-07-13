@@ -10,7 +10,7 @@ postgres_data/
 # Execution logs (local, not committed)
 logs/
 
-# Cache of raw Riot API responses (soloq phase 1)
+# Local scratch data (not used by the pipeline; the DB is the source of truth)
 data/
 
 # Python
@@ -30,6 +30,7 @@ __pycache__/
 # Internal documentation and working files (not in the public repo)
 *.md
 !README.md
+!DEPLOY.md
 
 # Development / introspection utilities
 introspect_grid.py

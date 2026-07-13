@@ -52,8 +52,9 @@ read-only API over the same database is up (see
 [The query API](#the-query-api-fastapi)), and a web front-end consumes it (see
 [The web front-end](#the-web-front-end-react--vite--typescript)).
 
-There is one known data shape that the scrim extractor cannot currently
-recover (matches played but with no draft events emitted by GRID). See
+Some scrims are played in blind pick or lose their draft events entirely; the
+scrim extractor still recovers the game (result, picks, per-player stats)
+with `draft_id` left `NULL` instead of dropping it. See
 [Known limitations](#known-limitations).
 
 ## How it works
@@ -89,10 +90,14 @@ For each series not yet fully in DB:
     Officials only: reconcile_player_roster (team/role/starter)
         │
         ▼
-    INSERT drafts → INSERT games → INSERT picks  (idempotent)
+    Draft usable?  yes ─► INSERT drafts (draft_id)
+                   no  ─► draft_id = NULL, stats.meta.draft_missing_reason set
+        │
+        ▼
+    INSERT games → INSERT picks  (idempotent)
 ```
 
-Three rules are enforced everywhere:
+Four rules are enforced everywhere:
 
 1. **Idempotency.** Re-running an extractor never reprocesses a match that's
    already in the database; the `ON CONFLICT (grid_series_id, game_number)`
@@ -101,10 +106,18 @@ Three rules are enforced everywhere:
 2. **Cosmetic vs. positional data.** Names, tags, etc. are written **once**
    on discovery and never overwritten. Positional facts (team, role,
    starter) are only updated from **official** matches, in chronological
-   order, protected against out-of-order runs by `players.last_update`.
+   order, protected against out-of-order runs by `players.last_update`, and
+   sourced from the same per-game evidence as `picks.role` below (never from
+   GRID's catalog, which only reflects a player's *current* declared role).
 3. **Match-level granularity.** A GRID *series* is a Bo1/Bo3/Bo5; a *game* is
    one match within a series. The schema and the extractors both work at
    the game level.
+4. **Role played vs. roster role.** `picks.role` is the role played *in that
+   specific game* (from the participant ordering convention, or
+   `team_position` for SoloQ) — not `players.role`, which is the roster's
+   *current* role and would misattribute historical games after a reroll or
+   a substitution. Every lane-pairing query in the API (matchups, champion
+   pool, player shares) joins on `picks.role`.
 
 ## Database schema
 
@@ -214,8 +227,8 @@ $EDITOR config/tournaments.yaml
 # 0 or >1 matches are skipped with a warning.
 ```
 
-That's all. The `champions` table is populated automatically the first
-time you run an extractor.
+That's all. The `champions` table is refreshed automatically on every
+extractor run.
 
 ### Verifying the setup
 
@@ -298,20 +311,30 @@ What's different from officials:
 - Mid-game feed invalidations (technical reconnections, not real remakes)
   no longer drop the draft: grid-minion v0.2.0 ignores any
   `grid-invalidated-series` that arrives after the game has started, and
-  rescues side-swaps internally. The old `_rescue_from_history` workaround
-  was removed.
+  rescues side-swaps internally.
+- **Blind-pick / undraftable games are still recovered.** A scrim played in
+  blind pick, or one whose recorded draft doesn't match what was actually
+  played (a dodged draft left orphaned in the feed), is inserted with
+  `draft_id = NULL` and `stats.meta.draft_missing_reason` set
+  (`no_draft_events` / `draft_partial` / `draft_mismatch`) instead of being
+  skipped. These games still count for lane-pairing stats (matchups, champion
+  pool) — they only drop out of anything that needs a real pick order
+  (blind/counter breakdown, FP/SP pick-order stats).
 
 ### 4. Manually refreshing the champions table
 
-The catalog is bootstrapped automatically when empty, but you can force
-a refresh if a new patch lands:
+Every official/scrim/soloq extractor run already refreshes the catalog from
+Data Dragon before processing anything, so a newly released champion is
+never lost. Run it standalone if you just want to update the catalog without
+extracting matches:
 
 ```bash
 python -m src.common.champions
 ```
 
-It re-fetches the latest version from Riot Data Dragon and inserts any
-new champion IDs. Existing rows are not touched.
+It re-fetches the latest version from Riot Data Dragon, inserts any new
+champion IDs, and corrects `name`/`alias` on existing ones if Riot renamed a
+champion (e.g. Nunu → "Nunu & Willump").
 
 ### 5. SoloQ extraction (Riot API)
 
@@ -402,11 +425,12 @@ SQL-only (no ORM), reuses the DB layer, and is meant for a front-end (and ad-hoc
 use).
 
 The recommended way to run it is via Docker Compose: the `api` service starts
-alongside the `db` service (it waits for the DB healthcheck), so a single
-command brings both up — no need to launch `uvicorn` by hand:
+alongside `db` (it waits for the DB healthcheck) and `web` (the front-end,
+see below), so a single command brings all three up — no need to launch
+`uvicorn` by hand:
 
 ```bash
-docker compose up -d        # starts db + api
+docker compose up -d        # starts db + api + web
 docker compose up -d --build api   # rebuild after changing dependencies
 ```
 
@@ -424,40 +448,59 @@ first); responses include both the id and the resolved name.
 
 | Endpoint | Purpose |
 |---|---|
-| `GET /champions`, `/teams`, `/players?team_id=&role=` | Catalog (populate filters, resolve name→id). |
+| `GET /champions`, `/teams`, `/players?team_id=&role=`, `/tournaments`, `/patches` | Catalog (populate filters, resolve name→id). |
 | `GET /drafts` | Drafts (officials/scrims). Filters: `team_id, rival_id, patch, pick_phase(first\|second), champ_id, game_type`. Exposes both axes: `team1`=BLUE/`team2`=RED **and** `first_pick_team` (decoupled since 2026). |
+| `GET /draft-stats/champion-presence`, `/pick-order`, `/role-picks`, `/role-pick-matchups` | Aggregate draft stats: presence/win-rate per champion, pick-order slot distribution, blind-pick vs. counterpick per role. Same filters as `/drafts` plus `date_from/date_to`. |
+| `GET /draft-stats/team-matchups`, `/lane-matchup` | Team-scoped lane-pairing stats (champion vs. champion per role, with lane diffs at 7/14 min) and an on-demand "how this matchup goes for other teams" lookup. |
 | `GET /scouting/champion-pool?team_id=` | Per-player champion pool split by medium (`by_medium`: official/scrim/soloq). Attribution via `players.team_id`. |
+| `GET /scouting/player-shares?team_id=` | Per-role gold%/damage% share of the team total (official/scrim only). |
+| `GET /scrims/games?team_id=` | One row per scrim of the tracked team, enriched for the Scrims dashboard (lineup, rival picks, block numbering). |
 | `GET /games` | Game search: `team_id, patch, game_type, champ_id, champ_id2+opposing` (matchup on opposite sides), `date_from/date_to`. Returns side compositions (`blue_champions`/`red_champions`). |
 | `GET /picks` | Raw per-player picks (drill-down); `stats` JSONB as stored. |
+| `GET /matchups` | Champion-vs-champion pick explorer (1v1/2v2), with builds and blind/counter relation. |
+| `GET /games/{id}/replay` | Streams the `.rofl` replay from GRID (server-side `GRID_API_KEY`; never reaches the browser). GRID-sourced games only. |
+| `GET /health` | DB connectivity check; used by the container healthcheck. |
 
-CORS is open to `localhost` and there is no auth (local use). Read-only: give it
-a Postgres user with `SELECT` only if you expose it.
+CORS is open to `localhost`/`127.0.0.1` and there is no auth: the model is
+each user running their own instance. `docker-compose.yml` binds `db` and
+`api` to `127.0.0.1` only; the `web` service (nginx + the front, see below)
+is the single entry point and by default listens on every interface
+(`WEB_HOST=0.0.0.0:8080`) so it can be reached from your LAN/tailnet — set
+`WEB_HOST=127.0.0.1` to restrict it further (e.g. behind `tailscale serve`,
+see [`DEPLOY.md`](DEPLOY.md)). There's no rate-limit on the replay proxy;
+fine for personal/team use, worth adding before exposing this more broadly.
+Read-only: give the API a Postgres user with `SELECT` only if you expose it
+beyond your own machine.
 
 ## The web front-end (React + Vite + TypeScript)
 
-A single-page app in `frontend/` consumes the API. It needs Node 20+ and is run
-with Vite's dev server (HMR); it is **not** dockerized yet (that's a deliberate
-follow-up — the dev server is better for active development).
+A single-page app in `frontend/` consumes the API. In production it's
+containerized: the `web` service (`docker compose up -d`) builds the Vite
+bundle and serves it with nginx, which also reverse-proxies `/api/` to the
+`api` service — the browser only ever talks to one origin, so there's no CORS
+to configure. For active development, run Vite's dev server instead (HMR):
 
 ```bash
 cd frontend
 npm install
-npm run dev        # http://localhost:5173
+npm run dev        # http://localhost:5173, proxies /api -> the api service
 ```
 
-It expects the API at `http://localhost:8000` by default; override with
-`VITE_API_BASE` (copy `.env.example` to `.env.local`). Champion/team names are
-resolved to ids client-side (the API is id-based) using the catalog endpoints.
+The default API base is `/api` (proxied by Vite in dev, by nginx in the `web`
+container); override with `VITE_API_BASE` (copy `.env.example` to
+`.env.local`) only if the API lives at a different origin. Champion/team
+names are resolved to ids client-side (the API is id-based) using the catalog
+endpoints.
 
 Five windows:
 
 | Window | What it shows |
 |---|---|
-| **Drafts** | Draft boards (officials/scrims), first-pick team left / second-pick right, side (BLUE/RED) and win marked separately (decoupled since 2026). Filters: team, rival, type, pick phase, champion, patch. Plus a Draft Stats view (pick-order slots, role distribution). |
-| **Games** | Searchable table (champion, matchup with "opposite sides", patch, dates) with side compositions. Each row **expands** into a post-game view: scoreboard, runes, and build/skill order (tabs). Columns adapt to the source (SoloQ exposes spells/level/vision; GRID exposes damage). |
-| **Scouting** | Per-team scouting: a dashboard (recent picks, last official series, bans faced in phase 1, counterpick rate per role, gold/damage radar), the per-player champion pool split by medium (official/scrim/soloq), role matchups, and a blind/counter breakdown. |
-| **Scrims** | Scrim-tracking dashboard for a team (remembered across sessions): latest-patch and last-7-days pools, expandable blocks, champion matchups, duos/trios, and vs-teams / vs-picks tables. |
-| **Picks** | Champion-vs-champion matchup explorer — 1v1 and 2v2 — with per-pick builds, lane diffs and blind/counter relation. |
+| **Drafts** | Draft boards (officials/scrims), first-pick team left / second-pick right, side (BLUE/RED) and win marked separately (decoupled since 2026). Filters: team, rival, type, pick phase, champion, patch. Plus a Draft Stats view (champion presence, pick-order slots/role distribution). |
+| **Games** | Searchable table of **official** games (champion, matchup with "opposite sides", patch, dates) with side compositions. Each row **expands** into a post-game view: scoreboard, runes, and build/skill order (tabs). SoloQ and scrim games are not listed here — see Scrims and Picks below. |
+| **Scouting** | Per-team scouting: a dashboard (recent picks, last official series, bans faced in phase 1, counterpick rate per role, gold/damage radar — all respecting the applied date range), the per-player champion pool split by medium (official/scrim/soloq), role matchups, and a blind/counter breakdown. |
+| **Scrims** | Scrim-tracking dashboard for a team (remembered across sessions): latest-patch and last-7-days pools, expandable blocks (with a post-game detail view, same as Games), champion matchups, duos/trios, and vs-teams / vs-picks tables. |
+| **Picks** | Champion-vs-champion matchup explorer — 1v1 and 2v2, across all three sources (official/scrim/soloq) — with per-pick builds, lane diffs and blind/counter relation. This is where SoloQ games are actually browsable, since Games is official-only. |
 
 Build a static bundle with `npm run build` (output in `frontend/dist/`); the
 `tsc -b` step also type-checks. Stack: React 19, `@tanstack/react-query`
@@ -528,24 +571,30 @@ Notes:
 
 ## Known limitations
 
-- **Pattern A (scrims):** some scrim series are played but GRID never
-  emits `team-picked-character` / `team-banned-character` events. The
-  Riot summary still reports a winner and the picked champions per
-  player, but the draft itself (bans + pick order) is lost. These series
-  are currently skipped with a `WARNING` log. Open question: whether GRID
-  exposes the draft in a different event type for these series, or
-  whether the data is simply not there. To investigate.
-- **LPL has no Riot summary.** GRID returns 404 on the Riot summary
-  endpoint for LPL series at this API tier, so `TeamsObserver` cannot
-  resolve participants and those series are skipped. Not a code bug — a
-  data-access limit; deferred until a future grid-minion exposes an
-  alternative source. Keep LPL commented out in `tournaments.yaml`.
+- **Draft-less scrims (resolved as a data shape, not a bug).** Some scrim
+  series are played in blind pick, or GRID never emits the
+  `team-picked-character` / `team-banned-character` events for them. These
+  are recovered rather than dropped: the game is inserted with
+  `draft_id = NULL` and `stats.meta.draft_missing_reason` set. See "Scrim
+  extraction" above for what still works (lane-pairing stats) and what
+  doesn't (blind/counter, pick-order stats).
+- **LPL drafts can be misaligned.** GRID's separate route for LPL (Tencent +
+  game-state, since grid-minion v0.3.0) occasionally attributes a draft to
+  the wrong game within a series. This is an upstream grid-minion issue, not
+  something this project's schema or extractor can detect on its own; a
+  handful of series have been corrected by hand after manual review.
 - **Build backfill.** Per-player builds were added with grid-minion
   v0.2.0; games ingested before that don't have them, and idempotency
   skips already-stored games. Backfilling them needs an explicit
   re-extraction path (not built yet).
 - **`tournaments.yaml` is project-specific.** The repository ships with a
   sample value — customise it before running the official extractor.
+- **SoloQ is implemented but starts empty.** The pipeline (accounts table,
+  extractor, API, front-end) is fully wired, but it only ever tracks
+  accounts you explicitly list in `config/soloq_accounts.yaml` and sync with
+  `accounts_sync` (see "SoloQ extraction" below) — with an empty `accounts`
+  table there is simply nothing to show in the SoloQ-specific parts of the
+  front-end (e.g. the SoloQ source in Picks).
 
 ## Project layout
 
@@ -611,9 +660,14 @@ frontend/                      web SPA (React + Vite + TS), consumes the API
   the warnings; if they're real players, leave them; if they're typos or
   one-off fills, delete the row and (optionally) re-run discovery to
   pull the canonical name from GRID.
-- **`empty draft (no draft events), skip`** — Pattern A above. The
-  series is skipped. There is nothing to do at the moment beyond
-  recording the series ID for the future investigation.
+- **`draft not usable (...), inserting with draft_id=NULL`** — a scrim
+  played in blind pick, or with an orphaned/dodged draft (see "Known
+  limitations" above). Expected; the game is still inserted with its result
+  and picks, just without a usable draft.
+- **`empty draft (no draft events), skip`** — this one only happens for
+  **official** matches (scrims recover it instead, see above). If it shows
+  up for an official series, it's worth checking the series manually in the
+  GRID portal — officials shouldn't normally be played in blind pick.
 
 ## License
 

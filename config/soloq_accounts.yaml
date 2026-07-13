@@ -1,14 +1,13 @@
-# Cuentas de SoloQ a trackear. Se vuelcan a la tabla `accounts` con
+# SoloQ accounts to track. Synced into the `accounts` table with
 # `python -m src.riot.accounts_sync`.
 #
-#   riot_id : "Nombre#TAG" — solo para resolver el PUUID; en BD no se
-#             guarda nunca (los Riot IDs cambian, el puuid no).
-#   player  : OBLIGATORIO para el sync — nombre EXACTO del jugador en la
-#             tabla `players` (los jugadores vienen del discovery de GRID;
-#             el sync no los crea). Con null la cuenta se salta con WARNING.
-#   region  : cluster regional de Match-V5 (americas/asia/europe/sea).
-#             null = autodetectar (avisa por log); fijarla para ahorrar
-#             requests.
+#   riot_id : "Name#TAG" — only used to resolve the PUUID; never stored in
+#             the DB (Riot IDs change, the puuid doesn't).
+#   player  : REQUIRED for the sync — the EXACT name of the player in the
+#             `players` table (players come from GRID discovery; the sync
+#             does not create them). null skips the account with a WARNING.
+#   region  : Match-V5 regional cluster (americas/asia/europe/sea).
+#             null = autodetect (logs a warning); set it to save requests.
 
 accounts:
   - riot_id: "J1HUIV#000"
