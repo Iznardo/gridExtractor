@@ -212,6 +212,14 @@ def pick_order_for(champion_name: str | None,
         return None
 
     fp_team_id = draft_data["fp"].get("team_id")
+    if fp_team_id is None:
+        # FP team unknown: every participant would fall into the SP branch,
+        # attributing the whole game to second-pick pick_orders it doesn't
+        # actually have (decision 2026-07-13: no order at all is preferable
+        # to a false one — the game is excluded from FP/SP and
+        # blind/counter stats instead).
+        return None
+
     fp_picks   = draft_data["fp"].get("picks") or []
     sp_picks   = draft_data["sp"].get("picks") or []
 
