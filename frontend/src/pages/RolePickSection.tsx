@@ -4,6 +4,7 @@ import { AlertTriangle } from "lucide-react";
 import { useRolePicks, useRolePickMatchups, type StatsFilters } from "../api/hooks";
 import type { MatchupEntry, RolePickEntry } from "../api/types";
 import { ChampIcon } from "../components/icons";
+import { wrArrow, wrStatus } from "../lib/winrate";
 import "./role-pick-section.css";
 
 const ROLES = ["TOP", "JUNGLE", "MID", "ADC", "SUPPORT"] as const;
@@ -15,26 +16,20 @@ const ROLE_LABEL: Record<string, string> = {
   SUPPORT: "SUP",
 };
 
-function wrClass(wr: number | null): string {
-  if (wr == null) return "";
-  if (wr >= 55) return "rps-wr-pos";
-  if (wr <= 45) return "rps-wr-neg";
+// Gated by the shared WR_MIN_GAMES threshold (lib/winrate) — a champion
+// picked once must not color as confidently as one picked 40 times.
+function wrClass(wr: number | null, games: number): string {
+  const status = wrStatus(wr, games);
+  if (status === "pos") return "rps-wr-pos";
+  if (status === "neg") return "rps-wr-neg";
   return "rps-wr-neutral";
-}
-
-// Directional glyph: WR is not conveyed by green/red alone (color blindness).
-function wrArrow(wr: number | null): string {
-  if (wr == null) return "";
-  if (wr >= 55) return "▲";
-  if (wr <= 45) return "▼";
-  return "";
 }
 
 // WR with its non-color reinforcement. Returns the % preceded by the glyph when
 // applicable; "—" when there is no data.
-function WrValue({ wr }: { wr: number | null }) {
+function WrValue({ wr, games }: { wr: number | null; games: number }) {
   if (wr == null) return <>—</>;
-  const arrow = wrArrow(wr);
+  const arrow = wrArrow(wr, games);
   return (
     <>
       {arrow && <span className="rps-wr-arrow" aria-hidden="true">{arrow}</span>}
@@ -97,8 +92,8 @@ function DetailPanel({
                 <ChampIcon id={m.champ_id} name={m.champ_name ?? ""} size={20} />
                 <span className="rps-matchup-name">{m.champ_name ?? `#${m.champ_id}`}</span>
                 <span className="rps-matchup-games">{m.games}g</span>
-                <span className={"rps-matchup-wr " + wrClass(m.win_rate)}>
-                  <WrValue wr={m.win_rate} />
+                <span className={"rps-matchup-wr " + wrClass(m.win_rate, m.games)}>
+                  <WrValue wr={m.win_rate} games={m.games} />
                 </span>
               </li>
             ))}
@@ -145,8 +140,8 @@ function RoleColumn({
               <span className="rps-entry-name">{e.champ_name ?? `#${e.champ_id}`}</span>
               <span className="rps-entry-meta">
                 <span className="rps-entry-games">{e.games}g</span>
-                <span className={"rps-entry-wr " + wrClass(e.win_rate)}>
-                  <WrValue wr={e.win_rate} />
+                <span className={"rps-entry-wr " + wrClass(e.win_rate, e.games)}>
+                  <WrValue wr={e.win_rate} games={e.games} />
                 </span>
               </span>
             </li>

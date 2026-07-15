@@ -306,8 +306,8 @@ function SharesRadar({
       <Radar
         axes={axes}
         series={[
-          { label: "Gold %", color: "#fde68a", values: data.map((d) => d.gold_pct ?? 0) },
-          { label: "Damage %", color: "#3b82f6", values: data.map((d) => d.dmg_pct ?? 0) },
+          { label: "Gold %", color: "var(--amber)", values: data.map((d) => d.gold_pct ?? 0) },
+          { label: "Damage %", color: "var(--blue)", values: data.map((d) => d.dmg_pct ?? 0) },
         ]}
       />
       <table className="scr-table scout-radar-table">

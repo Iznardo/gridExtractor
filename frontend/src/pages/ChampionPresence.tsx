@@ -6,6 +6,7 @@ import { useChampionPresence, type StatsFilters } from "../api/hooks";
 import type { ChampionPresenceRow } from "../api/types";
 import { ChampIcon } from "../components/icons";
 import { useTooltip } from "../components/Tooltip";
+import { wrArrow, wrStatus } from "../lib/winrate";
 import { RolePickSection } from "./RolePickSection";
 import "./champion-presence.css";
 
@@ -57,20 +58,13 @@ function heatClass(value: number, max: number): string {
   return "cp-heat-1";
 }
 
-function wrClass(wr: number | null): string {
-  if (wr == null) return "cp-wr-neutral";
-  if (wr >= 55) return "cp-wr-pos";
-  if (wr <= 45) return "cp-wr-neg";
+// win_rate = wins/picks — gated by the shared WR_MIN_GAMES threshold so a
+// 1-pick 100% doesn't render as confidently as a 40-pick 65% (lib/winrate).
+function wrClass(wr: number | null, picks: number): string {
+  const status = wrStatus(wr, picks);
+  if (status === "pos") return "cp-wr-pos";
+  if (status === "neg") return "cp-wr-neg";
   return "cp-wr-neutral";
-}
-
-// Non-color glyph for WR: the direction (▲/▼) encodes good/bad without relying
-// on green/red alone (color blindness).
-function wrArrow(wr: number | null): string {
-  if (wr == null) return "";
-  if (wr >= 55) return "▲";
-  if (wr <= 45) return "▼";
-  return "";
 }
 
 // A real 0 (picked 0 times, 0 wins…) shows as a dimmed 0, never as «—»: the dash
@@ -134,18 +128,23 @@ function ColHead({
   title,
   sort,
   toggleSort,
+  rowSpan,
 }: {
   col: SortCol;
   label: string;
   title?: string;
   sort: { col: SortCol; dir: SortDir };
   toggleSort: (col: SortCol) => void;
+  // Set on Presence% (ungrouped, alongside Champion) so it spans both header
+  // rows instead of sitting empty under the group-label row.
+  rowSpan?: number;
 }) {
   const active = sort.col === col;
   const { anchorProps, tip } = useTooltip(title);
   return (
     <th
       className={active ? "cp-sorted" : undefined}
+      rowSpan={rowSpan}
       onClick={() => toggleSort(col)}
       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleSort(col); } }}
       tabIndex={0}
@@ -222,8 +221,9 @@ export function ChampionPresence({
     );
   }
 
-  // Fixed + dynamic columns (By/Vs picks and bans with team) + game-number cols.
-  const fixedCols = hasTeam ? 11 : 9;
+  // Fixed + dynamic columns: Champion, Presence%, (By/Vs or Picked), Wins,
+  // WR%, (Ban By/Ban Vs or Banned), Phase 1, Phase 2 + game-number cols.
+  const fixedCols = hasTeam ? 10 : 8;
   const colCount = fixedCols + gnCols.length;
 
   if (error) {
@@ -274,9 +274,22 @@ export function ChampionPresence({
       <div className="cp-wrap">
         <table className="cp-table">
           <thead>
+            {/* Group-label row: chunks the ~17 sortable columns into named
+                bands (Picks / Bans / Phases / Per Game) so scanning for one
+                doesn't mean reading all of them. Champion and Presence% stay
+                ungrouped (rowSpan into this row) — they're identity/overview,
+                not a stat category. */}
+            <tr className="cp-group-row">
+              <th scope="colgroup" colSpan={hasTeam ? 4 : 3} className="cp-group-th">Picks</th>
+              <th scope="colgroup" colSpan={hasTeam ? 2 : 1} className="cp-group-th">Bans</th>
+              <th scope="colgroup" colSpan={2} className="cp-group-th">Phases</th>
+              {gnCols.length > 0 && (
+                <th scope="colgroup" colSpan={gnCols.length} className="cp-group-th">Per Game</th>
+              )}
+            </tr>
             <tr>
-              <th style={{ textAlign: "left" }}>Champion</th>
-              <ColHead col="presence_pct" label="Presence%" title="(picks + bans) / total" sort={sort} toggleSort={toggleSort} />
+              <th rowSpan={2} style={{ textAlign: "left" }}>Champion</th>
+              <ColHead rowSpan={2} col="presence_pct" label="Presence%" title="(picks + bans) / total" sort={sort} toggleSort={toggleSort} />
               {hasTeam ? (
                 <>
                   <ColHead col="picked_by" label="By" title="Picked by the team" sort={sort} toggleSort={toggleSort} />
@@ -325,14 +338,14 @@ export function ChampionPresence({
                   )}
                   <td>{numCell(row.wins)}</td>
                   <TipTd
-                    className={wrClass(row.win_rate)}
+                    className={wrClass(row.win_rate, row.picks)}
                     content={hasTeam ? wrTooltip(row.win_rate, row.picked_by, row.wins_by, row.picked_vs, row.wins_vs) : null}
                   >
                     {row.win_rate != null ? (
                       <>
-                        {wrArrow(row.win_rate) && (
+                        {wrArrow(row.win_rate, row.picks) && (
                           <span className="cp-wr-arrow" aria-hidden="true">
-                            {wrArrow(row.win_rate)}
+                            {wrArrow(row.win_rate, row.picks)}
                           </span>
                         )}
                         {row.win_rate.toFixed(1)}%

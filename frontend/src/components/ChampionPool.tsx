@@ -7,6 +7,7 @@
 import { useState } from "react";
 
 import type { ScoutPlayer } from "../api/types";
+import { WR_MIN_GAMES } from "../lib/winrate";
 import { ChampIcon } from "./icons";
 import "../pages/scouting.css";
 
@@ -22,7 +23,9 @@ export const ROLE_LABELS: Record<Role, string> = {
 };
 
 export const CHAMP_LIMIT = 5;
-export const WR_MIN_GAMES = 3;
+// Re-exported for the pages that already import the gate from here (the
+// canonical constant lives in lib/winrate.ts, shared by every WR display).
+export { WR_MIN_GAMES };
 
 // ---- WR display ----
 

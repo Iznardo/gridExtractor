@@ -53,7 +53,11 @@
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 8px;
-  overflow: hidden;
+  /* x:auto so a wide table (many rival columns, vs-Teams G1..Gn) scrolls
+     instead of clipping with no way to reach the rest; y:hidden keeps the
+     rounded-corner clip (nothing here ever overflows vertically). */
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
 .scr-card-title {
@@ -134,7 +138,10 @@
 .scr-block-row { cursor: pointer; }
 .scr-block-row:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px; }
 .scr-caret { width: 1.4rem; text-align: center; color: var(--muted); }
-/* The detail games table is embedded in a cell: no double border. */
-.scr-block-detail-row > td { padding: 0; background: var(--panel2); }
+/* The detail games table is embedded in a cell: no double border. Scrolls
+   horizontally on its own — this row's colSpan spans the full outer table
+   width, so a wide embedded scoreboard (GameDetail) or lineup table needs its
+   own scroll path rather than forcing the whole page wider. */
+.scr-block-detail-row > td { padding: 0; background: var(--panel2); overflow-x: auto; }
 .scr-block-detail-row .scr-block-table { background: transparent; }
 .scr-block-detail-row .scr-block-table th { background: transparent; }

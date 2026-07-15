@@ -51,4 +51,8 @@
 .detail-row > td {
   background: var(--bg);
   padding: 0.4rem 1rem;
+  /* This row's colSpan spans the full table width; the embedded GameDetail
+     scoreboard (many nowrap columns) needs its own scroll path on a narrow
+     window instead of clipping with no way to reach the rest. */
+  overflow-x: auto;
 }

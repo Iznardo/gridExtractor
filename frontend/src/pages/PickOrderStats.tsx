@@ -3,6 +3,7 @@ import { AlertTriangle, SearchX } from "lucide-react";
 import { usePickOrderStats, type StatsFilters } from "../api/hooks";
 import type { PickSlotEntry, RoleDistEntry } from "../api/types";
 import { ChampIcon } from "../components/icons";
+import { wrArrow, wrStatus } from "../lib/winrate";
 import "./pick-order.css";
 
 // ─── constants ────────────────────────────────────────────────────────────────
@@ -33,18 +34,12 @@ function rdHeatClass(pct: number): string {
   return "";
 }
 
-function wrColor(wr: number | null): string {
-  if (wr == null) return "";
-  if (wr >= 55) return "po-wr-pos";
-  if (wr <= 45) return "po-wr-neg";
-  return "";
-}
-
-// Directional glyph: WR is not conveyed by green/red alone (color blindness).
-function wrArrow(wr: number | null): string {
-  if (wr == null) return "";
-  if (wr >= 55) return "▲";
-  if (wr <= 45) return "▼";
+// Gated by the shared WR_MIN_GAMES threshold (lib/winrate) — a slot picked
+// once must not color as confidently as one picked 40 times.
+function wrColor(wr: number | null, games: number): string {
+  const status = wrStatus(wr, games);
+  if (status === "pos") return "po-wr-pos";
+  if (status === "neg") return "po-wr-neg";
   return "";
 }
 
@@ -82,13 +77,13 @@ function SlotColumn({
             <div key={`${e.champ_id}-${slotKey}`} className="po-entry">
               <ChampIcon id={e.champ_id} name={e.champ_name ?? ""} size={20} />
               <span className="po-champ-name">{e.champ_name ?? `#${e.champ_id}`}</span>
-              <span className={`po-stats ${wrColor(e.win_rate)}`}>
+              <span className={`po-stats ${wrColor(e.win_rate, e.games)}`}>
                 {e.games}g
                 {e.win_rate != null && (
                   <>
                     {" · "}
-                    {wrArrow(e.win_rate) && (
-                      <span className="po-wr-arrow" aria-hidden="true">{wrArrow(e.win_rate)}</span>
+                    {wrArrow(e.win_rate, e.games) && (
+                      <span className="po-wr-arrow" aria-hidden="true">{wrArrow(e.win_rate, e.games)}</span>
                     )}
                     {e.win_rate.toFixed(0)}%
                   </>

@@ -39,8 +39,27 @@
   border-color: var(--border);
 }
 
-.api-base {
+/* Nav key hint: a tiny, muted digit after each label — the shortcut is a
+   bonus for keyboard users, never competing visually with the label itself. */
+.app-nav-key {
+  font-size: 0.7em;
+  font-weight: 400;
+  opacity: 0.6;
+  margin-left: 0.4em;
+}
+
+/* Discreet legend for the global shortcuts ("/" + 1-5). Pushed to the right
+   edge alongside .api-base; deliberately quiet — no icon, no border, no
+   attention-seeking treatment, matching PRODUCT.md's "the data rules,
+   decoration doesn't" principle. */
+.app-shortcut-hint {
   margin-left: auto;
+  font-size: 0.78em;
+  font-family: ui-monospace, Consolas, monospace;
+  cursor: default;
+}
+
+.api-base {
   font-size: 0.78em;
   font-family: ui-monospace, Consolas, monospace;
 }

@@ -143,6 +143,10 @@ export function Scouting() {
       setSubmitError("Select a team before scouting.");
       return;
     }
+    if (dateFrom && dateTo && dateFrom > dateTo) {
+      setSubmitError("The «From» date cannot be after «To».");
+      return;
+    }
     setSubmitError("");
     const next = new URLSearchParams(params);
     next.set("team", teamId);
@@ -153,6 +157,20 @@ export function Scouting() {
     else next.delete("dateTo");
     setParams(next);
   }
+
+  function clearFilters() {
+    setTeamId("");
+    setDateFrom("");
+    setDateTo("");
+    setSubmitError("");
+    const next = new URLSearchParams(params);
+    next.delete("team");
+    next.delete("dateFrom");
+    next.delete("dateTo");
+    setParams(next);
+  }
+
+  const hasFilters = params.get("team") != null || params.get("dateFrom") != null || params.get("dateTo") != null;
 
   function handleTabChange(id: string) {
     const next = new URLSearchParams(params);
@@ -296,6 +314,9 @@ export function Scouting() {
         >
           Scout
         </button>
+        {hasFilters && (
+          <button type="button" className="btn-ghost" onClick={clearFilters}>Clear</button>
+        )}
       </FilterBar>
 
       {submitError && (

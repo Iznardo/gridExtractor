@@ -36,7 +36,6 @@
 
 .cp-table thead th {
   position: sticky;
-  top: 0;
   z-index: 2;
   background: var(--panel);
   padding: 6px 10px;
@@ -52,7 +51,27 @@
   transition: color 120ms ease-out;
 }
 
-.cp-table thead th:first-child {
+/* Group-label row (Picks / Bans / Phases / Per Game): chunks ~17 sortable
+   columns into named bands. Not interactive (no sort of its own), so it gets
+   its own tonal step and no hover/focus affordance. Sticks at top:0; the leaf
+   header row below sticks right under it (see tr:last-child).
+   Selectors are prefixed with ".cp-table thead" to out-specificity the base
+   ".cp-table thead th" rule above (a bare ".cp-group-row th" would lose). */
+.cp-table thead .cp-group-row th {
+  top: 0;
+  height: 20px;
+  box-sizing: border-box;
+  padding: 3px 10px;
+  font-size: 0.6rem;
+  text-align: center;
+  cursor: default;
+  background: var(--panel2);
+}
+.cp-table thead .cp-group-row th:hover { color: var(--muted); }
+
+.cp-table thead tr:last-child th { top: 20px; }
+
+.cp-table thead tr:last-child th:first-child {
   text-align: left;
   padding-left: 4px;
 }

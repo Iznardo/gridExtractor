@@ -9,6 +9,7 @@ import {
 } from "../api/hooks";
 import type { BaselineEntry, TeamMatchupEntry } from "../api/types";
 import { ChampIcon } from "../components/icons";
+import { WR_MIN_GAMES, wrArrow, wrStatus } from "../lib/winrate";
 import "./team-matchups.css";
 
 // Context filters that "vs other teams" inherits from the view.
@@ -23,23 +24,16 @@ const ROLE_LABEL: Record<string, string> = {
   SUPPORT: "SUP",
 };
 
-// Minimum games to trust a WR (consistent with the scouting pool).
-const WR_MIN_GAMES = 3;
 const COL_LIMIT = 10;
 
-function wrClass(wr: number | null, games: number): string {
-  if (wr == null || games < WR_MIN_GAMES) return "tm-wr-neutral";
-  if (wr >= 55) return "tm-wr-pos";
-  if (wr <= 45) return "tm-wr-neg";
-  return "tm-wr-neutral";
-}
+const WR_CLASS: Record<ReturnType<typeof wrStatus>, string> = {
+  pos: "tm-wr-pos",
+  neg: "tm-wr-neg",
+  neutral: "tm-wr-neutral",
+};
 
-// Directional non-color glyph (color blindness) — consistent with the rest of the front.
-function wrArrow(wr: number | null, games: number): string {
-  if (wr == null || games < WR_MIN_GAMES) return "";
-  if (wr >= 55) return "▲";
-  if (wr <= 45) return "▼";
-  return "";
+function wrClass(wr: number | null, games: number): string {
+  return WR_CLASS[wrStatus(wr, games)];
 }
 
 function WrValue({ wr, games }: { wr: number | null; games: number }) {

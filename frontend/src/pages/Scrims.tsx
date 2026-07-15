@@ -410,6 +410,7 @@ export function Scrims() {
   const [dateFrom, setDateFrom] = useState(() => params.get("dateFrom") ?? "");
   const [dateTo, setDateTo] = useState(() => params.get("dateTo") ?? "");
   const [patch, setPatch] = useState(() => params.get("patch") ?? "");
+  const [formError, setFormError] = useState("");
 
   const viewParam = params.get("view");
   const activeView = (VIEW_IDS as readonly string[]).includes(viewParam ?? "")
@@ -456,6 +457,11 @@ export function Scrims() {
   });
 
   function submit() {
+    if (dateFrom && dateTo && dateFrom > dateTo) {
+      setFormError("The «From» date cannot be after «To».");
+      return;
+    }
+    setFormError("");
     const next = new URLSearchParams(params);
     if (teamId) next.set("team", teamId);
     else next.delete("team");
@@ -467,6 +473,27 @@ export function Scrims() {
     else next.delete("patch");
     setParams(next);
   }
+
+  function clearFilters() {
+    setTeamId("");
+    setDateFrom("");
+    setDateTo("");
+    setPatch("");
+    setFormError("");
+    if (typeof localStorage !== "undefined") localStorage.removeItem(LS_KEY);
+    const next = new URLSearchParams(params);
+    next.delete("team");
+    next.delete("dateFrom");
+    next.delete("dateTo");
+    next.delete("patch");
+    setParams(next);
+  }
+
+  const hasFilters =
+    !!appliedTeam ||
+    params.get("dateFrom") != null ||
+    params.get("dateTo") != null ||
+    params.get("patch") != null;
 
   function handleViewChange(id: string) {
     const next = new URLSearchParams(params);
@@ -563,7 +590,14 @@ export function Scrims() {
         <button type="submit" className="btn-primary" disabled={!teamId}>
           Track
         </button>
+        {hasFilters && (
+          <button type="button" className="btn-ghost" onClick={clearFilters}>Clear</button>
+        )}
       </FilterBar>
+
+      {formError && (
+        <p className="field-error" role="alert">{formError}</p>
+      )}
 
       <p className={"status" + (error ? " error" : "")} role="status" aria-live="polite">
         {appliedTeamId == null
